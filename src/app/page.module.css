@@ -49,7 +49,8 @@
   gap: 1.5rem;
 }
 
-.primaryBtn, .secondaryBtn {
+.primaryBtn,
+.secondaryBtn {
   padding: 1rem 2.5rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -83,7 +84,8 @@
 
 .heroImageSide {
   flex: 1;
-  background-color: #111; /* Dark background for image area */
+  background-color: #111;
+  /* Dark background for image area */
   position: relative;
   border-left: 4px solid var(--color-gold);
   display: flex;
@@ -155,9 +157,14 @@
   margin: 0 0 2.5rem 0;
   line-height: 1.6;
 }
+
 /* --- Explore Section --- */
 .exploreSection {
   padding: 5rem 0;
+  background-image: linear-gradient(rgba(245, 243, 239, 0.85), rgba(245, 243, 239, 0.85)), url('/web-phts/bg-section.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-color: #f5f3ef;
 }
 
@@ -247,7 +254,7 @@
 
 .categoryGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
 }
 
@@ -262,29 +269,34 @@
 
 .categoryCard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   border-color: var(--color-gold);
 }
 
-.categoryImagePlaceholder {
+.categoryImage {
+  width: 100%;
   height: 250px;
-  background-color: #eee;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #888;
-  font-weight: 600;
-  text-transform: uppercase;
+  object-fit: cover;
   border-bottom: 2px solid var(--color-gold);
 }
 
-.categoryTitle {
+.categoryContent {
   padding: 1.5rem;
   text-align: center;
-  color: var(--color-inkblue);
-  font-size: 1.2rem;
+}
+
+.categoryTitle {
+  font-size: 1.25rem;
+  color: var(--color-ink-blue);
   font-weight: 700;
   text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.categoryDesc {
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.6;
 }
 
 /* --- Affiliations Section --- */
@@ -319,6 +331,14 @@
 .ctaSection {
   padding: 5rem 0;
   background-color: var(--color-inkblue);
+  background-image: 
+    linear-gradient(135deg, rgba(196, 166, 97, 0.05) 25%, transparent 25%),
+    linear-gradient(225deg, rgba(196, 166, 97, 0.05) 25%, transparent 25%),
+    linear-gradient(45deg, rgba(196, 166, 97, 0.05) 25%, transparent 25%),
+    linear-gradient(315deg, rgba(196, 166, 97, 0.05) 25%, transparent 25%);
+  background-position:  20px 0, 20px 0, 0 0, 0 0;
+  background-size: 40px 40px;
+  background-repeat: repeat;
   text-align: center;
 }
 
@@ -446,6 +466,39 @@
   color: var(--color-inkblue);
 }
 
+/* --- Comments / Testimonials Section --- */
+.commentsSection {
+  padding: 5rem 0;
+  background-color: var(--color-white);
+}
+
+.commentsSplit {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+}
+
+.commentsImageSide {
+  flex: 0 0 500px;
+  overflow: hidden;
+  height: 500px;
+}
+
+.commentsImage {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+.commentsTextSide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
 /* =============================================
    RESPONSIVE: TABLET (≤1024px)
    ============================================= */
@@ -459,12 +512,15 @@
     flex-direction: column;
     min-height: auto;
   }
+
   .heroTextSide {
     padding: 3rem 2rem;
   }
+
   .heroTitle {
     font-size: 2.8rem;
   }
+
   .heroImageSide {
     min-height: 350px;
     border-left: none;
@@ -475,14 +531,29 @@
   .aboutSection {
     padding: 4rem 0;
   }
+
   .aboutSplit {
     flex-direction: column;
   }
+
   .aboutImage {
     height: 350px;
     border-left: none;
     border-top: 4px solid var(--color-gold);
   }
+
+  /* Comments */
+  .commentsSplit {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .commentsImageSide {
+    flex: none;
+    width: 100%;
+    height: 350px;
+  }
+
   .aboutTitle {
     font-size: 2rem;
   }
@@ -491,9 +562,11 @@
   .exploreSection {
     padding: 4rem 0;
   }
+
   .exploreSplit {
     gap: 3rem;
   }
+
   .exploreTitle {
     font-size: 2.2rem;
   }
@@ -502,10 +575,12 @@
   .categoriesSection {
     padding: 4rem 0;
   }
+
   .sectionTitle {
     font-size: 2rem;
     margin-bottom: 1.5rem;
   }
+
   .categoryGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
@@ -520,6 +595,7 @@
   .ctaSection {
     padding: 4rem 0;
   }
+
   .ctaTitle {
     font-size: 1.8rem;
   }
@@ -528,6 +604,7 @@
   .features {
     padding: 4rem 0;
   }
+
   .featureGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
@@ -546,22 +623,28 @@
   .heroTextSide {
     padding: 2.5rem 1.5rem;
   }
+
   .heroTitle {
     font-size: 2rem;
   }
+
   .heroText {
     font-size: 1rem;
     margin-bottom: 2rem;
   }
+
   .heroActions {
     flex-direction: column;
     gap: 1rem;
   }
-  .primaryBtn, .secondaryBtn {
+
+  .primaryBtn,
+  .secondaryBtn {
     text-align: center;
     padding: 0.9rem 2rem;
     font-size: 0.85rem;
   }
+
   .heroImageSide {
     min-height: 250px;
   }
@@ -570,16 +653,20 @@
   .exploreSection {
     padding: 3rem 0;
   }
+
   .exploreSplit {
     flex-direction: column;
     gap: 2rem;
   }
+
   .exploreTitle {
     font-size: 1.6rem;
   }
+
   .exploreText {
     font-size: 1rem;
   }
+
   .exploreVideoSide {
     border-width: 2px;
     width: 100%;
@@ -589,18 +676,23 @@
   .aboutSection {
     padding: 3rem 0;
   }
+
   .aboutSplit {
     gap: 2rem;
   }
+
   .aboutTitle {
     font-size: 1.6rem;
   }
+
   .aboutText {
     font-size: 1rem;
   }
+
   .aboutQuote {
     font-size: 1rem;
   }
+
   .aboutImage {
     height: 250px;
   }
@@ -609,18 +701,22 @@
   .categoriesSection {
     padding: 3rem 0;
   }
+
   .sectionTitle {
     font-size: 1.5rem;
     margin-bottom: 1rem;
   }
+
   .sectionDescription {
     font-size: 0.95rem;
     margin-bottom: 2rem;
   }
+
   .categoryGrid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+
   .categoryImagePlaceholder {
     height: 180px;
   }
@@ -629,9 +725,11 @@
   .affiliationsSection {
     padding: 3rem 0;
   }
+
   .affiliationsGrid {
     gap: 2rem;
   }
+
   .affiliationLogo {
     max-height: 55px;
     max-width: 140px;
@@ -641,14 +739,17 @@
   .ctaSection {
     padding: 3rem 0;
   }
+
   .ctaTitle {
     font-size: 1.4rem;
     letter-spacing: 0.5px;
   }
+
   .ctaText {
     font-size: 0.95rem;
     line-height: 1.7;
   }
+
   .ctaButton {
     padding: 0.9rem 2rem;
     font-size: 0.9rem;
@@ -658,13 +759,16 @@
   .features {
     padding: 3rem 0;
   }
+
   .featureGrid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+
   .featureCard {
     padding: 2rem 1.5rem;
   }
+
   .featureTitle {
     font-size: 1.2rem;
   }

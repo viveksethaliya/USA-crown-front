@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "./page.module.css";
+import TestimonialCarousel from "../components/TestimonialCarousel";
 
 export default function Home() {
   return (
@@ -64,28 +65,58 @@ export default function Home() {
           </p>
           <div className={styles.categoryGrid}>
 
-            {/* Category Card 1 */}
-            <Link href="/category/findings" className={styles.categoryCard}>
-              <div className={styles.categoryImagePlaceholder}>[Findings Image]</div>
-              <h3 className={styles.categoryTitle}>Findings</h3>
+            {/* Category Card 1: Earrings */}
+            <Link href="/products?category=earrings" className={styles.categoryCard}>
+              <img src="https://crownfindings.com/wp-content/uploads/2025/10/Earrings.webp" alt="Earrings" className={styles.categoryImage} />
+              <div className={styles.categoryContent}>
+                <h3 className={styles.categoryTitle}>Earrings</h3>
+                <p className={styles.categoryDesc}>Our earrings range offers diverse findings, including posts, hooks, backs, jackets, and wires, for unique and custom earring creations.</p>
+              </div>
             </Link>
 
-            {/* Category Card 2 */}
-            <Link href="/category/mountings" className={styles.categoryCard}>
-              <div className={styles.categoryImagePlaceholder}>[Mountings Image]</div>
-              <h3 className={styles.categoryTitle}>Mountings</h3>
+            {/* Category Card 2: Chains */}
+            <Link href="/products?category=chains" className={styles.categoryCard}>
+              <img src="https://crownfindings.com/wp-content/uploads/2025/10/Chains.webp" alt="Chains" className={styles.categoryImage} />
+              <div className={styles.categoryContent}>
+                <h3 className={styles.categoryTitle}>Chains</h3>
+                <p className={styles.categoryDesc}>Choose from our versatile chains, available in bulk or by inch, to create distinctive necklaces and bracelets for your collection.</p>
+              </div>
             </Link>
 
-            {/* Category Card 3 */}
-            <Link href="/category/chains" className={styles.categoryCard}>
-              <div className={styles.categoryImagePlaceholder}>[Chains Image]</div>
-              <h3 className={styles.categoryTitle}>Chains</h3>
+            {/* Category Card 3: Rings */}
+            <Link href="/products?category=rings" className={styles.categoryCard}>
+              <img src="https://crownfindings.com/wp-content/uploads/2025/10/Rings-1.png.webp" alt="Rings" className={styles.categoryImage} />
+              <div className={styles.categoryContent}>
+                <h3 className={styles.categoryTitle}>Rings</h3>
+                <p className={styles.categoryDesc}>Explore our ring components, offering a solid foundation for crafting tailored rings that stand out in any jewelry collection.</p>
+              </div>
             </Link>
 
-            {/* Category Card 4 */}
-            <Link href="/category/metals" className={styles.categoryCard}>
-              <div className={styles.categoryImagePlaceholder}>[Metals Image]</div>
-              <h3 className={styles.categoryTitle}>Metals & Mill</h3>
+            {/* Category Card 4: Pendants */}
+            <Link href="/products?category=pendants" className={styles.categoryCard}>
+              <img src="https://crownfindings.com/wp-content/uploads/2025/10/Pendants-1.png.webp" alt="Pendants" className={styles.categoryImage} />
+              <div className={styles.categoryContent}>
+                <h3 className={styles.categoryTitle}>Pendants</h3>
+                <p className={styles.categoryDesc}>Discover our selection of oval pendants, ideal for custom gemstone settings or engraving, adding a personal touch to any design.</p>
+              </div>
+            </Link>
+
+            {/* Category Card 5: Clasps */}
+            <Link href="/products?category=clasps" className={styles.categoryCard}>
+              <img src="https://crownfindings.com/wp-content/uploads/2025/10/Clasps-1.png.webp" alt="Clasps" className={styles.categoryImage} />
+              <div className={styles.categoryContent}>
+                <h3 className={styles.categoryTitle}>Clasps</h3>
+                <p className={styles.categoryDesc}>Explore our range of over 30 types of clasps, offering jewelers diverse, stylish, and secure options for all necklace and bracelet designs.</p>
+              </div>
+            </Link>
+
+            {/* Category Card 6: Religious Items */}
+            <Link href="/products?category=religious-items" className={styles.categoryCard}>
+              <img src="https://crownfindings.com/wp-content/uploads/2025/10/Religious-Items-1.webp" alt="Religious Items" className={styles.categoryImage} />
+              <div className={styles.categoryContent}>
+                <h3 className={styles.categoryTitle}>Religious Items</h3>
+                <p className={styles.categoryDesc}>Our religious items feature a variety of charms and symbols, perfect for creating spiritually meaningful jewelry at wholesale prices.</p>
+              </div>
             </Link>
 
           </div>
@@ -146,21 +177,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Badges / Features Section */}
-      <section className={styles.features}>
+      {/* Comments / Testimonials Section */}
+      <section className={styles.commentsSection}>
         <div className={styles.container}>
-          <div className={styles.featureGrid}>
-            <div className={styles.featureCard}>
-              <h3 className={styles.featureTitle}>Vast Catalog</h3>
-              <p className={styles.featureText}>Over 18,000+ items across multiple metal types including Gold, Silver, and Platinum.</p>
+          <div className={styles.commentsSplit}>
+            <div className={styles.commentsImageSide}>
+              <img
+                src="/web-phts/comments2.webp"
+                alt="Customer Testimonials"
+                className={styles.commentsImage}
+              />
             </div>
-            <div className={styles.featureCard}>
-              <h3 className={styles.featureTitle}>Bulk Pricing</h3>
-              <p className={styles.featureText}>Tiered pricing models designed specifically for jewelers and manufacturers.</p>
-            </div>
-            <div className={styles.featureCard}>
-              <h3 className={styles.featureTitle}>Real-time Metals</h3>
-              <p className={styles.featureText}>Pricing integrated with live market values for precise and fair wholesale costs.</p>
+            <div className={styles.commentsTextSide}>
+              <TestimonialCarousel />
             </div>
           </div>
         </div>
