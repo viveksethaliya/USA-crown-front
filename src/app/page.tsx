@@ -1,65 +1,183 @@
-import Image from "next/image";
+import Link from "next/link";
+import styles from "./page.module.css";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className={styles.page}>
+      {/* 50/50 Split Hero Section */}
+      <section className={styles.heroSplit}>
+        <div className={styles.heroTextSide}>
+          <div className={styles.heroTextContent}>
+            <h1 className={styles.heroTitle}>Premium Wholesale Jewelry & Findings</h1>
+            <p className={styles.heroText}>
+              Exclusive access to our high-SKU catalog of professional-grade chains, clasps, earrings, and findings.
+              Providing the finest quality materials to jewelers worldwide since 1985.
+            </p>
+            <div className={styles.heroActions}>
+              <Link href="/login" className={styles.primaryBtn}>Member Login</Link>
+              <Link href="/apply" className={styles.secondaryBtn}>Apply for Membership</Link>
+            </div>
+          </div>
+        </div>
+        <div className={styles.heroImageSide}>
+          <img
+            src="/web-phts/Jeweler-Image-Placeholder.jpg"
+            alt="Jeweler Working"
+            className={styles.heroImage}
+          />
+        </div>
+      </section>
+
+      {/* About Crown Findings Section */}
+      <section className={styles.aboutSection}>
+        <div className={styles.container}>
+          <div className={styles.aboutSplit}>
+            <div className={styles.aboutImageSide}>
+              <img
+                src="/web-phts/Mask-group-2-600x436-1.webp"
+                alt="Crown Findings Workshop"
+                className={styles.aboutImage}
+              />
+            </div>
+            <div className={styles.aboutTextSide}>
+              <h2 className={styles.aboutTitle}>About Crown Findings</h2>
+              <p className={styles.aboutText}>
+                Crown Findings Co., Inc. was established November 8, 1983 and has since flourished to become a leading wholesale jewelry findings business. Located in Manhattan’s iconic Diamond District, Crown Findings has been serving jewelers on the block, across the country, and around the world throughout its lifetime. Since its birth, Crown has provided the jewelry industry with competitive pricing, quality items, and unmatched service and integrity.
+              </p>
+              <blockquote className={styles.aboutQuote}>
+                “One of the best parts about being a business owner is having the opportunity to meet new people from different backgrounds,” Berc explains. “I still keep in touch with people I met through Crown 35 years ago.”
+              </blockquote>
+              <Link href="/about" className={styles.primaryBtn}>
+                Learn more
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Categories Section */}
+      <section className={styles.categoriesSection}>
+        <div className={styles.container}>
+          <h2 className={styles.sectionTitle}>Our Wholesale Jewelry Supplies</h2>
+          <p className={styles.sectionDescription}>
+            Explore our diverse wholesale jewelry findings range featuring settings, chains, pendants, mill products and more to unlock limitless design potential for your creations.
           </p>
+          <div className={styles.categoryGrid}>
+
+            {/* Category Card 1 */}
+            <Link href="/category/findings" className={styles.categoryCard}>
+              <div className={styles.categoryImagePlaceholder}>[Findings Image]</div>
+              <h3 className={styles.categoryTitle}>Findings</h3>
+            </Link>
+
+            {/* Category Card 2 */}
+            <Link href="/category/mountings" className={styles.categoryCard}>
+              <div className={styles.categoryImagePlaceholder}>[Mountings Image]</div>
+              <h3 className={styles.categoryTitle}>Mountings</h3>
+            </Link>
+
+            {/* Category Card 3 */}
+            <Link href="/category/chains" className={styles.categoryCard}>
+              <div className={styles.categoryImagePlaceholder}>[Chains Image]</div>
+              <h3 className={styles.categoryTitle}>Chains</h3>
+            </Link>
+
+            {/* Category Card 4 */}
+            <Link href="/category/metals" className={styles.categoryCard}>
+              <div className={styles.categoryImagePlaceholder}>[Metals Image]</div>
+              <h3 className={styles.categoryTitle}>Metals & Mill</h3>
+            </Link>
+
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Professional Affiliations Section */}
+      <section className={styles.affiliationsSection}>
+        <div className={styles.container}>
+          <h3 className={styles.sectionTitle}>Professional Affiliations</h3>
+          <p className={styles.sectionDescription}>
+            We are proud members of the following professional organizations:
+          </p>
+          <div className={styles.affiliationsGrid}>
+            <img src="/professional-affiliations/image-2-25.png" alt="Affiliation 1" className={styles.affiliationLogo} />
+            <img src="/professional-affiliations/image-3.webp" alt="Affiliation 2" className={styles.affiliationLogo} />
+            <img src="/professional-affiliations/image-4-removebg-preview.png" alt="Affiliation 3" className={styles.affiliationLogo} />
+            <img src="/professional-affiliations/image-5-removebg-preview.png" alt="Affiliation 4" className={styles.affiliationLogo} />
+            <img src="/professional-affiliations/jewelersofamerica-logo_1-1-200x133-1.png" alt="Jewelers of America" className={styles.affiliationLogo} />
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Exclusive Pricing CTA Section */}
+      <section className={styles.ctaSection}>
+        <div className={styles.container}>
+          <h2 className={styles.ctaTitle}>Get Access to Exclusive Pricing &amp; Bulk Discounts</h2>
+          <p className={styles.ctaText}>
+            As a trusted wholesale jewelry supplier serving this industry for over 40 years, we offer our competitive pricing, bulk discounts, and ordering only to members of the jewelry trade. By becoming a member, you gain access to our full catalog of quality jewelry findings at competitive trade prices. You&#39;ll also benefit from working with our experienced and attentive team. Apply today to start enjoying exclusive pricing and benefits.
+          </p>
+          <Link href="/login" className={styles.ctaButton}>
+            Start Application
+          </Link>
+        </div>
+      </section>
+      {/* Explore the World of Crown Section */}
+      <section className={styles.exploreSection}>
+        <div className={styles.container}>
+          <div className={styles.exploreSplit}>
+            <div className={styles.exploreTextSide}>
+              <h2 className={styles.exploreTitle}>
+                Explore the<br />World of Crown
+              </h2>
+              <p className={styles.exploreText}>
+                Crown Findings Co., Inc offers a wide variety of 14K, 18K &amp; Plat. wholesale findings. The decades old family owned &amp; operated business runs on fast and reliable service.
+              </p>
+            </div>
+            <div className={styles.exploreVideoSide}>
+              <iframe
+                className={styles.exploreVideo}
+                src="https://www.youtube.com/embed/i5y6E2C0ULI"
+                title="Explore the World of Crown Findings"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges / Features Section */}
+      <section className={styles.features}>
+        <div className={styles.container}>
+          <div className={styles.featureGrid}>
+            <div className={styles.featureCard}>
+              <h3 className={styles.featureTitle}>Vast Catalog</h3>
+              <p className={styles.featureText}>Over 18,000+ items across multiple metal types including Gold, Silver, and Platinum.</p>
+            </div>
+            <div className={styles.featureCard}>
+              <h3 className={styles.featureTitle}>Bulk Pricing</h3>
+              <p className={styles.featureText}>Tiered pricing models designed specifically for jewelers and manufacturers.</p>
+            </div>
+            <div className={styles.featureCard}>
+              <h3 className={styles.featureTitle}>Real-time Metals</h3>
+              <p className={styles.featureText}>Pricing integrated with live market values for precise and fair wholesale costs.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom Banner */}
+      <section className={styles.bottomBanner}>
+        <div className={styles.container}>
+          <p className={styles.bannerText}>
+            Elevate your jewelry creations with our premium 14K, 18K, and Platinum wholesale jewelry findings. Our family business combines decades of expertise with unwavering dedication to fast, reliable service with exclusive member discounts!
+          </p>
+          <h3 className={styles.bannerHeadline}>Experience the Crown Findings Difference</h3>
+          <Link href="/apply" className={styles.bannerBtn}>
+            Register for a Wholesale Account
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

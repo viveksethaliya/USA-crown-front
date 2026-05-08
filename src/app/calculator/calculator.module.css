@@ -1,0 +1,284 @@
+.page {
+  padding: 4rem 0;
+  background-color: var(--color-bg-light);
+  min-height: 80vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  color: var(--color-inkblue);
+  text-transform: uppercase;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Shape Selector */
+.shapeSelector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.shapeBtn {
+  background-color: var(--color-white);
+  color: var(--color-inkblue);
+  border: 1px solid var(--color-border);
+  padding: 0.8rem 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.shapeBtn:hover {
+  border-color: var(--color-gold);
+}
+
+.activeShapeBtn {
+  background-color: var(--color-inkblue);
+  color: var(--color-gold);
+  border-color: var(--color-inkblue);
+}
+
+/* Split Content */
+.contentSplit {
+  display: flex;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+.calculatorSide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.tableSide {
+  flex: 1;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-gold);
+  padding: 2rem;
+}
+
+/* Calculator Box */
+.calculatorBox {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-inkblue);
+  padding: 2rem;
+}
+
+.boxTitle {
+  color: var(--color-inkblue);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.inputGroup {
+  margin-bottom: 2rem;
+}
+
+.label {
+  display: block;
+  font-weight: 700;
+  color: var(--color-inkblue);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.selectInput {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  border: 1px solid var(--color-border);
+  background-color: #fafafa;
+  color: var(--color-inkblue);
+  outline: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.selectInput:focus {
+  border-color: var(--color-gold);
+}
+
+.resultBox {
+  background-color: var(--color-inkblue);
+  padding: 2rem;
+  text-align: center;
+  border: 2px solid var(--color-gold);
+}
+
+.resultLabel {
+  color: var(--color-gold);
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.resultValue {
+  color: var(--color-white);
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+/* Image Box */
+.imageBox {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  padding: 2rem;
+  text-align: center;
+}
+
+.diagramImage {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.imageCaption {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Table */
+.tableTitle {
+  color: var(--color-inkblue);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.referenceTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.referenceTable th {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  color: var(--color-inkblue);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  border-bottom: 2px solid var(--color-inkblue);
+}
+
+.referenceTable td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  color: var(--color-text-main);
+  font-size: 1.05rem;
+}
+
+.referenceTable tr:hover td {
+  background-color: #fafafa;
+}
+
+.activeRow td {
+  background-color: rgba(212, 175, 55, 0.1);
+  font-weight: 700;
+  color: var(--color-inkblue);
+}
+
+/* =============================================
+   RESPONSIVE: TABLET (≤1024px)
+   ============================================= */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+  .title {
+    font-size: 2rem;
+  }
+  .contentSplit {
+    gap: 2rem;
+  }
+}
+
+/* =============================================
+   RESPONSIVE: MOBILE (≤768px)
+   ============================================= */
+@media (max-width: 768px) {
+  .page {
+    padding: 2.5rem 0;
+  }
+  .container {
+    padding: 0 1rem;
+  }
+  .title {
+    font-size: 1.5rem;
+  }
+  .subtitle {
+    font-size: 0.95rem;
+  }
+  .header {
+    margin-bottom: 2rem;
+  }
+  .shapeSelector {
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  .shapeBtn {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+  .contentSplit {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .calculatorSide, .tableSide {
+    width: 100%;
+  }
+  .calculatorBox, .tableSide {
+    padding: 1.5rem;
+  }
+  .boxTitle, .tableTitle {
+    font-size: 1.2rem;
+  }
+  .resultValue {
+    font-size: 2.2rem;
+  }
+  .referenceTable th, .referenceTable td {
+    padding: 0.7rem;
+    font-size: 0.9rem;
+  }
+}

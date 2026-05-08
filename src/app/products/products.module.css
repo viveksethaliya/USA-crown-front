@@ -1,0 +1,369 @@
+.page {
+  background-color: var(--color-bg-light);
+  min-height: calc(100vh - 80px);
+  padding: 2rem 0;
+}
+
+.layout {
+  display: flex;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* =============================================
+   MOBILE FILTER TOGGLE
+   ============================================= */
+.mobileFilterBtn {
+  display: none;
+  width: 100%;
+  padding: 0.8rem;
+  background-color: var(--color-inkblue);
+  color: var(--color-white);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.mobileClose {
+  display: none;
+  width: 100%;
+  padding: 0.7rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: right;
+  margin-bottom: 1rem;
+}
+
+/* =============================================
+   SIDEBAR
+   ============================================= */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.searchBox {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.7rem 2.5rem 0.7rem 0.8rem;
+  border: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  background: var(--color-white);
+  color: var(--color-text-main);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-inkblue);
+}
+
+.searchIcon {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+/* Filter blocks */
+.filterBlock {
+  margin-bottom: 1.5rem;
+}
+
+.filterTitle {
+  background-color: var(--color-inkblue);
+  color: var(--color-white);
+  padding: 0.55rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.8rem;
+}
+
+.filterList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 0.3rem;
+}
+
+.categoryItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--color-text-main);
+  cursor: pointer;
+  padding: 0.15rem 0;
+}
+
+.checkInput {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-inkblue);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.subcategories {
+  padding-left: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+  margin-bottom: 0.3rem;
+}
+
+/* =============================================
+   MAIN CONTENT
+   ============================================= */
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Top Bar */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.resetBtn {
+  padding: 0.5rem 1.2rem;
+  background-color: var(--color-inkblue);
+  color: var(--color-white);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.resetBtn:hover {
+  background-color: var(--color-gold);
+  color: var(--color-inkblue);
+}
+
+.resultCount {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.sortSelect {
+  padding: 0.5rem 2rem 0.5rem 0.8rem;
+  border: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text-main);
+  background: var(--color-white);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23333' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  cursor: pointer;
+}
+
+/* =============================================
+   PRODUCT GRID
+   ============================================= */
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.productCard {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+
+.productCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.productImageWrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #fafafa;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.productImage {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.productInfo {
+  padding: 1rem;
+  flex: 1;
+}
+
+.productName {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-inkblue);
+  line-height: 1.4;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.3px;
+}
+
+.metalRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metalLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.metalDots {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.metalDot {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  display: inline-block;
+}
+
+.viewBtn {
+  display: block;
+  text-align: center;
+  padding: 0.75rem;
+  background-color: var(--color-inkblue);
+  color: var(--color-white);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.viewBtn:hover {
+  background-color: var(--color-gold);
+  color: var(--color-inkblue);
+}
+
+/* =============================================
+   RESPONSIVE: TABLET (≤1024px)
+   ============================================= */
+@media (max-width: 1024px) {
+  .layout {
+    padding: 0 1.5rem;
+  }
+  .productGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .sidebar {
+    width: 210px;
+  }
+}
+
+/* =============================================
+   RESPONSIVE: MOBILE (≤768px)
+   ============================================= */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+    padding: 0 1rem;
+  }
+
+  .mobileFilterBtn {
+    display: block;
+  }
+
+  .mobileClose {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+    width: 100%;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .sidebarOpen {
+    display: block;
+  }
+
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  .resultCount {
+    text-align: center;
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+  }
+
+  .productImageWrap {
+    padding: 1rem;
+  }
+
+  .productName {
+    font-size: 0.75rem;
+  }
+
+  .metalLabel {
+    font-size: 0.7rem;
+  }
+
+  .metalDot {
+    width: 14px;
+    height: 14px;
+  }
+}

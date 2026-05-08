@@ -1,0 +1,437 @@
+'use client';
+
+import Link from 'next/link';
+import { useState, useRef } from 'react';
+import styles from './apply.module.css';
+
+
+
+export default function ApplyPage() {
+  const [step, setStep] = useState(1);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Step 1: Personal Information
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [hearAbout, setHearAbout] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Step 2: Company Information
+  const [companyName, setCompanyName] = useState('');
+  const [companyWebsite, setCompanyWebsite] = useState('');
+  const [addressLine, setAddressLine] = useState('');
+  const [phone, setPhone] = useState('');
+  const [resaleTaxId, setResaleTaxId] = useState('');
+  const [city, setCity] = useState('');
+  const [fax, setFax] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [stateProvince, setStateProvince] = useState('');
+  const [country, setCountry] = useState('');
+  const [creditApp, setCreditApp] = useState('');
+
+  // Step 3: Resale Certificate
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+  };
+
+  const handlePrev = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files).slice(0, 2);
+    setUploadedFiles(files);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files).slice(0, 2);
+      setUploadedFiles(files);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Submit registration to backend
+    console.log('Registration submitted');
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.container}>
+        {/* Step Indicator */}
+        <div className={styles.stepIndicator}>
+          <div className={`${styles.stepItem} ${step >= 1 ? styles.stepActive : ''} ${step > 1 ? styles.stepComplete : ''}`}>
+            <div className={styles.stepNumber}>1</div>
+            <span className={styles.stepLabel}>Personal Info</span>
+          </div>
+          <div className={styles.stepLine}></div>
+          <div className={`${styles.stepItem} ${step >= 2 ? styles.stepActive : ''} ${step > 2 ? styles.stepComplete : ''}`}>
+            <div className={styles.stepNumber}>2</div>
+            <span className={styles.stepLabel}>Company Info</span>
+          </div>
+          <div className={styles.stepLine}></div>
+          <div className={`${styles.stepItem} ${step >= 3 ? styles.stepActive : ''}`}>
+            <div className={styles.stepNumber}>3</div>
+            <span className={styles.stepLabel}>Resale Certificate</span>
+          </div>
+        </div>
+
+        {/* Form Card */}
+        <div className={styles.formCard}>
+          <form onSubmit={handleSubmit}>
+
+            {/* ===== STEP 1: Personal Information ===== */}
+            {step === 1 && (
+              <div className={styles.stepContent}>
+                <h2 className={styles.stepTitle}>Personal Information</h2>
+                <p className={styles.stepDesc}>
+                  Please fill out and submit the registration form to gain full access to the Crown Findings Co., INC Website.
+                </p>
+
+                <div className={styles.formGrid}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Name <span className={styles.required}>*</span></label>
+                    <div className={styles.nameRow}>
+                      <div className={styles.nameField}>
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          className={styles.input}
+                          placeholder="First name"
+                          required
+                        />
+                        <span className={styles.fieldHint}>First</span>
+                      </div>
+                      <div className={styles.nameField}>
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          className={styles.input}
+                          placeholder="Last Name"
+                          required
+                        />
+                        <span className={styles.fieldHint}>Last</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Email <span className={styles.required}>*</span></label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={styles.input}
+                      placeholder="Email"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>How did you hear about us? <span className={styles.required}>*</span></label>
+                    <select
+                      value={hearAbout}
+                      onChange={(e) => setHearAbout(e.target.value)}
+                      className={styles.select}
+                      required
+                    >
+                      <option value="">How did you hear about us?</option>
+                      <option value="google">Google Search</option>
+                      <option value="referral">Referral</option>
+                      <option value="tradeshow">Trade Show</option>
+                      <option value="social">Social Media</option>
+                      <option value="diamond-district">Diamond District Walk-in</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Password <span className={styles.required}>*</span></label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={styles.input}
+                      placeholder="Password"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Confirm Password <span className={styles.required}>*</span></label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={styles.input}
+                      placeholder="Retype Password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.btnRow}>
+                  <button type="button" onClick={handleNext} className={styles.nextBtn}>
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ===== STEP 2: Company Information ===== */}
+            {step === 2 && (
+              <div className={styles.stepContent}>
+                <h2 className={styles.stepTitle}>Company Information</h2>
+
+                <div className={styles.formGrid}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Company Name <span className={styles.required}>*</span></label>
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className={styles.input}
+                      placeholder="Company Name"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Company Website</label>
+                    <input
+                      type="url"
+                      value={companyWebsite}
+                      onChange={(e) => setCompanyWebsite(e.target.value)}
+                      className={styles.input}
+                      placeholder="Company Website"
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Address Line <span className={styles.required}>*</span></label>
+                    <input
+                      type="text"
+                      value={addressLine}
+                      onChange={(e) => setAddressLine(e.target.value)}
+                      className={styles.input}
+                      placeholder="Address Line"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.twoCol}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Phone <span className={styles.required}>*</span></label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className={styles.input}
+                        placeholder="+1 (555) 123-4567"
+                        required
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Fax</label>
+                      <input
+                        type="tel"
+                        value={fax}
+                        onChange={(e) => setFax(e.target.value)}
+                        className={styles.input}
+                        placeholder="Fax"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Resale/Tax ID Number <span className={styles.required}>*</span></label>
+                    <input
+                      type="text"
+                      value={resaleTaxId}
+                      onChange={(e) => setResaleTaxId(e.target.value)}
+                      className={styles.input}
+                      placeholder="Resale/Tax Id Number"
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.twoCol}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>City <span className={styles.required}>*</span></label>
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className={styles.input}
+                        placeholder="City"
+                        required
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Postal / Zip Code <span className={styles.required}>*</span></label>
+                      <input
+                        type="text"
+                        value={zipCode}
+                        onChange={(e) => setZipCode(e.target.value)}
+                        className={styles.input}
+                        placeholder="Postal / Zip Code"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.twoCol}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>State / Province / Region <span className={styles.required}>*</span></label>
+                      <input
+                        type="text"
+                        value={stateProvince}
+                        onChange={(e) => setStateProvince(e.target.value)}
+                        className={styles.input}
+                        placeholder="State / Province / Region"
+                        required
+                      />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Country <span className={styles.required}>*</span></label>
+                      <input
+                        type="text"
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        className={styles.input}
+                        placeholder="Country"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Credit Application <span className={styles.required}>*</span></label>
+                    <div className={styles.radioGroup}>
+                      <label className={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="creditApp"
+                          value="yes"
+                          checked={creditApp === 'yes'}
+                          onChange={(e) => setCreditApp(e.target.value)}
+                          className={styles.radio}
+                        />
+                        Yes, I also want to apply for credit application
+                      </label>
+                      <label className={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="creditApp"
+                          value="no"
+                          checked={creditApp === 'no'}
+                          onChange={(e) => setCreditApp(e.target.value)}
+                          className={styles.radio}
+                        />
+                        No, I don&#39;t want to apply for credit application
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.btnRow}>
+                  <button type="button" onClick={handlePrev} className={styles.prevBtn}>
+                    Previous
+                  </button>
+                  <button type="button" onClick={handleNext} className={styles.nextBtn}>
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ===== STEP 3: Resale Certificate ===== */}
+            {step === 3 && (
+              <div className={styles.stepContent}>
+                <h2 className={styles.stepTitle}>Resale Certificate</h2>
+                <p className={styles.stepDesc}>
+                  Please fill out and submit the registration form to gain full access to the Crown Findings Co., INC Website.
+                </p>
+                <div className={styles.certificateNotice}>
+                  <p>
+                    The New York State Resale Certificate ST-120 must be filled out, signed and submitted prior to the approval of your registration.
+                  </p>
+                </div>
+
+                <Link
+                  href="/NYS-ResaleCertificate-ST120.pdf"
+                  target="_blank"
+                  className={styles.downloadBtn}
+                >
+                  ↓ Download Resale Certificate
+                </Link>
+
+                <p className={styles.uploadInstructions}>
+                  The Resale Certificate will open in a New Tab. Fill out the form and upload it back with your signature filled in.
+                </p>
+
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Upload Signed Certificate <span className={styles.required}>*</span></label>
+                  <div
+                    className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleFileDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      multiple
+                      onChange={handleFileSelect}
+                      className={styles.fileInput}
+                    />
+                    <div className={styles.dropIcon}>📄</div>
+                    <p className={styles.dropText}>Drag &amp; Drop Files, or <span className={styles.browseLink}>Choose Files</span> to Upload</p>
+                    <p className={styles.dropHint}>You can upload up to 2 files.</p>
+                  </div>
+
+                  {uploadedFiles.length > 0 && (
+                    <div className={styles.fileList}>
+                      {uploadedFiles.map((file, idx) => (
+                        <div key={idx} className={styles.fileItem}>
+                          <span className={styles.fileName}>📎 {file.name}</span>
+                          <button type="button" onClick={() => removeFile(idx)} className={styles.removeFile}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.btnRow}>
+                  <button type="button" onClick={handlePrev} className={styles.prevBtn}>
+                    Previous
+                  </button>
+                  <button type="submit" className={styles.submitBtn}>
+                    Submit Registration Application
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
