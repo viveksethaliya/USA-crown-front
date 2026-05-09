@@ -26,7 +26,6 @@
 .brandLogo {
   max-height: 50px;
   margin-bottom: 2.5rem;
-  filter: brightness(0) invert(1);
 }
 
 .brandTagline {

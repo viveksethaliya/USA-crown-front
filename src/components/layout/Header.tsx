@@ -48,7 +48,7 @@ export default function Header() {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('findings');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const [metalPrices, setMetalPrices] = useState({
     gold: '...',
     silver: '...',
@@ -63,12 +63,12 @@ export default function Header() {
           fetch('https://api.gold-api.com/price/XAG/USD'),
           fetch('https://api.gold-api.com/price/XPT/USD')
         ]);
-        
+
         if (goldRes.ok && silverRes.ok && platRes.ok) {
           const goldData = await goldRes.json();
           const silverData = await silverRes.json();
           const platData = await platRes.json();
-          
+
           const formatPrice = (price: number) => {
             return new Intl.NumberFormat('en-US', {
               style: 'currency',
@@ -86,7 +86,7 @@ export default function Header() {
         console.error('Failed to fetch metal prices:', error);
       }
     }
-    
+
     fetchPrices();
     // Refresh every 5 minutes
     const interval = setInterval(fetchPrices, 5 * 60 * 1000);
@@ -108,8 +108,8 @@ export default function Header() {
             <span className={styles.divider}>|</span>
             <Link href="/calculator" className={styles.topLink}>MM to Carat Calculator</Link>
             <span className={styles.divider}>|</span>
-            <Link href="/about" className={styles.topLink}>About</Link>
-            <Link href="/support" className={styles.topLink}>Support</Link>
+            <Link href="/contact" className={styles.topLink}>Contact Us</Link>
+            <Link href="/about" className={styles.topLink}>About Us</Link>
             <span className={styles.divider}>|</span>
             <Link href="/login" className={styles.topLink}>Sign In</Link>
             <Link href="/apply" className={styles.topLink}>Register</Link>
@@ -130,9 +130,9 @@ export default function Header() {
 
             {/* Global Search */}
             <div className={styles.searchContainer}>
-              <input 
-                type="text" 
-                placeholder="Search products by SKU, name, or category..." 
+              <input
+                type="text"
+                placeholder="Search products by SKU, name, or category..."
                 className={styles.searchInput}
               />
               <button className={styles.searchButton}>SEARCH</button>
@@ -161,8 +161,8 @@ export default function Header() {
       <div className={styles.bottomTier}>
         <div className={styles.container}>
           {/* Mobile Hamburger Button */}
-          <button 
-            className={styles.mobileMenuBtn} 
+          <button
+            className={styles.mobileMenuBtn}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -174,7 +174,7 @@ export default function Header() {
           <nav className={styles.nav}>
             {/* Desktop Nav */}
             <ul className={styles.navList}>
-              <li 
+              <li
                 className={styles.navItem}
                 onMouseEnter={() => setIsMegaMenuOpen(true)}
                 onMouseLeave={() => setIsMegaMenuOpen(false)}
@@ -182,7 +182,7 @@ export default function Header() {
                 <Link href="/products" className={styles.navLink}>
                   ALL PRODUCTS ▾
                 </Link>
-                
+
                 {/* Mega Menu Dropdown */}
                 {isMegaMenuOpen && (
                   <div className={styles.megaMenu}>
@@ -190,7 +190,7 @@ export default function Header() {
                       {/* Left Side: Categories */}
                       <div className={styles.megaMenuSidebar}>
                         {Object.keys(megaMenuData).map((catKey) => (
-                          <div 
+                          <div
                             key={catKey}
                             className={`${styles.sidebarItem} ${activeCategory === catKey ? styles.sidebarItemActive : ''}`}
                             onMouseEnter={() => setActiveCategory(catKey)}
@@ -200,7 +200,7 @@ export default function Header() {
                           </div>
                         ))}
                       </div>
-                      
+
                       {/* Right Side: Category Links */}
                       <div className={styles.megaMenuContent}>
                         <h3 className={styles.megaMenuTitle}>{megaMenuData[activeCategory].title}</h3>
@@ -216,7 +216,7 @@ export default function Header() {
                       {/* Mega Menu Featured Image/Promo */}
                       <div className={styles.megaMenuPromo}>
                         <div className={styles.promoImagePlaceholder}>
-                           Featured
+                          Featured
                         </div>
                         <p className={styles.promoText}>Discover our new Spring mountings.</p>
                         <Link href="/collections/spring" className={styles.promoBtn}>SHOP NOW</Link>

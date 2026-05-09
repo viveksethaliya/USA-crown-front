@@ -48,8 +48,8 @@ export default function Home() {
               <blockquote className={styles.aboutQuote}>
                 “One of the best parts about being a business owner is having the opportunity to meet new people from different backgrounds,” Berc explains. “I still keep in touch with people I met through Crown 35 years ago.”
               </blockquote>
-              <Link href="/about" className={styles.primaryBtn}>
-                Learn more
+              <Link href="/contact" className={styles.primaryBtn}>
+                Contact Us
               </Link>
             </div>
           </div>

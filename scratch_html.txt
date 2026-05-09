@@ -1,0 +1,12 @@
+<USER_REQUEST>
+<div class="content-container site-container">
+		<div id="main" class="site-main">
+			<div class="woocommerce kadence-woo-messages-none-woo-pages woocommerce-notices-wrapper"></div>			<div class="content-wrap">
+				<article id="post-1182" class="entry content-bg single-entry post-1182 page type-page status-publish has-post-thumbnail hentry">
+	<div class="entry-content-wrap">
+		
+<div class="entry-content single-content">
+	<div class="kb-row-layout-wrap kb-row-layout-id1182_a4fc66-16 alignnone has-theme-palette8-background-color kt-row-has-bg wp-block-kadence-rowlayout"><div class="kt-row-column-wrap kt-has-1-columns kt-row-layout-equal kt-tab-layout-inherit kt-mobile-layout-row kt-row-valign-top kb-theme-content-width">
+
+<div class="wp-block-kadence-column kadence-column1182_36b9b9-ae inner-column-1"><div class="kt-inside-inner-col">
+<truncated 109500 bytes>
