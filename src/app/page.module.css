@@ -423,7 +423,9 @@
 /* --- Bottom Banner --- */
 .bottomBanner {
   padding: 2.5rem 0;
-  background-color: var(--color-gold);
+  background: linear-gradient(rgba(212, 175, 55, 0.95), rgba(212, 175, 55, 0.95)), url('/web-phts/btmbnr.jpg.jpeg');
+  background-size: cover;
+  background-position: center;
   text-align: center;
 }
 

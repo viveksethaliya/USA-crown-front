@@ -72,13 +72,13 @@ export default function AboutPage() {
 
                     <div className={styles.commitmentStats}>
                         <div className={styles.statCard}>
-                            <h3>40+</h3>
+                            <h3>43+</h3>
                             <span>Years In Business</span>
                         </div>
 
                         <div className={styles.statCard}>
-                            <h3>Thousands</h3>
-                            <span>Of Loyal Customers</span>
+                            <h3>5,000+</h3>
+                            <span>Loyal Customers</span>
                         </div>
 
                         <div className={styles.statCard}>

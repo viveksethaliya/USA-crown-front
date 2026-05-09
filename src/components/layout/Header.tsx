@@ -108,6 +108,8 @@ export default function Header() {
             <span className={styles.divider}>|</span>
             <Link href="/calculator" className={styles.topLink}>MM to Carat Calculator</Link>
             <span className={styles.divider}>|</span>
+            <Link href="/" className={styles.topLink}>Home</Link>
+            <span className={styles.divider}>|</span>
             <Link href="/contact" className={styles.topLink}>Contact Us</Link>
             <span className={styles.divider}>|</span>
             <Link href="/about" className={styles.topLink}>About Us</Link>

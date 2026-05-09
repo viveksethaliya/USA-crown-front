@@ -368,7 +368,9 @@
    BOTTOM BANNER
 -------------------------------- */
 .bottomBanner {
-  background: #000c1f;
+  background: linear-gradient(rgba(0, 12, 31, 0.95), rgba(0, 12, 31, 0.95)), url('/web-phts/btmbnr.jpg.jpeg');
+  background-size: cover;
+  background-position: center;
   padding: 4rem 2rem;
   text-align: center;
   display: flex;
