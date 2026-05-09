@@ -1,109 +1,165 @@
 .carouselContainer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 4rem;
   width: 100%;
-  padding: 2rem 0;
+  padding: 4rem 0;
+  /* Matching light background */
+}
+
+/* IMAGE COLUMN */
+.imageColumn {
+  position: relative;
+  flex: 0 0 350px;
+  /* Fixed width for the image block */
+  height: 350px;
+}
+
+.imageOffsetBg {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 100%;
+  height: 100%;
+
+  z-index: 1;
+}
+
+.imageWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-color: var(--color-white);
+  z-index: 2;
+  box-shadow: 10px 10px 0px var(--color-gold);
+  /* Optional subtle drop shadow */
 }
 
-.navButton {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-white);
-  border: 1px solid var(--color-border, #ccc);
-  color: var(--color-text-main, #333);
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+.authorImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-.navButton:hover {
-  background: var(--color-bg-light, #f5f5f5);
-  border-color: var(--color-inkblue, #001F3F);
-}
-
-.testimonialContent {
+/* CONTENT COLUMN */
+.contentColumn {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 0 2rem;
-}
-
-.quoteIconWrapper {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border, #eaeaea);
-  display: flex;
-  align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
 }
 
 .quoteIcon {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #f4811f; /* Orange from the reference image */
+  font-size: 5rem;
+  color: #8288ab;
+  /* Lavender quote icon from the design */
   line-height: 1;
+  margin-bottom: 0.5rem;
   font-family: serif;
-  transform: translateY(5px);
-}
-
-.stars {
-  color: #f4811f; /* Orange from the reference image */
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
-  letter-spacing: 2px;
+  font-weight: 800;
 }
 
 .testimonialText {
-  font-size: 1.05rem;
+  font-size: 1.35rem;
   line-height: 1.6;
-  color: var(--color-text-main, #333);
-  margin-bottom: 1.5rem;
+  color: var(--color-text-main);
+  margin-bottom: 2rem;
   max-width: 800px;
 }
 
+.authorSection {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
 .testimonialAuthor {
-  font-weight: 800;
-  font-size: 1rem;
-  color: var(--color-text-main, #000);
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: var(--color-text-main);
+  margin-bottom: 0.25rem;
+}
+
+.stars {
+  color: #f4d03f;
+  /* Yellow stars */
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+}
+
+.navigation {
+  display: flex;
+  gap: 1rem;
+}
+
+.navButton {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 2px solid #5a5f82;
+  /* Muted blue border */
+  background: transparent;
+  color: #5a5f82;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  /* Strictly no rounded borders */
+  cursor: pointer;
+}
+
+.navButtonActive {
+  background: #5a5f82;
+  /* Solid color for 'next' button */
+  color: var(--color-white);
+}
+
+.navButton:hover {
+  background: var(--color-inkblue);
+  border-color: var(--color-inkblue);
+  color: var(--color-white);
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .carouselContainer {
     flex-direction: column;
-    gap: 2rem;
-    position: relative;
-    padding: 2rem 0 4rem;
+    gap: 3rem;
+    padding: 3rem 0;
   }
 
-  .testimonialContent {
-    padding: 0 1rem;
+  .imageColumn {
+    flex: 0 0 350px;
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+    margin-top: 20px;
+    /* Space for the offset */
+  }
+
+  .quoteIcon {
+    font-size: 4rem;
   }
 
   .testimonialText {
-    font-size: 0.95rem;
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .imageColumn {
+    flex: 0 0 280px;
+    max-width: 280px;
+    height: 280px;
   }
 
-  .navButton {
-    position: absolute;
-    bottom: 0;
-  }
-
-  .navButton:first-child {
-    left: calc(50% - 50px);
-  }
-
-  .navButton:last-child {
-    right: calc(50% - 50px);
+  .authorSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
   }
 }

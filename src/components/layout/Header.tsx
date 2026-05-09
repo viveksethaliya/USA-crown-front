@@ -109,6 +109,7 @@ export default function Header() {
             <Link href="/calculator" className={styles.topLink}>MM to Carat Calculator</Link>
             <span className={styles.divider}>|</span>
             <Link href="/contact" className={styles.topLink}>Contact Us</Link>
+            <span className={styles.divider}>|</span>
             <Link href="/about" className={styles.topLink}>About Us</Link>
             <span className={styles.divider}>|</span>
             <Link href="/login" className={styles.topLink}>Sign In</Link>

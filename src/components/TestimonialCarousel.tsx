@@ -5,29 +5,22 @@ import styles from './TestimonialCarousel.module.css';
 
 const TESTIMONIALS = [
   {
-    "id": 1,
-    "text": "Crown Findings has consistently delivered premium quality jewelry findings with outstanding service.",
-    "author": "Daniel M., Goldsmith, Chicago"
+    id: 1,
+    text: "Reliable products, fast shipping, and professional support make Crown Findings our trusted supplier.",
+    author: "Emily T., Jewelry Retailer, Miami",
+    image: "/web-phts/testim/1.jpg"
   },
   {
-    "id": 2,
-    "text": "Reliable products, fast shipping, and professional support make Crown Findings our trusted supplier.",
-    "author": "Emily T., Jewelry Retailer, Miami"
+    id: 2,
+    text: "Crown Findings always provides excellent quality and smooth communication for bulk orders.",
+    author: "Sophia L., Designer, Seattle",
+    image: "/web-phts/testim/2.jpg"
   },
   {
-    "id": 3,
-    "text": "Their craftsmanship and competitive wholesale pricing keep us coming back every time.",
-    "author": "Kevin R., Manufacturer, Dallas"
-  },
-  {
-    "id": 4,
-    "text": "Crown Findings always provides excellent quality and smooth communication for bulk orders.",
-    "author": "Sophia L., Designer, Seattle"
-  },
-  {
-    "id": 5,
-    "text": "One of the most dependable B2B jewelry suppliers we've worked with in the last decade.",
-    "author": "Anthony P., Wholesaler, Boston"
+    id: 3,
+    text: "One of the most dependable B2B jewelry suppliers we've worked with in the last decade.",
+    author: "Anthony P., Wholesaler, Boston",
+    image: "/web-phts/testim/3.jpg"
   }
 ];
 
@@ -50,31 +43,44 @@ export default function TestimonialCarousel() {
 
   return (
     <div className={styles.carouselContainer}>
-      <button onClick={prev} className={styles.navButton} aria-label="Previous testimonial">
-        &#10094;
-      </button>
-
-      <div className={styles.testimonialContent}>
-        <div className={styles.quoteIconWrapper}>
-          <span className={styles.quoteIcon}>&ldquo;</span>
+      <div className={styles.imageColumn}>
+        <div className={styles.imageOffsetBg}></div>
+        <div className={styles.imageWrapper}>
+          <img 
+            src={currentTestimonial.image} 
+            alt={currentTestimonial.author}
+            className={styles.authorImage}
+          />
         </div>
+      </div>
 
-        <div className={styles.stars}>
-          &#9733;&#9733;&#9733;&#9733;&#9733;
-        </div>
+      <div className={styles.contentColumn}>
+        <div className={styles.quoteIcon}>&ldquo;</div>
 
         <p className={styles.testimonialText}>
           {currentTestimonial.text}
         </p>
 
-        <p className={styles.testimonialAuthor}>
-          {currentTestimonial.author}
-        </p>
-      </div>
+        <div className={styles.authorSection}>
+          <div>
+            <p className={styles.testimonialAuthor}>
+              {currentTestimonial.author}
+            </p>
+            <div className={styles.stars}>
+              &#9733;&#9733;&#9733;&#9733;&#9733;
+            </div>
+          </div>
 
-      <button onClick={next} className={styles.navButton} aria-label="Next testimonial">
-        &#10095;
-      </button>
+          <div className={styles.navigation}>
+            <button onClick={prev} className={styles.navButton} aria-label="Previous testimonial">
+              &#8592;
+            </button>
+            <button onClick={next} className={`${styles.navButton} ${styles.navButtonActive}`} aria-label="Next testimonial">
+              &#8594;
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

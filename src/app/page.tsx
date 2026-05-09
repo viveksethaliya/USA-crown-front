@@ -181,13 +181,7 @@ export default function Home() {
       <section className={styles.commentsSection}>
         <div className={styles.container}>
           <div className={styles.commentsSplit}>
-            <div className={styles.commentsImageSide}>
-              <img
-                src="/web-phts/comments2.webp"
-                alt="Customer Testimonials"
-                className={styles.commentsImage}
-              />
-            </div>
+
             <div className={styles.commentsTextSide}>
               <TestimonialCarousel />
             </div>

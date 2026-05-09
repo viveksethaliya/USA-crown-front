@@ -84,7 +84,7 @@
 
 .formContainer {
   flex: 1;
-  padding: 4rem 5%;
+  padding: 4rem 2rem;
   background: #f9f9f9;
 }
 
@@ -190,14 +190,14 @@
 -------------------------------- */
 .infoBoxesSection {
   background: var(--color-inkblue);
-  padding: 6rem 5% 4rem;
+  padding: 6rem 2rem 4rem;
 }
 
 .infoBoxesGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 3rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -254,7 +254,7 @@
 -------------------------------- */
 .faqSection {
   position: relative;
-  padding: 6rem 5%;
+  padding: 6rem 2rem;
   background-color: var(--color-inkblue); /* fallback */
   color: #fff;
   text-align: center;
@@ -358,7 +358,7 @@
 -------------------------------- */
 .bottomBanner {
   background: #000c1f;
-  padding: 4rem 5%;
+  padding: 4rem 2rem;
   text-align: center;
   display: flex;
   flex-direction: column;
