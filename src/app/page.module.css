@@ -162,7 +162,7 @@
 /* --- Explore Section --- */
 .exploreSection {
   padding: 5rem 0;
-  background-image: linear-gradient(rgba(245, 243, 239, 0.85), rgba(245, 243, 239, 0.85)), url('/web-phts/comments2.webp');
+  background-image: linear-gradient(rgba(245, 243, 239, 0.95), rgba(245, 243, 239, 0.95)), url('/web-phts/comments2.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
