@@ -25,8 +25,12 @@ export default function AboutPage() {
 
             {/* Who We Are */}
             <section className={styles.whoWeAreSection}>
+                <h2 className={styles.whoWeAreTitle}>Who We Are?</h2>
                 <div className={styles.whoWeAreContent}>
-                    <img src="/web-phts/crown-logo.png" alt="Crown Findings" className={styles.whoWeAreImage} />
+                    <div className={styles.whoWeAreImageWrapper}>
+                        <img src="/web-phts/about.jpg" alt="Crown Findings" className={styles.whoWeAreImage} />
+                        <img src="/logo.png" alt="Crown Findings Logo" className={styles.whoWeAreCornerLogo} />
+                    </div>
                     <p className={styles.whoWeAreText}>
                         Crown Findings Co., Inc. was established November 8, 1983 and has since flourished to become a leading wholesale jewelry findings business. Located in Manhattan’s iconic Diamond District, Crown Findings has been serving jewelers on the block, across the country, and around the world throughout its lifetime. Since its birth, Crown has provided the jewelry industry with competitive pricing, quality items, and unmatched service and integrity.
 
@@ -37,6 +41,51 @@ export default function AboutPage() {
 
                         As the world shifts in the direction of e-commerce and the role of technology becomes increasingly present in our lives, we hope that our website provides you with excellent service and convenience where you can place orders, access our inventory 24/7, get up-to-date pricing and product availability, and chat with us live online.
                     </p>
+                </div>
+            </section>
+            {/* Our Commitment Section */}
+            <section className={styles.commitmentSection}>
+                <div className={styles.commitmentContent}>
+                    <div className={styles.commitmentText}>
+                        <span className={styles.sectionLabel}>OUR COMMITMENT</span>
+
+                        <h2 className={styles.commitmentTitle}>
+                            Trusted Quality & Reliable Service
+                        </h2>
+
+                        <p className={styles.commitmentDescription}>
+                            At Crown Findings, we understand the importance of consistency,
+                            precision, and dependable service in the jewelry industry.
+                            Every product in our inventory is selected with attention to
+                            quality, durability, and craftsmanship to support jewelers,
+                            manufacturers, and designers in their daily operations.
+                        </p>
+
+                        <p className={styles.commitmentDescription}>
+                            Our team remains committed to maintaining strong relationships
+                            with customers through transparent communication, efficient
+                            order fulfillment, and a continuously expanding catalog of
+                            wholesale jewelry findings designed to meet evolving industry
+                            demands.
+                        </p>
+                    </div>
+
+                    <div className={styles.commitmentStats}>
+                        <div className={styles.statCard}>
+                            <h3>40+</h3>
+                            <span>Years In Business</span>
+                        </div>
+
+                        <div className={styles.statCard}>
+                            <h3>Thousands</h3>
+                            <span>Of Loyal Customers</span>
+                        </div>
+
+                        <div className={styles.statCard}>
+                            <h3>24/7</h3>
+                            <span>Online Inventory Access</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 

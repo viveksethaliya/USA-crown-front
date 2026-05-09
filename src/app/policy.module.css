@@ -22,7 +22,10 @@
 .heroSection::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-image: url('https://images.unsplash.com/photo-1599643477874-c11c7f558155?q=80&w=2000&auto=format&fit=crop');
   background-size: cover;
   background-position: center;
@@ -89,4 +92,113 @@
   line-height: 1.8;
   color: #333;
   margin-bottom: 0.5rem;
+}
+
+.twoColumnLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+@media (min-width: 768px) {
+  .twoColumnLayout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.leftColumn {
+  flex: 1;
+}
+
+.rightColumn {
+  flex: 2;
+}
+
+.imageFull {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  box-shadow: 10px 10px var(--color-gold);
+}
+
+/* --------------------------------
+   FAQ ACCORDION (LIGHT BG)
+-------------------------------- */
+.faqSection {
+  background-color: #f9f9f9;
+  padding: 4rem 2rem;
+  margin-top: 4rem;
+  border-top: 1px solid #eaeaea;
+}
+
+.faqContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faqTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--color-inkblue);
+  text-align: center;
+}
+
+.accordion {
+  text-align: left;
+  width: 100%;
+}
+
+.accordionItem {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+}
+
+.accordionHeader {
+  width: 100%;
+  padding: 1.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-inkblue);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.accordionHeader::before {
+  content: '+';
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  font-weight: 300;
+  display: inline-block;
+  color: var(--color-gold);
+}
+
+.accordionHeader.open::before {
+  content: '−';
+}
+
+.accordionContentWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease-in-out;
+}
+
+.accordionContentWrapper.open {
+  grid-template-rows: 1fr;
+}
+
+.accordionContentInner {
+  overflow: hidden;
+}
+
+.accordionContent {
+  padding: 0 0 1.5rem 2.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #333;
 }

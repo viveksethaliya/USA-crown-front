@@ -81,6 +81,26 @@
   background-color: var(--color-white);
 }
 
+.whoWeAreTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-inkblue);
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: center;
+  position: relative;
+}
+
+.whoWeAreTitle::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: var(--color-gold);
+  margin: 1rem auto 0;
+}
+
 .whoWeAreContent {
   max-width: 1400px;
   margin: 0 auto;
@@ -97,13 +117,31 @@
   }
 }
 
+.whoWeAreImageWrapper {
+  position: relative;
+  display: flex;
+}
+
 .whoWeAreImage {
   display: block;
   object-fit: cover;
+  height: 700px;
   border: 1px solid #182854;
   border-radius: 0;
   background: #182854;
   box-shadow: 10px 10px 0px 0px var(--color-gold);
+}
+
+.whoWeAreCornerLogo {
+  position: absolute;
+  bottom: 5%;
+  left: 5%;
+  width: 25%;
+  max-width: 150px;
+  min-width: 80px;
+  height: auto;
+  z-index: 2;
+  object-fit: contain;
 }
 
 .whoWeAreText {
@@ -116,6 +154,86 @@
   flex-direction: column;
   justify-content: center;
 }
+
+/* --------------------------------
+   COMMITMENT SECTION
+-------------------------------- */
+.commitmentSection {
+  padding: 5rem 2rem;
+  background: #f8f8f8;
+}
+
+.commitmentContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+@media (min-width: 900px) {
+  .commitmentContent {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.commitmentText {
+  flex: 1;
+  max-width: 750px;
+}
+
+.sectionLabel {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--color-gold);
+}
+
+.commitmentTitle {
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-inkblue);
+  line-height: 1.2;
+}
+
+.commitmentDescription {
+  font-size: 1rem;
+  line-height: 1.9;
+  color: #33415c;
+  margin-bottom: 1.5rem;
+}
+
+.commitmentStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.statCard {
+  background: var(--color-white);
+  border: 1px solid rgba(24, 40, 84, 0.1);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.04);
+}
+
+.statCard h3 {
+  font-size: 2rem;
+  color: var(--color-inkblue);
+  margin-bottom: 0.5rem;
+}
+
+.statCard span {
+  font-size: 0.95rem;
+  color: #5c677d;
+  line-height: 1.5;
+}
+
 
 /* --------------------------------
    BOTTOM BANNER
