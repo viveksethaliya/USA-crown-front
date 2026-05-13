@@ -255,9 +255,8 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
         <div className={styles.formGroup}>
           <label>Content *</label>
           <div className={styles.editorContainer}>
-            {/* @ts-expect-error - next/dynamic does not pass ref types correctly */}
             <ReactQuill
-              ref={quillRef}
+              ref={quillRef as any}
               theme="snow"
               value={formData.content}
               onChange={handleContentChange}
