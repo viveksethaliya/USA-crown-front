@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 
 // ... megaMenuData ...
@@ -44,10 +45,38 @@ const megaMenuData: Record<string, { title: string, links: { label: string, href
   }
 };
 
+// Fallback links if API is unavailable
+const fallbackCollections = [
+  { name: 'NEW ARRIVALS', slug: 'new' },
+  { name: 'METALS & MILL', slug: 'metals' },
+  { name: 'TOOLS & SUPPLIES', slug: 'tools' },
+  { name: 'CUSTOM MANUFACTURING', slug: 'custom' },
+];
+
+interface NavCollection {
+  id?: string;
+  name: string;
+  slug: string;
+}
+
+interface UserSession {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+}
+
 export default function Header() {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('findings');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [navCollections, setNavCollections] = useState<NavCollection[]>(fallbackCollections);
+
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const router = useRouter();
 
   const [metalPrices, setMetalPrices] = useState({
     gold: '...',
@@ -55,7 +84,48 @@ export default function Header() {
     platinum: '...'
   });
 
+  // Check user session on mount
   useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch('http://localhost:5000/api/user/session', {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            setUser(data.user);
+          }
+        }
+      } catch {
+        // silently fail
+      }
+    }
+
+    checkSession();
+
+    // Listen for auth changes (from login/logout on other components)
+    const handleAuthChange = () => checkSession();
+    window.addEventListener('user-auth-change', handleAuthChange);
+    return () => window.removeEventListener('user-auth-change', handleAuthChange);
+  }, []);
+
+  useEffect(() => {
+    // Fetch dynamic collections for navbar
+    async function fetchCollections() {
+      try {
+        const res = await fetch('http://localhost:5000/api/collections');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.collections && data.collections.length > 0) {
+            setNavCollections(data.collections);
+          }
+        }
+      } catch {
+        // Keep fallback data
+      }
+    }
+
     async function fetchPrices() {
       try {
         const [goldRes, silverRes, platRes] = await Promise.all([
@@ -87,11 +157,27 @@ export default function Header() {
       }
     }
 
+    fetchCollections();
     fetchPrices();
     // Refresh every 5 minutes
     const interval = setInterval(fetchPrices, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:5000/api/user/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setUser(null);
+      setUserMenuOpen(false);
+      window.dispatchEvent(new Event('user-auth-change'));
+      router.push('/');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
   return (
     <header className={styles.header}>
@@ -114,8 +200,52 @@ export default function Header() {
             <span className={styles.divider}>|</span>
             <Link href="/about" className={styles.topLink}>About Us</Link>
             <span className={styles.divider}>|</span>
-            <Link href="/login" className={styles.topLink}>Sign In</Link>
-            <Link href="/apply" className={styles.topLink}>Register</Link>
+
+            {user ? (
+              /* ── Logged-in state ── */
+              <div className={styles.userArea}>
+                <button
+                  className={styles.userBtn}
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                >
+                  <span className={styles.userAvatar}>
+                    {user.firstName.charAt(0).toUpperCase()}
+                  </span>
+                  <span className={styles.userName}>
+                    {user.firstName} {user.lastName}
+                  </span>
+                  <span className={styles.userCaret}>▾</span>
+                </button>
+
+                {userMenuOpen && (
+                  <div className={styles.userDropdown}>
+                    <div className={styles.userDropdownHeader}>
+                      <strong>{user.firstName} {user.lastName}</strong>
+                      <span>{user.companyName}</span>
+                    </div>
+                    <Link
+                      href="/profile"
+                      className={styles.userDropdownItem}
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      ✏️ Edit Profile
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className={styles.userDropdownLogout}
+                    >
+                      🚪 Log Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ── Guest state ── */
+              <>
+                <Link href="/login" className={styles.topLink}>Sign In</Link>
+                <Link href="/apply" className={styles.topLink}>Register</Link>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -228,20 +358,31 @@ export default function Header() {
                   </div>
                 )}
               </li>
-              <li className={styles.navItem}><Link href="/new" className={styles.navLink}>NEW ARRIVALS</Link></li>
-              <li className={styles.navItem}><Link href="/metals" className={styles.navLink}>METALS & MILL</Link></li>
-              <li className={styles.navItem}><Link href="/tools" className={styles.navLink}>TOOLS & SUPPLIES</Link></li>
-              <li className={styles.navItem}><Link href="/custom" className={styles.navLink}>CUSTOM MANUFACTURING</Link></li>
+
+              {/* Dynamic collection links */}
+              {navCollections.map((col) => (
+                <li key={col.slug} className={styles.navItem}>
+                  <Link href={`/${col.slug}`} className={styles.navLink}>
+                    {col.name.toUpperCase()}
+                  </Link>
+                </li>
+              ))}
             </ul>
 
             {/* Mobile Nav */}
             {isMobileMenuOpen && (
               <div className={styles.mobileNav}>
                 <Link href="/products" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>ALL PRODUCTS</Link>
-                <Link href="/new" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>NEW ARRIVALS</Link>
-                <Link href="/metals" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>METALS & MILL</Link>
-                <Link href="/tools" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>TOOLS & SUPPLIES</Link>
-                <Link href="/custom" className={styles.navLink} onClick={() => setIsMobileMenuOpen(false)}>CUSTOM MANUFACTURING</Link>
+                {navCollections.map((col) => (
+                  <Link
+                    key={col.slug}
+                    href={`/${col.slug}`}
+                    className={styles.navLink}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {col.name.toUpperCase()}
+                  </Link>
+                ))}
               </div>
             )}
           </nav>

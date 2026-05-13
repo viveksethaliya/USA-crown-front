@@ -55,6 +55,119 @@
   opacity: 0.5;
 }
 
+/* --- User Auth Area --- */
+.userArea {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  color: var(--color-inkblue);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.userBtn:hover {
+  color: var(--color-gold);
+}
+
+.userAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background-color: var(--color-inkblue);
+  color: var(--color-gold);
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+
+.userName {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userCaret {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+.userDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: var(--color-white);
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+  z-index: 300;
+}
+
+.userDropdownHeader {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.userDropdownHeader strong {
+  color: var(--color-inkblue);
+  font-size: 0.9rem;
+}
+
+.userDropdownHeader span {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.userDropdownItem {
+  display: block;
+  padding: 0.8rem 1rem;
+  color: var(--color-inkblue);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 0.15s;
+}
+
+.userDropdownItem:hover {
+  background-color: #f8f9fa;
+  color: var(--color-gold);
+}
+
+.userDropdownLogout {
+  display: block;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  color: #dc3545;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  background: none;
+  border: none;
+  border-top: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.userDropdownLogout:hover {
+  background-color: #f8d7da;
+}
+
 /* --- Middle Tier --- */
 .middleTier {
   background-color: var(--color-inkblue);

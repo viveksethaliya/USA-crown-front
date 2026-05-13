@@ -1,6 +1,6 @@
 import Link from "next/link";
 import styles from "./page.module.css";
-import TestimonialCarousel from "../components/TestimonialCarousel";
+import TestimonialCarousel from "@/components/TestimonialCarousel";
 
 export default function Home() {
   return (

@@ -100,6 +100,15 @@
   gap: 1.5rem;
 }
 
+.errorMessage {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-left: 4px solid #dc3545;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .inputGroup {
   display: flex;
   flex-direction: column;

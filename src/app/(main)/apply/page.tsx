@@ -35,6 +35,11 @@ export default function ApplyPage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Form State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
   };
@@ -61,11 +66,75 @@ export default function ApplyPage() {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Submit registration to backend
-    console.log('Registration submitted');
+    if (password !== confirmPassword) {
+      setSubmitError('Passwords do not match');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('email', email);
+      formData.append('hearAbout', hearAbout);
+      formData.append('password', password);
+      formData.append('companyName', companyName);
+      formData.append('companyWebsite', companyWebsite);
+      formData.append('addressLine', addressLine);
+      formData.append('phone', phone);
+      formData.append('resaleTaxId', resaleTaxId);
+      formData.append('city', city);
+      formData.append('fax', fax);
+      formData.append('zipCode', zipCode);
+      formData.append('stateProvince', stateProvince);
+      formData.append('country', country);
+      formData.append('creditApp', creditApp);
+
+      uploadedFiles.forEach((file) => {
+        formData.append('certificates', file);
+      });
+
+      const response = await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit registration');
+      }
+
+      setSubmitSuccess(true);
+    } catch (err: any) {
+      setSubmitError(err.message || 'An error occurred during submission');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (submitSuccess) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <div className={styles.formCard} style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+            <h2 className={styles.stepTitle} style={{ color: 'green' }}>Registration Submitted!</h2>
+            <p className={styles.stepDesc} style={{ marginTop: '1rem', fontSize: '1.1rem' }}>
+              Your application has been received and is pending review. We will contact you once it is approved.
+            </p>
+            <Link href="/" className={styles.submitBtn} style={{ display: 'inline-block', marginTop: '2rem', textDecoration: 'none' }}>
+              Return to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -422,8 +491,9 @@ export default function ApplyPage() {
                   <button type="button" onClick={handlePrev} className={styles.prevBtn}>
                     Previous
                   </button>
-                  <button type="submit" className={styles.submitBtn}>
-                    Submit Registration Application
+                  {submitError && <div className={styles.errorText} style={{ color: 'red', marginBottom: '1rem' }}>{submitError}</div>}
+                  <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Registration Application'}
                   </button>
                 </div>
               </div>

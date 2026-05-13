@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -9,11 +10,39 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Connect to authentication backend
-    console.log('Login attempt:', { email, password, remember });
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include',
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Dispatch a custom event so the Header updates immediately
+      window.dispatchEvent(new Event('user-auth-change'));
+
+      router.push('/');
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during login');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -52,18 +81,24 @@ export default function LoginPage() {
               Ready to dive back into the world of premium jewelry findings?
             </p>
 
+            {error && (
+              <div className={styles.errorMessage}>
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.inputGroup}>
                 <label htmlFor="email" className={styles.label}>
-                  Username or email address <span className={styles.required}>*</span>
+                  Email address <span className={styles.required}>*</span>
                 </label>
                 <input
                   id="email"
-                  type="text"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={styles.input}
-                  placeholder="Enter your email or username"
+                  placeholder="Enter your email"
                   required
                 />
               </div>
@@ -105,8 +140,8 @@ export default function LoginPage() {
                 </label>
               </div>
 
-              <button type="submit" className={styles.loginBtn}>
-                Log in
+              <button type="submit" className={styles.loginBtn} disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Log in'}
               </button>
 
               <Link href="/forgot-password" className={styles.forgotLink}>

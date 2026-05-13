@@ -1,9 +1,87 @@
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
 import styles from './Footer.module.css';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setStatus('loading');
+    try {
+      const res = await fetch('http://localhost:5000/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'footer' }),
+        credentials: 'include',
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus('error');
+        setMessage(data.error || 'Something went wrong.');
+        return;
+      }
+
+      setStatus('success');
+      setMessage(data.message);
+      setEmail('');
+    } catch {
+      setStatus('error');
+      setMessage('Failed to subscribe. Please try again.');
+    }
+  };
+
   return (
     <footer className={styles.footer}>
+      {/* Newsletter Banner */}
+      <div className={styles.newsletterBanner}>
+        <div className={styles.newsletterContainer}>
+          <div className={styles.newsletterContent}>
+            <div className={styles.newsletterText}>
+              <h3 className={styles.newsletterTitle}>Stay in the Loop</h3>
+              <p className={styles.newsletterSubtitle}>
+                Get exclusive updates on new arrivals, metal price alerts, and wholesale deals.
+              </p>
+            </div>
+            <form onSubmit={handleSubscribe} className={styles.newsletterForm}>
+              <div className={styles.newsletterInputWrap}>
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (status !== 'idle') { setStatus('idle'); setMessage(''); }
+                  }}
+                  className={styles.newsletterInput}
+                  required
+                />
+                <button
+                  type="submit"
+                  className={styles.newsletterBtn}
+                  disabled={status === 'loading'}
+                >
+                  {status === 'loading' ? 'Subscribing...' : 'SUBSCRIBE'}
+                </button>
+              </div>
+              {message && (
+                <p className={`${styles.newsletterMsg} ${status === 'error' ? styles.newsletterMsgError : styles.newsletterMsgSuccess}`}>
+                  {message}
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
+      </div>
+
       <div className={styles.container}>
         {/* Column 1 */}
         <div className={styles.column}>
@@ -13,7 +91,7 @@ export default function Footer() {
             </Link>
           </div>
           <p className={styles.text}>
-            For decades, we’ve provided wholesale jewelry findings, mountings, and supplies. Offering unbeatable prices and unmatched quality for the jewelry trade.
+            For decades, we've provided wholesale jewelry findings, mountings, and supplies. Offering unbeatable prices and unmatched quality for the jewelry trade.
           </p>
           <div className={styles.contactInfo}>
             <p className={styles.contactItem}>

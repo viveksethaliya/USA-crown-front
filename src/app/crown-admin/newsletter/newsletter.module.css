@@ -1,0 +1,447 @@
+/* Newsletter Admin — CSS Module */
+
+/* ─── Tabs ─────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  padding: 0.85rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.tab:hover {
+  color: #1a1a2e;
+}
+
+.tabActive {
+  color: #1a1a2e;
+  border-bottom-color: #d4af37;
+}
+
+/* ─── Layout grid (compose) ─────────────── */
+.composeGrid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .composeGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.editorPane {}
+.sidePane {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ─── Cards ────────────────────────────── */
+.card {
+  background: #fff;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border-top: 3px solid #1a1a2e;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cardSubtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin: -0.5rem 0 1rem;
+  line-height: 1.4;
+}
+
+/* ─── Content textarea ─────────────────── */
+.contentArea {
+  min-height: 280px;
+  resize: vertical;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ─── Quick insert chips ───────────────── */
+.quickInsert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.quickLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chipBtn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #d0d0d0;
+  background: #fafafa;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chipBtn:hover {
+  background: #1a1a2e;
+  color: #fff;
+  border-color: #1a1a2e;
+}
+
+/* ─── Actions row ──────────────────────── */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.previewBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.previewBtn:hover {
+  background: #f0f0f0;
+}
+
+.previewBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Mailjet info ─────────────────────── */
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.infoDot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  background: #28a745;
+  display: inline-block;
+  margin-top: 5px;
+}
+
+.infoText {
+  font-size: 0.82rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.infoText code {
+  background: #f0f0f0;
+  padding: 1px 5px;
+  font-size: 0.78rem;
+  color: #c7254e;
+}
+
+/* ─── Tips ──────────────────────────────── */
+.tipsList {
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.8;
+}
+
+/* ─── Subscriber badges ────────────────── */
+.typeBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  letter-spacing: 0.04em;
+}
+
+.typeMember {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.typeGuest {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.statusActive {
+  background: #28a745;
+}
+
+.statusInactive {
+  background: #dc3545;
+}
+
+.statusDeactivated {
+  background: #ffc107;
+}
+
+/* ─── Campaign list ────────────────────── */
+.campaignList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.campaignItem {
+  border-bottom: 1px solid #eee;
+}
+
+.campaignItem:last-child {
+  border-bottom: none;
+}
+
+.campaignRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.campaignRow:hover {
+  background: #fafafa;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.campaignInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.campaignInfo strong {
+  font-size: 0.95rem;
+  color: #1a1a2e;
+}
+
+.campaignMeta {
+  font-size: 0.78rem;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expandIcon {
+  color: #888;
+  font-size: 1.1rem;
+}
+
+.campaignContent {
+  padding: 1rem 1rem 1.25rem;
+  background: #f9f9f9;
+  border-left: 3px solid #d4af37;
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+/* ─── Empty state ──────────────────────── */
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #999;
+  font-size: 0.95rem;
+}
+
+/* ─── Refresh button ───────────────────── */
+.refreshBtn {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 0.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.refreshBtn:hover {
+  background: #f0f0f0;
+}
+
+.refreshBtn:disabled {
+  opacity: 0.4;
+}
+
+@keyframes spinAnim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spinAnim 1s linear infinite;
+}
+
+/* ─── Toast ────────────────────────────── */
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideInToast 0.3s ease;
+}
+
+@keyframes slideInToast {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toastSuccess {
+  background: #1a1a2e;
+  color: #d4af37;
+  border-left: 4px solid #d4af37;
+}
+
+.toastError {
+  background: #fff;
+  color: #dc3545;
+  border-left: 4px solid #dc3545;
+}
+
+/* ─── Preview modal ────────────────────── */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background: #fff;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #888;
+  padding: 0.25rem;
+}
+
+.modalClose:hover {
+  color: #333;
+}
+
+.modalBody {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.previewMeta {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.previewFrame {
+  border: 1px solid #ddd;
+}
