@@ -99,7 +99,7 @@ export default function ApplyPage() {
         formData.append('certificates', file);
       });
 
-      const response = await fetch('http://localhost:5000/api/register', {
+      const response = await fetch('https://usa-crown-back.vercel.app/api/register', {
         method: 'POST',
         body: formData,
       });

@@ -8,7 +8,7 @@ import {
   FiChevronDown, FiChevronUp, FiEye, FiRefreshCw
 } from "react-icons/fi";
 
-const API = "http://localhost:5000/api/admin";
+const API = "https://usa-crown-back.vercel.app/api/admin";
 
 interface Subscriber {
   id: string;
@@ -381,10 +381,9 @@ export default function NewsletterPage() {
                         </span>
                       </td>
                       <td>
-                        <span className={`${nl.statusDot} ${
-                          s.status === "subscribed" ? nl.statusActive :
-                          s.status === "unsubscribed" ? nl.statusInactive : nl.statusDeactivated
-                        }`} />
+                        <span className={`${nl.statusDot} ${s.status === "subscribed" ? nl.statusActive :
+                            s.status === "unsubscribed" ? nl.statusInactive : nl.statusDeactivated
+                          }`} />
                         {s.status}
                       </td>
                       <td>{new Date(s.date).toLocaleDateString()}</td>

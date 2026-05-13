@@ -4,15 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./admin.module.css";
-import { 
-  FiMenu, FiGrid, FiFileText, FiUsers, FiSettings, FiLogOut, FiLayers, FiMail 
+import {
+  FiMenu, FiGrid, FiFileText, FiUsers, FiSettings, FiLogOut, FiLayers, FiMail
 } from "react-icons/fi";
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [adminUser, setAdminUser] = useState<{username: string} | null>(null);
-  
+  const [adminUser, setAdminUser] = useState<{ username: string } | null>(null);
+
   const pathname = usePathname();
   const router = useRouter();
   const isLoginPage = pathname === "/crown-admin/login";
@@ -20,11 +20,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/admin/check-session", {
+        const res = await fetch("https://usa-crown-back.vercel.app/api/admin/check-session", {
           credentials: "include"
         });
         const data = await res.json();
-        
+
         if (data.authenticated) {
           setAdminUser(data.admin);
           if (isLoginPage) {
@@ -55,7 +55,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:5000/api/admin/logout", {
+      await fetch("https://usa-crown-back.vercel.app/api/admin/logout", {
         method: "POST",
         credentials: "include"
       });
@@ -78,20 +78,20 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       <aside className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}>
         <div className={styles.brand}>
           <h2>Crown Admin</h2>
-          <button 
-            className={styles.toggleBtn} 
+          <button
+            className={styles.toggleBtn}
             onClick={() => setCollapsed(!collapsed)}
             aria-label="Toggle Sidebar"
           >
             <FiMenu />
           </button>
         </div>
-        
+
         <nav>
           <ul className={styles.navLinks}>
             <li>
-              <Link 
-                href="/crown-admin" 
+              <Link
+                href="/crown-admin"
                 className={`${styles.navLink} ${pathname === "/crown-admin" ? styles.navLinkActive : ""}`}
               >
                 <span className={styles.navLinkIcon}><FiGrid /></span>
@@ -99,8 +99,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
               </Link>
             </li>
             <li>
-              <Link 
-                href="/crown-admin/blogs" 
+              <Link
+                href="/crown-admin/blogs"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/blogs") ? styles.navLinkActive : ""}`}
               >
                 <span className={styles.navLinkIcon}><FiFileText /></span>
@@ -108,8 +108,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
               </Link>
             </li>
             <li>
-              <Link 
-                href="/crown-admin/registrations" 
+              <Link
+                href="/crown-admin/registrations"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/registrations") ? styles.navLinkActive : ""}`}
               >
                 <span className={styles.navLinkIcon}><FiUsers /></span>
@@ -117,8 +117,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
               </Link>
             </li>
             <li>
-              <Link 
-                href="/crown-admin/collections" 
+              <Link
+                href="/crown-admin/collections"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/collections") ? styles.navLinkActive : ""}`}
               >
                 <span className={styles.navLinkIcon}><FiLayers /></span>
@@ -126,8 +126,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
               </Link>
             </li>
             <li>
-              <Link 
-                href="/crown-admin/newsletter" 
+              <Link
+                href="/crown-admin/newsletter"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/newsletter") ? styles.navLinkActive : ""}`}
               >
                 <span className={styles.navLinkIcon}><FiMail /></span>
@@ -143,7 +143,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           <div className={styles.userMenu}>
             <span className={styles.userName}>{adminUser?.username || "Admin"}</span>
             <button onClick={handleLogout} className={styles.logoutBtn}>
-              <FiLogOut style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> 
+              <FiLogOut style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
               Logout
             </button>
           </div>

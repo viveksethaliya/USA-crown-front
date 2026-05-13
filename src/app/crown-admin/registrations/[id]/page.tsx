@@ -50,7 +50,7 @@ export default function RegistrationDetailPage() {
     const fetchDetail = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:5000/api/admin/registrations/${id}`, {
+        const res = await fetch(`https://usa-crown-back.vercel.app/api/admin/registrations/${id}`, {
           credentials: "include",
         });
         if (!res.ok) {
@@ -73,7 +73,7 @@ export default function RegistrationDetailPage() {
     if (!confirm(`Are you sure you want to mark this application as ${status}?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/registrations/${id}/status`, {
+      const res = await fetch(`https://usa-crown-back.vercel.app/api/admin/registrations/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -81,7 +81,7 @@ export default function RegistrationDetailPage() {
       });
 
       if (!res.ok) throw new Error("Failed to update status");
-      
+
       setReg((prev) => prev ? { ...prev, status } : null);
     } catch (err: any) {
       alert(err.message || "Failed to update status");
@@ -260,7 +260,7 @@ export default function RegistrationDetailPage() {
             <h3 style={{ marginTop: 0, color: '#d4af37', borderBottom: '2px solid #d4af37', paddingBottom: '0.5rem', marginBottom: '1.5rem', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Resale Certificates / Documents
             </h3>
-            
+
             {reg.certificate_urls && reg.certificate_urls.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {reg.certificate_urls.map((url, index) => {
@@ -270,9 +270,9 @@ export default function RegistrationDetailPage() {
                       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>
                         <strong>📄 {fileName}</strong>
                       </div>
-                      <a 
-                        href={url} 
-                        target="_blank" 
+                      <a
+                        href={url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className={styles.btnSecondary}
                         style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}

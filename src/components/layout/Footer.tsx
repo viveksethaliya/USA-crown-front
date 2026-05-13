@@ -15,7 +15,7 @@ export default function Footer() {
 
     setStatus('loading');
     try {
-      const res = await fetch('http://localhost:5000/api/newsletter/subscribe', {
+      const res = await fetch('https://usa-crown-back.vercel.app/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, source: 'footer' }),

@@ -53,7 +53,7 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
     // Fetch existing categories for suggestions
     async function fetchCategories() {
       try {
-        const res = await fetch("http://localhost:5000/api/blogs/categories");
+        const res = await fetch("https://usa-crown-back.vercel.app/api/blogs/categories");
         if (res.ok) {
           const data = await res.json();
           setExistingCategories(data.categories || []);
@@ -100,12 +100,12 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
       formData.append("image", file);
 
       try {
-        const res = await fetch("http://localhost:5000/api/admin/upload-image", {
+        const res = await fetch("https://usa-crown-back.vercel.app/api/admin/upload-image", {
           method: "POST",
           body: formData,
           credentials: "include"
         });
-        
+
         if (res.status === 401) {
           alert("Session expired. Please log in again.");
           router.push("/crown-admin/login");
@@ -135,7 +135,7 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
       container: [
         [{ 'header': [1, 2, 3, false] }],
         ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
         ['link', 'image'],
         ['clean']
       ],
@@ -167,10 +167,10 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
         data.append("existing_cover", formData.cover_image);
       }
 
-      const url = isEdit 
-        ? `http://localhost:5000/api/admin/blogs/${initialData.id}` 
-        : "http://localhost:5000/api/admin/blogs";
-      
+      const url = isEdit
+        ? `https://usa-crown-back.vercel.app/api/admin/blogs/${initialData.id}`
+        : "https://usa-crown-back.vercel.app/api/admin/blogs";
+
       const method = isEdit ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -205,35 +205,35 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label>Title *</label>
-            <input 
-              type="text" 
-              name="title" 
-              className={styles.formControl} 
-              value={formData.title} 
-              onChange={handleChange} 
-              required 
+            <input
+              type="text"
+              name="title"
+              className={styles.formControl}
+              value={formData.title}
+              onChange={handleChange}
+              required
             />
           </div>
           <div className={styles.formGroup}>
             <label>Slug (Leave blank to auto-generate)</label>
-            <input 
-              type="text" 
-              name="slug" 
-              className={styles.formControl} 
-              value={formData.slug} 
-              onChange={handleChange} 
+            <input
+              type="text"
+              name="slug"
+              className={styles.formControl}
+              value={formData.slug}
+              onChange={handleChange}
             />
           </div>
         </div>
 
         <div className={styles.formGroup}>
           <label>Cover Image (Required for new blogs)</label>
-          <input 
-            type="file" 
-            name="cover_image" 
-            accept="image/jpeg, image/png, image/webp" 
-            className={styles.formControl} 
-            onChange={handleFileChange} 
+          <input
+            type="file"
+            name="cover_image"
+            accept="image/jpeg, image/png, image/webp"
+            className={styles.formControl}
+            onChange={handleFileChange}
             required={!isEdit && !formData.cover_image}
           />
           {coverPreview && (
@@ -243,11 +243,11 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
 
         <div className={styles.formGroup}>
           <label>Excerpt / Short Description</label>
-          <textarea 
-            name="excerpt" 
-            className={styles.formControl} 
-            rows={3} 
-            value={formData.excerpt} 
+          <textarea
+            name="excerpt"
+            className={styles.formControl}
+            rows={3}
+            value={formData.excerpt}
             onChange={handleChange}
           ></textarea>
         </div>
@@ -256,11 +256,11 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
           <label>Content *</label>
           <div className={styles.editorContainer}>
             {/* @ts-expect-error - next/dynamic does not pass ref types correctly */}
-            <ReactQuill 
+            <ReactQuill
               ref={quillRef}
-              theme="snow" 
-              value={formData.content} 
-              onChange={handleContentChange} 
+              theme="snow"
+              value={formData.content}
+              onChange={handleContentChange}
               modules={modules}
             />
           </div>
@@ -324,13 +324,13 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
           </div>
           <div className={styles.formGroup}>
             <label>Tags (Comma separated)</label>
-            <input 
-              type="text" 
-              name="tags" 
-              className={styles.formControl} 
+            <input
+              type="text"
+              name="tags"
+              className={styles.formControl}
               placeholder="e.g. Rings, Fashion, Tips"
-              value={formData.tags} 
-              onChange={handleChange} 
+              value={formData.tags}
+              onChange={handleChange}
             />
           </div>
         </div>
@@ -338,10 +338,10 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label>Status</label>
-            <select 
-              name="status" 
-              className={styles.formControl} 
-              value={formData.status} 
+            <select
+              name="status"
+              className={styles.formControl}
+              value={formData.status}
               onChange={handleChange}
             >
               <option value="draft">Draft</option>
@@ -350,12 +350,12 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
           </div>
           <div className={styles.formGroup}>
             <label>SEO Meta Description</label>
-            <input 
-              type="text" 
-              name="meta_description" 
-              className={styles.formControl} 
-              value={formData.meta_description} 
-              onChange={handleChange} 
+            <input
+              type="text"
+              name="meta_description"
+              className={styles.formControl}
+              value={formData.meta_description}
+              onChange={handleChange}
             />
           </div>
         </div>

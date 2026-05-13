@@ -46,7 +46,7 @@ interface RelatedData {
 
 async function getBlogPost(slug: string): Promise<BlogDetail | null> {
   try {
-    const res = await fetch(`http://localhost:5000/api/blogs/${slug}`, {
+    const res = await fetch(`https://usa-crown-back.vercel.app/api/blogs/${slug}`, {
       cache: 'no-store'
     });
     if (!res.ok) return null;
@@ -59,7 +59,7 @@ async function getBlogPost(slug: string): Promise<BlogDetail | null> {
 
 async function getRelatedPosts(slug: string): Promise<RelatedData | null> {
   try {
-    const res = await fetch(`http://localhost:5000/api/blogs/${slug}/related`, {
+    const res = await fetch(`https://usa-crown-back.vercel.app/api/blogs/${slug}/related`, {
       cache: 'no-store'
     });
     if (!res.ok) return null;

@@ -13,7 +13,7 @@ interface Collection {
   created_at: string;
 }
 
-const API = "http://localhost:5000/api/admin";
+const API = "https://usa-crown-back.vercel.appk.vercel.app/api/admin";
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -198,7 +198,7 @@ export default function CollectionsPage() {
       </div>
 
       <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.95rem" }}>
-        Manage the navigation links shown in the gold Tier 3 bar. &quot;ALL PRODUCTS&quot; is always displayed first. 
+        Manage the navigation links shown in the gold Tier 3 bar. &quot;ALL PRODUCTS&quot; is always displayed first.
         Toggle visibility and reorder collections to control how they appear on the public site.
       </p>
 

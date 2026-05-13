@@ -32,7 +32,7 @@ export default function BlogPage() {
       if (search) params.set('search', search);
       if (category) params.set('category', category);
 
-      const res = await fetch(`http://localhost:5000/api/blogs?${params.toString()}`);
+      const res = await fetch(`https://usa-crown-back.vercel.app/api/blogs?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setPosts(data.blogs || []);
@@ -51,7 +51,7 @@ export default function BlogPage() {
     // Fetch categories
     async function fetchCategories() {
       try {
-        const res = await fetch('http://localhost:5000/api/blogs/categories');
+        const res = await fetch('https://usa-crown-back.vercel.app/api/blogs/categories');
         if (res.ok) {
           const data = await res.json();
           setCategories(data.categories || []);

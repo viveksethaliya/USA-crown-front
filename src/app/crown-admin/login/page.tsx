@@ -15,7 +15,7 @@ export default function AdminLogin() {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/admin/login", {
+      const res = await fetch("https://usa-crown-back.vercel.appk.vercel.appk.vercel.appk.vercel.app/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -40,7 +40,7 @@ export default function AdminLogin() {
         <div className={styles.loginLogo}>
           <h1>Crown<span>Admin</span></h1>
         </div>
-        
+
         {error && <div className={styles.errorMessage}>{error}</div>}
 
         <form onSubmit={handleLogin}>

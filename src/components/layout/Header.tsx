@@ -88,7 +88,7 @@ export default function Header() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch('http://localhost:5000/api/user/session', {
+        const res = await fetch('https://usa-crown-back.vercel.app/api/user/session', {
           credentials: 'include',
         });
         if (res.ok) {
@@ -114,7 +114,7 @@ export default function Header() {
     // Fetch dynamic collections for navbar
     async function fetchCollections() {
       try {
-        const res = await fetch('http://localhost:5000/api/collections');
+        const res = await fetch('https://usa-crown-back.vercel.app/api/collections');
         if (res.ok) {
           const data = await res.json();
           if (data.collections && data.collections.length > 0) {
@@ -166,7 +166,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/api/user/logout', {
+      await fetch('https://usa-crown-back.vercel.app/api/user/logout', {
         method: 'POST',
         credentials: 'include',
       });

@@ -23,7 +23,7 @@ export default function RegistrationsPage() {
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/admin/registrations", {
+      const res = await fetch("https://usa-crown-back.vercel.appk.vercel.app/api/admin/registrations", {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch registrations");
@@ -44,7 +44,7 @@ export default function RegistrationsPage() {
     if (!confirm(`Are you sure you want to mark this application as ${status}?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/registrations/${id}/status`, {
+      const res = await fetch(`https://usa-crown-back.vercel.app/api/admin/registrations/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -52,7 +52,7 @@ export default function RegistrationsPage() {
       });
 
       if (!res.ok) throw new Error("Failed to update status");
-      
+
       // Refresh list
       fetchRegistrations();
     } catch (err: any) {
@@ -96,13 +96,12 @@ export default function RegistrationsPage() {
                   <td>{new Date(reg.created_at).toLocaleDateString()}</td>
                   <td>
                     <span
-                      className={`${styles.badge} ${
-                        reg.status === "approved"
-                          ? styles.badgePublished
-                          : reg.status === "rejected"
+                      className={`${styles.badge} ${reg.status === "approved"
+                        ? styles.badgePublished
+                        : reg.status === "rejected"
                           ? styles.badgeDraft
                           : "" // pending or deactivated
-                      }`}
+                        }`}
                       style={{
                         backgroundColor: reg.status === 'approved' ? '#28a745' : reg.status === 'rejected' ? '#dc3545' : reg.status === 'deactivated' ? '#6c757d' : '#ffc107',
                         color: reg.status === 'pending' ? '#000' : '#fff'
