@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import styles from './calculator.module.css';
-import diamondData from '../../data/diamondSizes.json';
+import diamondData from '../../../data/diamondSizes.json';
 
 type Shape = keyof typeof diamondData;
 
