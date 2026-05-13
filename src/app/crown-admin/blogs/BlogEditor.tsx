@@ -11,6 +11,8 @@ const ReactQuill = dynamic(() => import("react-quill-new"), {
   loading: () => <p>Loading editor...</p>,
 });
 
+const QuillEditor = ReactQuill as React.ComponentType<any>;
+
 interface BlogData {
   id?: string;
   title: string;
@@ -255,8 +257,8 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
         <div className={styles.formGroup}>
           <label>Content *</label>
           <div className={styles.editorContainer}>
-            <ReactQuill
-              ref={quillRef as any}
+            <QuillEditor
+              ref={quillRef}
               theme="snow"
               value={formData.content}
               onChange={handleContentChange}
