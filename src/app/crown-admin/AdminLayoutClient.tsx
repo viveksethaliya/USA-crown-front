@@ -51,7 +51,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     };
 
     checkSession();
-  }, [pathname, isLoginPage, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   const handleLogout = async () => {
     try {
