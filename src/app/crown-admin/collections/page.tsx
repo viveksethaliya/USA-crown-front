@@ -13,7 +13,7 @@ interface Collection {
   created_at: string;
 }
 
-const API = "https://usa-crown-back.vercel.appk.vercel.app/api/admin";
+const API = "https://usa-crown-back.vercel.app/api/admin";
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);

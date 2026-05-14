@@ -13,7 +13,7 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await fetch(`https://usa-crown-back.vercel.appk.vercel.app/api/admin/blogs/${unwrappedParams.id}`, {
+        const res = await fetch(`https://usa-crown-back.vercel.app/api/admin/blogs/${unwrappedParams.id}`, {
           credentials: "include"
         });
         if (!res.ok) throw new Error("Blog not found");

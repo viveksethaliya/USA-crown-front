@@ -15,7 +15,7 @@ export default function AdminLogin() {
     setError(null);
 
     try {
-      const res = await fetch("https://usa-crown-back.vercel.appk.vercel.appk.vercel.appk.vercel.app/api/admin/login", {
+      const res = await fetch("https://usa-crown-back.vercel.app/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

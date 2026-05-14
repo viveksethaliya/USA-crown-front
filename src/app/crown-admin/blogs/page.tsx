@@ -14,7 +14,7 @@ export default function AdminBlogsList() {
   const fetchBlogs = async (status = 'all') => {
     setLoading(true);
     try {
-      const res = await fetch(`https://usa-crown-back.vercel.appk.vercel.app/api/admin/blogs?status=${status}`, {
+      const res = await fetch(`https://usa-crown-back.vercel.app/api/admin/blogs?status=${status}`, {
         credentials: "include"
       });
       const data = await res.json();

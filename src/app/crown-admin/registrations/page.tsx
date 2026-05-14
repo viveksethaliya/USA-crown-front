@@ -23,7 +23,7 @@ export default function RegistrationsPage() {
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
-      const res = await fetch("https://usa-crown-back.vercel.appk.vercel.app/api/admin/registrations", {
+      const res = await fetch("https://usa-crown-back.vercel.app/api/admin/registrations", {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch registrations");
