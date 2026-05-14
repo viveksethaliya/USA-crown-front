@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import styles from "../admin.module.css";
 import nl from "./newsletter.module.css";
 import {
@@ -10,6 +12,14 @@ import {
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/api/admin`;
 
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), {
+  ssr: false,
+  loading: () => <p style={{ padding: 20 }}>Loading editor...</p>,
+});
+
+const QuillEditor = ReactQuill as React.ComponentType<any>;
 interface Subscriber {
   id: string;
   email: string;
@@ -31,6 +41,8 @@ interface Campaign {
 type Tab = "compose" | "subscribers" | "campaigns";
 
 export default function NewsletterPage() {
+  const router = useRouter();
+  const quillRef = useRef<any>(null);
   const [tab, setTab] = useState<Tab>("compose");
 
   // Compose state
@@ -92,6 +104,66 @@ export default function NewsletterPage() {
     if (tab === "subscribers") fetchSubscribers();
     if (tab === "campaigns") fetchCampaigns();
   }, [tab, fetchSubscribers, fetchCampaigns]);
+
+  // ─── Custom Image Handler ─────────────────────────────
+  const imageHandler = useCallback(() => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files ? input.files[0] : null;
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const res = await fetch(`${API}/upload-image`, {
+          method: "POST",
+          body: formData,
+          credentials: "include"
+        });
+
+        if (res.status === 401) {
+          alert("Session expired. Please log in again.");
+          router.push("/crown-admin/login");
+          return;
+        }
+
+        const data = await res.json();
+
+        if (res.ok && data.url) {
+          const quill = quillRef.current?.getEditor();
+          if (quill) {
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, "image", data.url);
+          }
+        } else {
+          alert(data.error || "Image upload failed");
+        }
+      } catch (err) {
+        console.error("Upload error", err);
+        alert("Image upload failed");
+      }
+    };
+  }, [router]);
+
+  const modules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        ['link', 'image'],
+        ['clean']
+      ],
+      handlers: {
+        image: imageHandler
+      }
+    }
+  }), [imageHandler]);
 
   // ─── Send test email ──────────────────────────────
   const handleTestSend = async () => {
@@ -218,47 +290,24 @@ export default function NewsletterPage() {
                   placeholder="e.g. New Spring Collection — Now Available"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
+                  required
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Email Content (HTML supported)</label>
-                <textarea
-                  className={`${styles.formControl} ${nl.contentArea}`}
-                  placeholder={`<h2>Hello!</h2>\n<p>We're excited to announce our new spring collection...</p>\n<p><a href="https://crownfindings.com/collections">Shop Now →</a></p>`}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={14}
-                />
+                <label>Email Content</label>
+                <div style={{ background: '#fff', borderRadius: '4px', overflow: 'hidden', border: '1px solid #333' }}>
+                  <QuillEditor
+                    ref={quillRef}
+                    theme="snow"
+                    value={content}
+                    onChange={setContent}
+                    modules={modules}
+                    style={{ minHeight: '350px' }}
+                  />
+                </div>
               </div>
 
-              <div className={nl.quickInsert}>
-                <span className={nl.quickLabel}>Quick Insert:</span>
-                <button
-                  className={nl.chipBtn}
-                  onClick={() => setContent(c => c + '\n<h2>📢 Announcement Title</h2>\n<p>Your announcement text here.</p>')}
-                >
-                  Heading
-                </button>
-                <button
-                  className={nl.chipBtn}
-                  onClick={() => setContent(c => c + '\n<a href="https://crownfindings.com" style="display:inline-block;padding:12px 28px;background:#1a1a2e;color:#fff;text-decoration:none;font-weight:600;letter-spacing:1px;">SHOP NOW</a>')}
-                >
-                  CTA Button
-                </button>
-                <button
-                  className={nl.chipBtn}
-                  onClick={() => setContent(c => c + '\n<hr style="border:none;border-top:1px solid #ddd;margin:20px 0;" />')}
-                >
-                  Divider
-                </button>
-                <button
-                  className={nl.chipBtn}
-                  onClick={() => setContent(c => c + '\n<img src="https://placehold.co/560x280/1a1a2e/d4af37?text=Crown+Findings" alt="Banner" style="width:100%;max-width:560px;" />')}
-                >
-                  Image
-                </button>
-              </div>
 
               {/* Action buttons */}
               <div className={nl.actions}>
@@ -308,31 +357,14 @@ export default function NewsletterPage() {
               </button>
             </div>
 
-            {/* Mailjet status */}
-            <div className={nl.card}>
-              <h3 className={nl.cardTitle}>Mailjet Integration</h3>
-              <div className={nl.infoRow}>
-                <span className={nl.infoDot} />
-                <span className={nl.infoText}>
-                  Add your <code>MAILJET_API_KEY</code> and <code>MAILJET_SECRET_KEY</code> in the backend <code>.env</code> file to enable real email delivery.
-                </span>
-              </div>
-              <div className={nl.infoRow} style={{ marginTop: 12 }}>
-                <span className={nl.infoDot} style={{ background: "#d4af37" }} />
-                <span className={nl.infoText}>
-                  Without keys configured, sends are <strong>simulated</strong> (logged server-side only).
-                </span>
-              </div>
-            </div>
-
             {/* Tips */}
             <div className={nl.card}>
               <h3 className={nl.cardTitle}>Tips</h3>
               <ul className={nl.tipsList}>
-                <li>Use HTML in the content area for rich formatting</li>
-                <li>Always send a test email first</li>
+                <li>Use the toolbar to easily format text, add lists, or insert links</li>
+                <li>Upload custom images directly from your computer</li>
+                <li>Always send a test email first to review your layout</li>
                 <li>Keep subject lines under 60 characters</li>
-                <li>Include a clear call-to-action</li>
               </ul>
             </div>
           </div>
@@ -382,7 +414,7 @@ export default function NewsletterPage() {
                       </td>
                       <td>
                         <span className={`${nl.statusDot} ${s.status === "subscribed" ? nl.statusActive :
-                            s.status === "unsubscribed" ? nl.statusInactive : nl.statusDeactivated
+                          s.status === "unsubscribed" ? nl.statusInactive : nl.statusDeactivated
                           }`} />
                         {s.status}
                       </td>
