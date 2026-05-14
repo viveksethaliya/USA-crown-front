@@ -20,7 +20,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch("https://usa-crown-back.vercel.app/api/admin/check-session", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/check-session`, {
           credentials: "include"
         });
         const data = await res.json();
@@ -56,7 +56,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
   const handleLogout = async () => {
     try {
-      await fetch("https://usa-crown-back.vercel.app/api/admin/logout", {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/logout`, {
         method: "POST",
         credentials: "include"
       });

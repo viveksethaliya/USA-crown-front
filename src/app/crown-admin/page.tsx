@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("https://usa-crown-back.vercel.app/api/admin/dashboard", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/dashboard`, {
           credentials: "include"
         });
         if (!res.ok) throw new Error("Failed to fetch dashboard");

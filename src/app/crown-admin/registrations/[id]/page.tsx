@@ -50,7 +50,7 @@ export default function RegistrationDetailPage() {
     const fetchDetail = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`https://usa-crown-back.vercel.app/api/admin/registrations/${id}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/registrations/${id}`, {
           credentials: "include",
         });
         if (!res.ok) {
@@ -73,7 +73,7 @@ export default function RegistrationDetailPage() {
     if (!confirm(`Are you sure you want to mark this application as ${status}?`)) return;
 
     try {
-      const res = await fetch(`https://usa-crown-back.vercel.app/api/admin/registrations/${id}/status`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/registrations/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),

@@ -65,7 +65,7 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch('https://usa-crown-back.vercel.app/api/user/profile', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/profile`, {
           credentials: 'include',
         });
 
@@ -109,7 +109,7 @@ export default function ProfilePage() {
     setSuccess('');
 
     try {
-      const res = await fetch('https://usa-crown-back.vercel.app/api/user/profile', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -331,7 +331,7 @@ export default function ProfilePage() {
                 onClick={async () => {
                   setNewsletterSaving(true);
                   try {
-                    const res = await fetch('https://usa-crown-back.vercel.app/api/user/newsletter', {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/newsletter`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ subscribed: !newsletterSubscribed }),

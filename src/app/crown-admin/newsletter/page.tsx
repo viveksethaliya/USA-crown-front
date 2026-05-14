@@ -8,7 +8,7 @@ import {
   FiChevronDown, FiChevronUp, FiEye, FiRefreshCw
 } from "react-icons/fi";
 
-const API = "https://usa-crown-back.vercel.app/api/admin";
+const API = `${process.env.NEXT_PUBLIC_API_URL}/api/admin`;
 
 interface Subscriber {
   id: string;
