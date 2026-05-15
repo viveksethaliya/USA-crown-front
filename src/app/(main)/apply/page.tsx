@@ -10,6 +10,26 @@ export default function ApplyPage() {
   const [step, setStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [errorField, setErrorField] = useState('');
+
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const hearAboutRef = useRef<HTMLSelectElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
+
+  const companyNameRef = useRef<HTMLInputElement>(null);
+  const companyWebsiteRef = useRef<HTMLInputElement>(null);
+  const addressLineRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const resaleTaxIdRef = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
+  const zipCodeRef = useRef<HTMLInputElement>(null);
+  const stateProvinceRef = useRef<HTMLInputElement>(null);
+  const countryRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+
   // Step 1: Personal Information
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -41,6 +61,25 @@ export default function ApplyPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleNext = () => {
+    if (step === 1) {
+      if (!firstName.trim()) { setErrorField('firstName'); firstNameRef.current?.focus(); return; }
+      if (!lastName.trim()) { setErrorField('lastName'); lastNameRef.current?.focus(); return; }
+      if (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim())) { setErrorField('email'); emailRef.current?.focus(); return; }
+      if (!hearAbout) { setErrorField('hearAbout'); hearAboutRef.current?.focus(); return; }
+      if (!password) { setErrorField('password'); passwordRef.current?.focus(); return; }
+      if (!confirmPassword) { setErrorField('confirmPassword'); confirmPasswordRef.current?.focus(); return; }
+    } else if (step === 2) {
+      if (!companyName.trim()) { setErrorField('companyName'); companyNameRef.current?.focus(); return; }
+      if (companyWebsite.trim() && !/^(https?:\/\/)?([\w\d\.-]+)\.([a-z\.]{2,6})(\/[\w\d\.-]*)*\/?$/i.test(companyWebsite.trim())) { setErrorField('companyWebsite'); companyWebsiteRef.current?.focus(); return; }
+      if (!addressLine.trim()) { setErrorField('addressLine'); addressLineRef.current?.focus(); return; }
+      if (!phone.trim()) { setErrorField('phone'); phoneRef.current?.focus(); return; }
+      if (!resaleTaxId.trim()) { setErrorField('resaleTaxId'); resaleTaxIdRef.current?.focus(); return; }
+      if (!city.trim()) { setErrorField('city'); cityRef.current?.focus(); return; }
+      if (!zipCode.trim()) { setErrorField('zipCode'); zipCodeRef.current?.focus(); return; }
+      if (!stateProvince.trim()) { setErrorField('stateProvince'); stateProvinceRef.current?.focus(); return; }
+      if (!country) { setErrorField('country'); countryRef.current?.focus(); return; }
+    }
+    setErrorField('');
     if (step < 3) setStep(step + 1);
   };
 
@@ -68,6 +107,13 @@ export default function ApplyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadedFiles.length === 0) {
+      setErrorField('certificates');
+      setSubmitError('Please upload your signed resale certificate.');
+      dropZoneRef.current?.focus();
+      return;
+    }
+    setErrorField('');
     if (password !== confirmPassword) {
       setSubmitError('Passwords do not match');
       return;
@@ -159,7 +205,7 @@ export default function ApplyPage() {
 
         {/* Form Card */}
         <div className={styles.formCard}>
-          <form onSubmit={handleSubmit}>
+          <form className={styles.form} onSubmit={handleSubmit} noValidate>
 
             {/* ===== STEP 1: Personal Information ===== */}
             {step === 1 && (
@@ -175,10 +221,12 @@ export default function ApplyPage() {
                     <div className={styles.nameRow}>
                       <div className={styles.nameField}>
                         <input
+                          ref={firstNameRef}
                           type="text"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          className={styles.input}
+                          className={`${styles.input} ${errorField === 'firstName' ? styles.errorBlink : ''}`}
+                          onAnimationEnd={() => setErrorField('')}
                           placeholder="First name"
                           required
                         />
@@ -186,10 +234,12 @@ export default function ApplyPage() {
                       </div>
                       <div className={styles.nameField}>
                         <input
+                          ref={lastNameRef}
                           type="text"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          className={styles.input}
+                          className={`${styles.input} ${errorField === 'lastName' ? styles.errorBlink : ''}`}
+                          onAnimationEnd={() => setErrorField('')}
                           placeholder="Last Name"
                           required
                         />
@@ -201,10 +251,12 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Email <span className={styles.required}>*</span></label>
                     <input
+                      ref={emailRef}
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errorField === 'email' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Email"
                       required
                     />
@@ -213,9 +265,11 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>How did you hear about us? <span className={styles.required}>*</span></label>
                     <select
+                      ref={hearAboutRef}
                       value={hearAbout}
                       onChange={(e) => setHearAbout(e.target.value)}
-                      className={styles.select}
+                      className={`${styles.select} ${errorField === 'hearAbout' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       required
                     >
                       <option value="">How did you hear about us?</option>
@@ -231,10 +285,12 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Password <span className={styles.required}>*</span></label>
                     <input
+                      ref={passwordRef}
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errorField === 'password' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Password"
                       required
                     />
@@ -243,10 +299,12 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Confirm Password <span className={styles.required}>*</span></label>
                     <input
+                      ref={confirmPasswordRef}
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errorField === 'confirmPassword' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Retype Password"
                       required
                     />
@@ -270,10 +328,12 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Company Name <span className={styles.required}>*</span></label>
                     <input
+                      ref={companyNameRef}
                       type="text"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errorField === 'companyName' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Company Name"
                       required
                     />
@@ -282,10 +342,12 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Company Website</label>
                     <input
+                      ref={companyWebsiteRef}
                       type="url"
                       value={companyWebsite}
                       onChange={(e) => setCompanyWebsite(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errorField === 'companyWebsite' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Company Website"
                     />
                   </div>
@@ -293,10 +355,12 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Address Line <span className={styles.required}>*</span></label>
                     <input
+                      ref={addressLineRef}
                       type="text"
                       value={addressLine}
                       onChange={(e) => setAddressLine(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errorField === 'addressLine' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Address Line"
                       required
                     />
@@ -306,10 +370,12 @@ export default function ApplyPage() {
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>Phone <span className={styles.required}>*</span></label>
                       <input
+                        ref={phoneRef}
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className={styles.input}
+                        className={`${styles.input} ${errorField === 'phone' ? styles.errorBlink : ''}`}
+                        onAnimationEnd={() => setErrorField('')}
                         placeholder="+1 (555) 123-4567"
                         required
                       />
@@ -329,10 +395,12 @@ export default function ApplyPage() {
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Resale/Tax ID Number <span className={styles.required}>*</span></label>
                     <input
+                      ref={resaleTaxIdRef}
                       type="text"
                       value={resaleTaxId}
                       onChange={(e) => setResaleTaxId(e.target.value)}
-                      className={styles.input}
+                      className={`${styles.input} ${errorField === 'resaleTaxId' ? styles.errorBlink : ''}`}
+                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Resale/Tax Id Number"
                       required
                     />
@@ -342,10 +410,12 @@ export default function ApplyPage() {
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>City <span className={styles.required}>*</span></label>
                       <input
+                        ref={cityRef}
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className={styles.input}
+                        className={`${styles.input} ${errorField === 'city' ? styles.errorBlink : ''}`}
+                        onAnimationEnd={() => setErrorField('')}
                         placeholder="City"
                         required
                       />
@@ -353,10 +423,12 @@ export default function ApplyPage() {
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>Postal / Zip Code <span className={styles.required}>*</span></label>
                       <input
+                        ref={zipCodeRef}
                         type="text"
                         value={zipCode}
                         onChange={(e) => setZipCode(e.target.value)}
-                        className={styles.input}
+                        className={`${styles.input} ${errorField === 'zipCode' ? styles.errorBlink : ''}`}
+                        onAnimationEnd={() => setErrorField('')}
                         placeholder="Postal / Zip Code"
                         required
                       />
@@ -367,10 +439,12 @@ export default function ApplyPage() {
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>State / Province / Region <span className={styles.required}>*</span></label>
                       <input
+                        ref={stateProvinceRef}
                         type="text"
                         value={stateProvince}
                         onChange={(e) => setStateProvince(e.target.value)}
-                        className={styles.input}
+                        className={`${styles.input} ${errorField === 'stateProvince' ? styles.errorBlink : ''}`}
+                        onAnimationEnd={() => setErrorField('')}
                         placeholder="State / Province / Region"
                         required
                       />
@@ -378,10 +452,12 @@ export default function ApplyPage() {
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>Country <span className={styles.required}>*</span></label>
                       <input
+                        ref={countryRef}
                         type="text"
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
-                        className={styles.input}
+                        className={`${styles.input} ${errorField === 'country' ? styles.errorBlink : ''}`}
+                        onAnimationEnd={() => setErrorField('')}
                         placeholder="Country"
                         required
                       />
@@ -456,11 +532,14 @@ export default function ApplyPage() {
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Upload Signed Certificate <span className={styles.required}>*</span></label>
                   <div
-                    className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
+                    ref={dropZoneRef}
+                    tabIndex={-1}
+                    className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''} ${errorField === 'certificates' ? styles.errorBlink : ''}`}
                     onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleFileDrop}
                     onClick={() => fileInputRef.current?.click()}
+                    onAnimationEnd={() => setErrorField('')}
                   >
                     <input
                       ref={fileInputRef}

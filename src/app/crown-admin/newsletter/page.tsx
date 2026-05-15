@@ -43,6 +43,8 @@ type Tab = "compose" | "subscribers" | "campaigns";
 export default function NewsletterPage() {
   const router = useRouter();
   const quillRef = useRef<any>(null);
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const testEmailRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<Tab>("compose");
 
   // Compose state
@@ -52,6 +54,7 @@ export default function NewsletterPage() {
   const [sending, setSending] = useState(false);
   const [testSending, setTestSending] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [errorField, setErrorField] = useState("");
 
   // Subscribers state
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -167,8 +170,23 @@ export default function NewsletterPage() {
 
   // ─── Send test email ──────────────────────────────
   const handleTestSend = async () => {
-    if (!subject || !content || !testEmail) {
-      showToast("error", "Fill in subject, content, and test email.");
+    if (!subject.trim()) {
+      showToast("error", "Subject line is required.");
+      setErrorField("subject");
+      if (subjectRef.current) {
+        subjectRef.current.focus();
+      }
+      return;
+    }
+    if (!content || content === "<p><br></p>") {
+      showToast("error", "Email content is required.");
+      quillRef.current?.focus();
+      return;
+    }
+    if (!testEmail.trim()) {
+      showToast("error", "Test email address is required.");
+      setErrorField("testEmail");
+      testEmailRef.current?.focus();
       return;
     }
     setTestSending(true);
@@ -191,8 +209,17 @@ export default function NewsletterPage() {
 
   // ─── Broadcast to all ─────────────────────────────
   const handleBroadcast = async () => {
-    if (!subject || !content) {
-      showToast("error", "Subject and content are required.");
+    if (!subject.trim()) {
+      showToast("error", "Subject line is required.");
+      setErrorField("subject");
+      if (subjectRef.current) {
+        subjectRef.current.focus();
+      }
+      return;
+    }
+    if (!content || content === "<p><br></p>") {
+      showToast("error", "Email content is required.");
+      quillRef.current?.focus();
       return;
     }
     if (!window.confirm("This will send the newsletter to ALL active subscribers. Continue?")) return;
@@ -285,11 +312,13 @@ export default function NewsletterPage() {
               <div className={styles.formGroup}>
                 <label>Subject Line</label>
                 <input
+                  ref={subjectRef}
                   type="text"
-                  className={styles.formControl}
+                  className={`${styles.formControl} ${errorField === 'subject' ? nl.errorBlink : ''}`}
                   placeholder="e.g. New Spring Collection — Now Available"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
+                  onAnimationEnd={() => setErrorField('')}
                   required
                 />
               </div>
@@ -321,7 +350,7 @@ export default function NewsletterPage() {
                 <button
                   className={styles.btnPrimary}
                   onClick={handleBroadcast}
-                  disabled={sending || !subject || !content}
+                  disabled={sending}
                 >
                   <FiSend style={{ marginRight: 6 }} />
                   {sending ? "Sending…" : "Send to All Subscribers"}
@@ -340,17 +369,19 @@ export default function NewsletterPage() {
               </p>
               <div className={styles.formGroup}>
                 <input
+                  ref={testEmailRef}
                   type="email"
-                  className={styles.formControl}
+                  className={`${styles.formControl} ${errorField === 'testEmail' ? nl.errorBlink : ''}`}
                   placeholder="your@email.com"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
+                  onAnimationEnd={() => setErrorField('')}
                 />
               </div>
               <button
                 className={styles.btnSecondary}
                 onClick={handleTestSend}
-                disabled={testSending || !subject || !content || !testEmail}
+                disabled={testSending}
                 style={{ width: "100%" }}
               >
                 {testSending ? "Sending…" : "Send Test"}

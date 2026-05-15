@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./admin.module.css";
 import {
-  FiMenu, FiGrid, FiFileText, FiUsers, FiSettings, FiLogOut, FiLayers, FiMail
+  FiMenu, FiGrid, FiFileText, FiUsers, FiSettings, FiLogOut, FiLayers, FiMail, FiImage, FiPackage
 } from "react-icons/fi";
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
@@ -101,6 +101,15 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
             </li>
             <li>
               <Link
+                href="/crown-admin/products"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/products") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiPackage /></span>
+                <span className={styles.navLinkText}>Products</span>
+              </Link>
+            </li>
+            <li>
+              <Link
                 href="/crown-admin/blogs"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/blogs") ? styles.navLinkActive : ""}`}
               >
@@ -124,6 +133,15 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
               >
                 <span className={styles.navLinkIcon}><FiLayers /></span>
                 <span className={styles.navLinkText}>Collections</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/crown-admin/banners"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/banners") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiImage /></span>
+                <span className={styles.navLinkText}>Banners</span>
               </Link>
             </li>
             <li>

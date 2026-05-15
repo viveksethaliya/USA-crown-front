@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './profile.module.css';
 import { FiDownload } from 'react-icons/fi';
@@ -62,6 +62,19 @@ export default function ProfilePage() {
   const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('');
 
+  const [errorField, setErrorField] = useState('');
+
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const companyNameRef = useRef<HTMLInputElement>(null);
+  const companyWebsiteRef = useRef<HTMLInputElement>(null);
+  const addressLineRef = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
+  const stateProvinceRef = useRef<HTMLInputElement>(null);
+  const zipCodeRef = useRef<HTMLInputElement>(null);
+  const countryRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -104,6 +117,19 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!firstName.trim()) { setErrorField('firstName'); firstNameRef.current?.focus(); return; }
+    if (!lastName.trim()) { setErrorField('lastName'); lastNameRef.current?.focus(); return; }
+    if (!phone.trim()) { setErrorField('phone'); phoneRef.current?.focus(); return; }
+    if (!companyName.trim()) { setErrorField('companyName'); companyNameRef.current?.focus(); return; }
+    if (companyWebsite.trim() && !/^(https?:\/\/)?([\w\d\.-]+)\.([a-z\.]{2,6})(\/[\w\d\.-]*)*\/?$/i.test(companyWebsite.trim())) { setErrorField('companyWebsite'); companyWebsiteRef.current?.focus(); return; }
+    if (!addressLine.trim()) { setErrorField('addressLine'); addressLineRef.current?.focus(); return; }
+    if (!city.trim()) { setErrorField('city'); cityRef.current?.focus(); return; }
+    if (!stateProvince.trim()) { setErrorField('stateProvince'); stateProvinceRef.current?.focus(); return; }
+    if (!zipCode.trim()) { setErrorField('zipCode'); zipCodeRef.current?.focus(); return; }
+    if (!country.trim()) { setErrorField('country'); countryRef.current?.focus(); return; }
+
+    setErrorField('');
     setSaving(true);
     setError('');
     setSuccess('');
@@ -169,7 +195,7 @@ export default function ProfilePage() {
         {error && <div className={styles.alert} style={{ backgroundColor: '#f8d7da', color: '#721c24', borderLeftColor: '#dc3545' }}>{error}</div>}
         {success && <div className={styles.alert} style={{ backgroundColor: '#d4edda', color: '#155724', borderLeftColor: '#28a745' }}>{success}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.form} noValidate>
 
           {/* Personal Information */}
           <div className={styles.section}>
@@ -178,11 +204,11 @@ export default function ProfilePage() {
             <div className={styles.row}>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
-                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={styles.input} required />
+                <input ref={firstNameRef} type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={`${styles.input} ${errorField === 'firstName' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Last Name <span className={styles.req}>*</span></label>
-                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={styles.input} required />
+                <input ref={lastNameRef} type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={`${styles.input} ${errorField === 'lastName' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
             </div>
 
@@ -195,7 +221,7 @@ export default function ProfilePage() {
             <div className={styles.row}>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Phone <span className={styles.req}>*</span></label>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={styles.input} required />
+                <input ref={phoneRef} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={`${styles.input} ${errorField === 'phone' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Fax</label>
@@ -221,11 +247,11 @@ export default function ProfilePage() {
             <div className={styles.row}>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Company Name <span className={styles.req}>*</span></label>
-                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={styles.input} required />
+                <input ref={companyNameRef} type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={`${styles.input} ${errorField === 'companyName' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Company Website</label>
-                <input type="text" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className={styles.input} placeholder="https://" />
+                <input ref={companyWebsiteRef} type="text" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className={`${styles.input} ${errorField === 'companyWebsite' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} placeholder="https://" />
               </div>
             </div>
 
@@ -258,28 +284,28 @@ export default function ProfilePage() {
 
             <div className={styles.inputGroup}>
               <label className={styles.label}>Address Line <span className={styles.req}>*</span></label>
-              <input type="text" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} className={styles.input} required />
+              <input ref={addressLineRef} type="text" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} className={`${styles.input} ${errorField === 'addressLine' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
             </div>
 
             <div className={styles.row}>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>City <span className={styles.req}>*</span></label>
-                <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={styles.input} required />
+                <input ref={cityRef} type="text" value={city} onChange={(e) => setCity(e.target.value)} className={`${styles.input} ${errorField === 'city' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>State / Province <span className={styles.req}>*</span></label>
-                <input type="text" value={stateProvince} onChange={(e) => setStateProvince(e.target.value)} className={styles.input} required />
+                <input ref={stateProvinceRef} type="text" value={stateProvince} onChange={(e) => setStateProvince(e.target.value)} className={`${styles.input} ${errorField === 'stateProvince' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
             </div>
 
             <div className={styles.row}>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Zip / Postal Code <span className={styles.req}>*</span></label>
-                <input type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className={styles.input} required />
+                <input ref={zipCodeRef} type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className={`${styles.input} ${errorField === 'zipCode' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Country <span className={styles.req}>*</span></label>
-                <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} className={styles.input} required />
+                <input ref={countryRef} type="text" value={country} onChange={(e) => setCountry(e.target.value)} className={`${styles.input} ${errorField === 'country' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
               </div>
             </div>
           </div>

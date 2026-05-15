@@ -137,7 +137,8 @@
   font-size: 1rem;
 }
 
-.input, .select {
+.input,
+.select {
   padding: 0.9rem 1rem;
   border: 1px solid var(--color-border);
   font-size: 0.95rem;
@@ -147,7 +148,8 @@
   width: 100%;
 }
 
-.input:focus, .select:focus {
+.input:focus,
+.select:focus {
   outline: none;
   border-color: var(--color-inkblue);
   box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.08);
@@ -270,7 +272,8 @@
   background-color: #fafafa;
 }
 
-.dropZone:hover, .dropZoneActive {
+.dropZone:hover,
+.dropZoneActive {
   border-color: var(--color-gold);
   background-color: #fdf8e8;
 }
@@ -350,7 +353,8 @@
   border-top: 1px solid var(--color-border);
 }
 
-.nextBtn, .submitBtn {
+.nextBtn,
+.submitBtn {
   padding: 1rem 2.5rem;
   background-color: var(--color-inkblue);
   color: var(--color-white);
@@ -363,7 +367,8 @@
   transition: background-color 0.2s, color 0.2s;
 }
 
-.nextBtn:hover, .submitBtn:hover {
+.nextBtn:hover,
+.submitBtn:hover {
   background-color: var(--color-gold);
   border-color: var(--color-gold);
   color: var(--color-inkblue);
@@ -393,9 +398,11 @@
   .container {
     padding: 0 1.5rem;
   }
+
   .formCard {
     padding: 2.5rem;
   }
+
   .stepLine {
     width: 50px;
   }
@@ -408,47 +415,74 @@
   .page {
     padding: 2rem 0;
   }
+
   .container {
     padding: 0 1rem;
   }
+
   .stepIndicator {
     margin-bottom: 2rem;
   }
+
   .stepLine {
     width: 30px;
     margin: 0 0.5rem;
     margin-bottom: 1.5rem;
   }
+
   .stepNumber {
     width: 36px;
     height: 36px;
     font-size: 0.95rem;
   }
+
   .stepLabel {
     font-size: 0.65rem;
   }
+
   .formCard {
     padding: 1.5rem;
   }
+
   .stepTitle {
     font-size: 1.4rem;
   }
+
   .nameRow {
     flex-direction: column;
     gap: 1rem;
   }
+
   .twoCol {
     flex-direction: column;
     gap: 1rem;
   }
+
   .btnRow {
     flex-direction: column-reverse;
   }
-  .nextBtn, .prevBtn, .submitBtn {
+
+  .nextBtn,
+  .prevBtn,
+  .submitBtn {
     width: 100%;
     text-align: center;
   }
+
   .dropZone {
     padding: 2rem 1rem;
   }
+}
+
+@keyframes errorBlink {
+  0% { border-color: red; }
+  25% { border-color: var(--color-border); }
+  50% { border-color: red; }
+  75% { border-color: var(--color-border); }
+  100% { border-color: red; }
+}
+
+.errorBlink {
+  animation: errorBlink 0.5s ease-in-out;
+  border-color: red !important;
 }

@@ -445,3 +445,13 @@
 .previewFrame {
   border: 1px solid #ddd;
 }
+
+/* ─── Error Blink ──────────────────────── */
+@keyframes blinkRed {
+  0%, 50%, 100% { border-color: #d0d0d0; box-shadow: none; }
+  25%, 75% { border-color: #dc3545; box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2); }
+}
+
+.errorBlink {
+  animation: blinkRed 0.6s ease-in-out;
+}

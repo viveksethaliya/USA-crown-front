@@ -5,42 +5,42 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 
-// ... megaMenuData ...
-const megaMenuData: Record<string, { title: string, links: { label: string, href: string }[] }> = {
+// Static fallback mega menu data
+const fallbackMegaMenuData: Record<string, { title: string, links: { label: string, href: string }[] }> = {
   'findings': {
     title: 'FINDINGS',
     links: [
-      { label: 'Clasps & Toggles', href: '/category/findings/clasps' },
-      { label: 'Earring Findings', href: '/category/findings/earring' },
-      { label: 'Jump Rings', href: '/category/findings/jump-rings' },
-      { label: 'Settings', href: '/category/findings/settings' },
+      { label: 'Clasps & Toggles', href: '/products?category=clasps' },
+      { label: 'Earring Findings', href: '/products?category=earring-findings' },
+      { label: 'Jump Rings', href: '/products?category=jump-rings' },
+      { label: 'Settings', href: '/products?category=settings' },
     ]
   },
   'mountings': {
     title: 'MOUNTINGS',
     links: [
-      { label: 'Ring Mountings', href: '/category/mountings/rings' },
-      { label: 'Pendant Mountings', href: '/category/mountings/pendants' },
-      { label: 'Earring Mountings', href: '/category/mountings/earrings' },
-      { label: 'Bracelet Mountings', href: '/category/mountings/bracelets' },
+      { label: 'Ring Mountings', href: '/products?category=ring-mountings' },
+      { label: 'Pendant Mountings', href: '/products?category=pendant-mountings' },
+      { label: 'Earring Mountings', href: '/products?category=earring-mountings' },
+      { label: 'Bracelet Mountings', href: '/products?category=bracelet-mountings' },
     ]
   },
   'finished': {
     title: 'FINISHED JEWELRY',
     links: [
-      { label: 'Chains', href: '/category/finished/chains' },
-      { label: 'Bracelets', href: '/category/finished/bracelets' },
-      { label: 'Earrings', href: '/category/finished/earrings' },
-      { label: 'Rings', href: '/category/finished/rings' },
+      { label: 'Chains', href: '/products?category=chains' },
+      { label: 'Bracelets', href: '/products?category=bracelets' },
+      { label: 'Earrings', href: '/products?category=earrings' },
+      { label: 'Rings', href: '/products?category=rings' },
     ]
   },
   'metals': {
     title: 'METALS',
     links: [
-      { label: 'Casting Grain', href: '/category/metals/casting-grain' },
-      { label: 'Wire', href: '/category/metals/wire' },
-      { label: 'Sheet', href: '/category/metals/sheet' },
-      { label: 'Solder', href: '/category/metals/solder' },
+      { label: 'Casting Grain', href: '/products?category=casting-grain' },
+      { label: 'Wire', href: '/products?category=wire' },
+      { label: 'Sheet', href: '/products?category=sheet' },
+      { label: 'Solder', href: '/products?category=solder' },
     ]
   }
 };
@@ -72,6 +72,7 @@ export default function Header() {
   const [activeCategory, setActiveCategory] = useState<string>('findings');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [navCollections, setNavCollections] = useState<NavCollection[]>(fallbackCollections);
+  const [megaMenuData, setMegaMenuData] = useState(fallbackMegaMenuData);
 
   const [user, setUser] = useState<UserSession | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -126,6 +127,35 @@ export default function Header() {
       }
     }
 
+    // Fetch product categories for mega menu
+    async function fetchCategories() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.categories && data.categories.length > 0) {
+            const dynamicMenu: Record<string, { title: string, links: { label: string, href: string }[] }> = {};
+            data.categories.forEach((cat: any) => {
+              const key = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
+              dynamicMenu[key] = {
+                title: cat.name.toUpperCase(),
+                links: (cat.children || []).map((child: any) => ({
+                  label: child.name,
+                  href: `/products?category=${child.slug}`
+                }))
+              };
+            });
+            if (Object.keys(dynamicMenu).length > 0) {
+              setMegaMenuData(dynamicMenu);
+              setActiveCategory(Object.keys(dynamicMenu)[0]);
+            }
+          }
+        }
+      } catch {
+        // Keep fallback mega menu
+      }
+    }
+
     async function fetchPrices() {
       try {
         const [goldRes, silverRes, platRes] = await Promise.all([
@@ -158,6 +188,7 @@ export default function Header() {
     }
 
     fetchCollections();
+    fetchCategories();
     fetchPrices();
     // Refresh every 5 minutes
     const interval = setInterval(fetchPrices, 5 * 60 * 1000);

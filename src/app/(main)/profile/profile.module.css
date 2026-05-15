@@ -300,3 +300,16 @@
     max-width: 100%;
   }
 }
+
+@keyframes errorBlink {
+  0% { border-color: red; }
+  25% { border-color: var(--color-border); }
+  50% { border-color: red; }
+  75% { border-color: var(--color-border); }
+  100% { border-color: red; }
+}
+
+.errorBlink {
+  animation: errorBlink 0.5s ease-in-out;
+  border-color: red !important;
+}

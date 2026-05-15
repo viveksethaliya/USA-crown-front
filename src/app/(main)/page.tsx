@@ -1,10 +1,14 @@
 import Link from "next/link";
 import styles from "./page.module.css";
 import TestimonialCarousel from "@/components/TestimonialCarousel";
+import HeroBanner from "@/components/HeroBanner";
 
 export default function Home() {
   return (
     <div className={styles.page}>
+      {/* Dynamic Promotional Banner */}
+      <HeroBanner />
+
       {/* 50/50 Split Hero Section */}
       <section className={styles.heroSplit}>
         <div className={styles.heroTextSide}>
