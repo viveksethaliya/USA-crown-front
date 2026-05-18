@@ -57,8 +57,7 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedMetal, setSelectedMetal] = useState(0);
-  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
@@ -69,6 +68,15 @@ export default function ProductDetailPage() {
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         setProduct(data.product);
+
+        // Initialize options with the first variation if available
+        if (data.product?.variations?.length > 0) {
+           const initialOptions: Record<string, string> = {};
+           data.product.variations[0].attributes.forEach((a: any) => {
+              initialOptions[a.slug] = a.value;
+           });
+           setSelectedOptions(initialOptions);
+        }
       } catch (err) {
         console.error('Failed to fetch product', err);
       } finally {
@@ -99,21 +107,104 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Extract metal and size options from attributes
-  const metalAttr = product.attributes.find(a => a.slug === 'metal' || a.name.toLowerCase() === 'metal');
-  const sizeAttr = product.attributes.find(a => a.slug === 'size' || a.name.toLowerCase() === 'size');
+  // --- Variation Logic ---
+  
+  // 1. Extract unique attributes used by variations to build the UI
+  const variationAttributes = (() => {
+    if (!product || !product.variations || product.variations.length === 0) return [];
+    const usedSlugs = new Set<string>();
+    product.variations.forEach(v => v.attributes.forEach(a => usedSlugs.add(a.slug)));
+    
+    // Return attributes in the order they are defined on the parent product
+    return product.attributes.filter(a => usedSlugs.has(a.slug));
+  })();
 
-  const metalOptions = metalAttr
-    ? metalAttr.values.split(',').map(v => v.trim()).filter(Boolean)
-    : [];
-  const sizeOptions = sizeAttr
-    ? sizeAttr.values.split(',').map(v => v.trim()).filter(Boolean)
-    : [];
+  // 2. Determine validity of an option based on higher-level selections (top-down hierarchy)
+  const isOptionValid = (attrIdx: number, slug: string, value: string) => {
+    if (!product || !product.variations) return false;
+    
+    const testSelections: Record<string, string> = {};
+    for (let i = 0; i < attrIdx; i++) {
+      const earlierSlug = variationAttributes[i].slug;
+      if (selectedOptions[earlierSlug]) {
+        testSelections[earlierSlug] = selectedOptions[earlierSlug];
+      }
+    }
+    testSelections[slug] = value;
 
-  // Build images array — product images + fallback
-  const images = product.images.length > 0
-    ? product.images.map(img => img.url)
-    : ['/web-phts/a-17.jpg'];
+    return product.variations.some(v => 
+      Object.entries(testSelections).every(([k, val]) => 
+        v.attributes.find(a => a.slug === k)?.value === val
+      )
+    );
+  };
+
+  // 3. Handle selection change
+  const handleOptionSelect = (attrIdx: number, slug: string, value: string) => {
+    setSelectedOptions(prev => {
+      const next = { ...prev, [slug]: value };
+      const validated: Record<string, string> = {};
+      
+      // Keep everything above and including the changed option
+      for (let i = 0; i <= attrIdx; i++) {
+        const s = variationAttributes[i].slug;
+        if (next[s]) validated[s] = next[s];
+      }
+
+      // Check downstream options
+      for (let i = attrIdx + 1; i < variationAttributes.length; i++) {
+        const s = variationAttributes[i].slug;
+        if (next[s]) {
+          const testSelections = { ...validated, [s]: next[s] };
+          const isValid = product.variations.some(v => 
+             Object.entries(testSelections).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
+          );
+          if (isValid) {
+            validated[s] = next[s];
+          }
+        }
+      }
+
+      // Try to auto-fill missing downstream attributes with valid choices
+      for (let i = attrIdx + 1; i < variationAttributes.length; i++) {
+         const s = variationAttributes[i].slug;
+         if (!validated[s]) {
+            const validVars = product.variations.filter(v => 
+               Object.entries(validated).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
+            );
+            if (validVars.length > 0) {
+               const firstAvailableValue = validVars[0].attributes.find(a => a.slug === s)?.value;
+               if (firstAvailableValue) {
+                  validated[s] = firstAvailableValue;
+               }
+            }
+         }
+      }
+
+      return validated;
+    });
+  };
+
+  // 4. Determine current active variation
+  const currentVariation = product.variations?.find(v => 
+    variationAttributes.every(attr => 
+      v.attributes.find(a => a.slug === attr.slug)?.value === selectedOptions[attr.slug]
+    )
+  ) || null;
+
+  // --- Dynamic Data for UI ---
+  const displaySku = currentVariation?.sku || product.sku || 'N/A';
+  const displayWeight = currentVariation?.weight_g || product.weight_g;
+  const weightDisplay = displayWeight ? `${displayWeight}g` : 'N/A';
+
+  const images = (currentVariation && currentVariation.images && currentVariation.images.length > 0)
+    ? currentVariation.images.map(img => img.url)
+    : (product.images.length > 0 ? product.images.map(img => img.url) : ['/web-phts/a-17.jpg']);
+
+  // Reset active image index if we switch variation and the new image list is shorter
+  if (activeImage >= images.length) {
+    setActiveImage(0);
+  }
 
   // Find category and subcategory
   const parentCat = product.categories.find(c => !c.parent_id);
@@ -121,20 +212,12 @@ export default function ProductDetailPage() {
   const categoryName = parentCat?.name || subCat?.name || 'Products';
   const subcategoryName = subCat?.name || '';
 
-  // Weight display
-  const weightDisplay = product.weight_g ? `${product.weight_g}g` : 'N/A';
-
-  // Get other visible attributes for the info table
+  // Get other visible attributes for the info table (exclude variation attributes)
   const visibleAttrs = product.attributes.filter(a =>
-    a.is_visible && a.slug !== 'metal' && a.slug !== 'size'
+    a.is_visible && !variationAttributes.find(va => va.slug === a.slug)
   );
 
-  // Bulk discount tiers (standard for Crown Findings)
-  const bulkTiers = [
-    { qty: 6, discount: '-5%' },
-    { qty: 72, discount: '-10%' },
-    { qty: 250, discount: '-15%' },
-  ];
+
 
   return (
     <div className={styles.page}>
@@ -186,15 +269,7 @@ export default function ProductDetailPage() {
 
           {/* Right: Details */}
           <div className={styles.detailSide}>
-            {/* Bulk Discount Badges */}
-            <div className={styles.bulkBadges}>
-              {bulkTiers.map((tier, idx) => (
-                <div key={idx} className={styles.bulkBadge}>
-                  <span className={styles.bulkQty}>{tier.qty} pieces</span>
-                  <span className={styles.bulkDiscount}>{tier.discount}</span>
-                </div>
-              ))}
-            </div>
+
 
             <p className={styles.customizeLabel}>Customize your Product</p>
 
@@ -206,53 +281,66 @@ export default function ProductDetailPage() {
               {product.description || product.short_description || `Elevate your jewelry creations with the ${product.name}, a premium-quality jewelry finding crafted to meet the needs of professional jewelers and wholesale buyers.`}
             </p>
 
-            {metalOptions.length > 0 && (
-              <p className={styles.selectPrompt}>Select a Metal to Enter Quantity</p>
+            {variationAttributes.length > 0 && (
+              <p className={styles.selectPrompt}>Select options to view details</p>
             )}
 
-            {/* Metal Selection */}
-            {metalOptions.length > 0 && (
-              <div className={styles.metalSection}>
-                <h4 className={styles.sectionLabel}>Metal</h4>
-                <div className={styles.metalOptions}>
-                  {metalOptions.map((metal, idx) => (
-                    <button
-                      key={metal}
-                      className={`${styles.metalOption} ${selectedMetal === idx ? styles.metalSelected : ''}`}
-                      onClick={() => setSelectedMetal(idx)}
+            {/* Dynamic Variation Selectors */}
+            {variationAttributes.map((attr, attrIdx) => {
+              const allOptions = Array.from(new Set(
+                product.variations.flatMap(v => v.attributes.filter(a => a.slug === attr.slug).map(a => a.value))
+              ));
+
+              const isMetal = attr.slug === 'metal' || attr.name.toLowerCase() === 'metal';
+
+              if (isMetal) {
+                return (
+                  <div key={attr.slug} className={styles.metalSection}>
+                    <h4 className={styles.sectionLabel}>{attr.name}</h4>
+                    <div className={styles.metalOptions}>
+                      {allOptions.map((opt) => {
+                        const valid = isOptionValid(attrIdx, attr.slug, opt);
+                        return (
+                          <button
+                            key={opt}
+                            disabled={!valid}
+                            className={`${styles.metalOption} ${selectedOptions[attr.slug] === opt ? styles.metalSelected : ''}`}
+                            onClick={() => handleOptionSelect(attrIdx, attr.slug, opt)}
+                            style={{ opacity: valid ? 1 : 0.3, cursor: valid ? 'pointer' : 'not-allowed' }}
+                          >
+                            <img src={images[0]} alt={opt} className={styles.metalImg} />
+                            <span className={styles.metalCode}>{opt}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={attr.slug} className={styles.sizeSection}>
+                  <h4 className={styles.sectionLabel}>{attr.name}</h4>
+                  <div className={styles.sizeRow}>
+                    <select
+                      value={selectedOptions[attr.slug] || ''}
+                      onChange={(e) => handleOptionSelect(attrIdx, attr.slug, e.target.value)}
+                      className={styles.sizeSelect}
                     >
-                      <img src={images[0]} alt={metal} className={styles.metalImg} />
-                      <span className={styles.metalCode}>{metal}</span>
-                    </button>
-                  ))}
+                      {!selectedOptions[attr.slug] && <option value="" disabled>Select {attr.name}</option>}
+                      {allOptions.map(opt => {
+                        const valid = isOptionValid(attrIdx, attr.slug, opt);
+                        return (
+                          <option key={opt} value={opt} disabled={!valid}>
+                            {opt} {!valid ? '(Unavailable)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Size Selection */}
-            {sizeOptions.length > 0 && (
-              <div className={styles.sizeSection}>
-                <h4 className={styles.sectionLabel}>Sizes</h4>
-                <div className={styles.sizeRow}>
-                  <select
-                    value={selectedSize}
-                    onChange={(e) => setSelectedSize(e.target.value)}
-                    className={styles.sizeSelect}
-                  >
-                    <option value="">{sizeOptions[0]}</option>
-                    {sizeOptions.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <button
-                    className={styles.clearBtn}
-                    onClick={() => setSelectedSize('')}
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-            )}
+              );
+            })}
 
             {/* Quantity + Add to Cart */}
             <div className={styles.orderRow}>
@@ -282,7 +370,7 @@ export default function ProductDetailPage() {
               </Link>
             </div>
 
-            <p className={styles.skuLine}><strong>SKU:</strong> {product.sku || 'N/A'}</p>
+            <p className={styles.skuLine}><strong>SKU:</strong> {displaySku}</p>
           </div>
         </div>
 
@@ -301,22 +389,15 @@ export default function ProductDetailPage() {
                 <th>Unit</th>
                 <td>PC</td>
               </tr>
-              <tr>
-                <th>Discount</th>
-                <td>YES</td>
-              </tr>
-              {metalOptions.length > 0 && (
-                <tr>
-                  <th>Metal</th>
-                  <td><em>{metalOptions[selectedMetal] || metalOptions[0]}</em></td>
-                </tr>
-              )}
-              {sizeOptions.length > 0 && (
-                <tr>
-                  <th>Sizes</th>
-                  <td><em>{selectedSize || sizeOptions[0]}</em></td>
-                </tr>
-              )}
+
+              {variationAttributes.map(attr => (
+                selectedOptions[attr.slug] && (
+                  <tr key={attr.slug}>
+                    <th>{attr.name}</th>
+                    <td><em>{selectedOptions[attr.slug]}</em></td>
+                  </tr>
+                )
+              ))}
               {visibleAttrs.map((attr, idx) => (
                 <tr key={idx}>
                   <th>{attr.name}</th>
