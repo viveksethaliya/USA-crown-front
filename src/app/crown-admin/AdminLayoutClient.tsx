@@ -153,6 +153,15 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                 <span className={styles.navLinkText}>Newsletter</span>
               </Link>
             </li>
+            <li>
+              <Link
+                href="/crown-admin/metal-colors"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/metal-colors") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiSettings /></span>
+                <span className={styles.navLinkText}>Metal Colors</span>
+              </Link>
+            </li>
           </ul>
         </nav>
       </aside>

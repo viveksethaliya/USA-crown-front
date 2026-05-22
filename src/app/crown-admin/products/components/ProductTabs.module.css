@@ -1,0 +1,36 @@
+.tabContainer {
+  display: flex;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px 4px 0 0;
+  border-bottom: none;
+  overflow-x: auto;
+  margin-bottom: -1px; /* Overlap the card border */
+  position: relative;
+  z-index: 2;
+}
+
+.tabBtn {
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-right: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.tabBtn:hover {
+  background: #f1f5f9;
+  color: #1a1a2e;
+}
+
+.tabBtn.active {
+  background: #fff;
+  color: #d4af37;
+  border-bottom-color: #d4af37;
+}

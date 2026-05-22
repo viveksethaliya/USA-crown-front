@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import styles from './Footer.module.css';
 
@@ -87,11 +88,11 @@ export default function Footer() {
         <div className={styles.column}>
           <div className={styles.logoContainer}>
             <Link href="/">
-              <img src="/logo.png" alt="Crown Findings Logo" className={styles.logo} />
+              <Image src="/logo.png" alt="Crown Findings Logo" width={180} height={40} className={styles.logo} unoptimized />
             </Link>
           </div>
           <p className={styles.text}>
-            For decades, we've provided wholesale jewelry findings, mountings, and supplies. Offering unbeatable prices and unmatched quality for the jewelry trade.
+            For decades, we&apos;ve provided wholesale jewelry findings, mountings, and supplies. Offering unbeatable prices and unmatched quality for the jewelry trade.
           </p>
           <div className={styles.contactInfo}>
             <p className={styles.contactItem}>

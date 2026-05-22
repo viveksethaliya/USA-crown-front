@@ -7,7 +7,7 @@ import styles from "../admin.module.css";
 import nl from "./newsletter.module.css";
 import {
   FiSend, FiUsers, FiClock, FiMail, FiCheckCircle, FiAlertCircle,
-  FiChevronDown, FiChevronUp, FiEye, FiRefreshCw
+  FiChevronDown, FiChevronUp, FiEye, FiRefreshCw, FiX
 } from "react-icons/fi";
 
 const API = `${process.env.NEXT_PUBLIC_API_URL}/api/admin`;
@@ -513,7 +513,7 @@ export default function NewsletterPage() {
           <div className={nl.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={nl.modalHeader}>
               <h3>Email Preview</h3>
-              <button className={nl.modalClose} onClick={() => setShowPreview(false)}>✕</button>
+              <button className={nl.modalClose} onClick={() => setShowPreview(false)}><FiX /></button>
             </div>
             <div className={nl.modalBody}>
               <div className={nl.previewMeta}>

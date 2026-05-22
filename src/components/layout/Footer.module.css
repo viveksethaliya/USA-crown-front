@@ -11,6 +11,7 @@
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(0, 31, 63, 0.95) 100%);
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   padding: 3rem 4rem;
+  margin-bottom: 4rem;
 }
 
 .newsletterContainer {
@@ -245,7 +246,8 @@
   gap: 1rem;
 }
 
-.copyright, .poweredBy {
+.copyright,
+.poweredBy {
   color: #aaaaaa;
   font-size: 0.85rem;
   margin: 0;
@@ -276,14 +278,17 @@
   .newsletterBanner {
     padding: 2.5rem 3rem;
   }
+
   .container {
     grid-template-columns: 1fr 1fr 1fr 1fr;
     padding: 0 3rem 3rem;
   }
+
   .column:first-child {
     grid-column: span 4;
     margin-bottom: 1rem;
   }
+
   .bottomContainer {
     padding: 1.5rem 3rem;
   }
@@ -296,24 +301,29 @@
   .newsletterBanner {
     padding: 2rem;
   }
+
   .newsletterContent {
     flex-direction: column;
     text-align: center;
     gap: 1.5rem;
   }
+
   .newsletterForm {
     max-width: 100%;
     width: 100%;
   }
+
   .container {
     grid-template-columns: 1fr 1fr;
     gap: 2.5rem;
     padding: 0 2rem 3rem;
   }
+
   .column:first-child {
     grid-column: span 2;
     margin-bottom: 0;
   }
+
   .bottomContainer {
     padding: 1.5rem 2rem;
   }
@@ -326,27 +336,34 @@
   .footer {
     padding-top: 0;
   }
+
   .newsletterBanner {
     padding: 2rem 1.5rem;
   }
+
   .newsletterTitle {
     font-size: 1.2rem;
   }
+
   .newsletterInputWrap {
     flex-direction: column;
   }
+
   .newsletterInput {
     border-right: 2px solid rgba(212, 175, 55, 0.3);
     border-bottom: none;
   }
+
   .container {
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
     padding: 0 1.5rem 2rem;
   }
+
   .column:first-child {
     grid-column: span 2;
   }
+
   .bottomContainer {
     flex-direction: column;
     text-align: center;
@@ -363,17 +380,21 @@
   .newsletterBanner {
     padding: 1.5rem 1rem;
   }
+
   .newsletterBtn {
     width: 100%;
   }
+
   .container {
     grid-template-columns: 1fr;
     padding: 0 1rem 2rem;
     gap: 2rem;
   }
+
   .column:first-child {
     grid-column: span 1;
   }
+
   .bottomContainer {
     padding: 1rem;
     gap: 1rem;

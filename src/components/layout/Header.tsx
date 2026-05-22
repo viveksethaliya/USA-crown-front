@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './Header.module.css';
@@ -135,11 +136,11 @@ export default function Header() {
           const data = await res.json();
           if (data.categories && data.categories.length > 0) {
             const dynamicMenu: Record<string, { title: string, links: { label: string, href: string }[] }> = {};
-            data.categories.forEach((cat: any) => {
+            data.categories.forEach((cat: { name: string; slug: string; children?: { name: string; slug: string }[] }) => {
               const key = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
               dynamicMenu[key] = {
                 title: cat.name.toUpperCase(),
-                links: (cat.children || []).map((child: any) => ({
+                links: (cat.children || []).map((child: { name: string; slug: string }) => ({
                   label: child.name,
                   href: `/products?category=${child.slug}`
                 }))
@@ -288,7 +289,7 @@ export default function Header() {
             {/* Logo */}
             <div className={styles.logoContainer}>
               <Link href="/" className={styles.logo}>
-                <img src="/logo.png" alt="Crown Findings Logo" className={styles.logoImage} />
+                <Image src="/logo.png" alt="Crown Findings Logo" width={200} height={50} priority className={styles.logoImage} unoptimized />
               </Link>
             </div>
 

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef } from 'react';
 import styles from './apply.module.css';
+import { FiX } from 'react-icons/fi';
 
 
 
@@ -559,7 +560,7 @@ export default function ApplyPage() {
                       {uploadedFiles.map((file, idx) => (
                         <div key={idx} className={styles.fileItem}>
                           <span className={styles.fileName}>📎 {file.name}</span>
-                          <button type="button" onClick={() => removeFile(idx)} className={styles.removeFile}>✕</button>
+                          <button type="button" onClick={() => removeFile(idx)} className={styles.removeFile}><FiX /></button>
                         </div>
                       ))}
                     </div>

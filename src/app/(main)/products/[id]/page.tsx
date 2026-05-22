@@ -51,6 +51,12 @@ interface ProductData {
   images: ProductImage[];
 }
 
+interface ProductApiResponse {
+  product?: ProductData;
+}
+
+const uniqueUrls = (urls: string[]) => Array.from(new Set(urls.filter(Boolean)));
+
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = params.id as string;
@@ -66,13 +72,15 @@ export default function ProductDetailPage() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`);
         if (!res.ok) throw new Error('Not found');
-        const data = await res.json();
+        const data = await res.json() as ProductApiResponse;
+        if (!data.product) throw new Error('Not found');
+
         setProduct(data.product);
 
         // Initialize options with the first variation if available
         if (data.product?.variations?.length > 0) {
            const initialOptions: Record<string, string> = {};
-           data.product.variations[0].attributes.forEach((a: any) => {
+           data.product.variations[0].attributes.forEach((a) => {
               initialOptions[a.slug] = a.value;
            });
            setSelectedOptions(initialOptions);
@@ -86,26 +94,6 @@ export default function ProductDetailPage() {
 
     fetchProduct();
   }, [productId]);
-
-  if (loading) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.container}>
-          <p style={{ padding: '3rem', textAlign: 'center', color: '#888' }}>Loading product...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.container}>
-          <p className={styles.notFound}>Product not found. <Link href="/products">← Back to Products</Link></p>
-        </div>
-      </div>
-    );
-  }
 
   // --- Variation Logic ---
   
@@ -156,7 +144,7 @@ export default function ProductDetailPage() {
         const s = variationAttributes[i].slug;
         if (next[s]) {
           const testSelections = { ...validated, [s]: next[s] };
-          const isValid = product.variations.some(v => 
+          const isValid = product?.variations?.some(v => 
              Object.entries(testSelections).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
           );
           if (isValid) {
@@ -169,10 +157,10 @@ export default function ProductDetailPage() {
       for (let i = attrIdx + 1; i < variationAttributes.length; i++) {
          const s = variationAttributes[i].slug;
          if (!validated[s]) {
-            const validVars = product.variations.filter(v => 
+            const validVars = product?.variations?.filter(v => 
                Object.entries(validated).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
             );
-            if (validVars.length > 0) {
+            if (validVars && validVars.length > 0) {
                const firstAvailableValue = validVars[0].attributes.find(a => a.slug === s)?.value;
                if (firstAvailableValue) {
                   validated[s] = firstAvailableValue;
@@ -186,25 +174,50 @@ export default function ProductDetailPage() {
   };
 
   // 4. Determine current active variation
-  const currentVariation = product.variations?.find(v => 
+  const currentVariation = product?.variations?.find(v => 
     variationAttributes.every(attr => 
       v.attributes.find(a => a.slug === attr.slug)?.value === selectedOptions[attr.slug]
     )
   ) || null;
 
   // --- Dynamic Data for UI ---
-  const displaySku = currentVariation?.sku || product.sku || 'N/A';
-  const displayWeight = currentVariation?.weight_g || product.weight_g;
+  const displaySku = currentVariation?.sku || product?.sku || 'N/A';
+  const displayWeight = currentVariation?.weight_g ?? product?.weight_g;
   const weightDisplay = displayWeight ? `${displayWeight}g` : 'N/A';
 
-  const images = (currentVariation && currentVariation.images && currentVariation.images.length > 0)
-    ? currentVariation.images.map(img => img.url)
-    : (product.images.length > 0 ? product.images.map(img => img.url) : ['/web-phts/a-17.jpg']);
+  const images = uniqueUrls(
+    (currentVariation && currentVariation.images && currentVariation.images.length > 0)
+      ? currentVariation.images.map(img => img.url)
+      : (product?.images && product.images.length > 0 ? product.images.map(img => img.url) : ['/web-phts/a-17.jpg'])
+  );
 
-  // Reset active image index if we switch variation and the new image list is shorter
-  if (activeImage >= images.length) {
-    setActiveImage(0);
+  useEffect(() => {
+    if (activeImage >= images.length) {
+      setActiveImage(0);
+    }
+  }, [images.length, activeImage]);
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <p style={{ padding: '3rem', textAlign: 'center', color: '#888' }}>Loading product...</p>
+        </div>
+      </div>
+    );
   }
+
+  if (!product) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <p className={styles.notFound}>Product not found. <Link href="/products">← Back to Products</Link></p>
+        </div>
+      </div>
+    );
+  }
+
+  const activeImageIndex = activeImage < images.length ? activeImage : 0;
 
   // Find category and subcategory
   const parentCat = product.categories.find(c => !c.parent_id);
@@ -247,7 +260,7 @@ export default function ProductDetailPage() {
           <div className={styles.imageSide}>
             <div className={styles.mainImage}>
               <img
-                src={images[activeImage] || images[0]}
+                src={images[activeImageIndex] || images[0]}
                 alt={product.name}
                 className={styles.mainImg}
               />
@@ -257,7 +270,7 @@ export default function ProductDetailPage() {
                 {images.map((img, idx) => (
                   <button
                     key={idx}
-                    className={`${styles.thumbBtn} ${activeImage === idx ? styles.thumbActive : ''}`}
+                    className={`${styles.thumbBtn} ${activeImageIndex === idx ? styles.thumbActive : ''}`}
                     onClick={() => setActiveImage(idx)}
                   >
                     <img src={img} alt={`${product.name} view ${idx + 1}`} className={styles.thumbImg} />
@@ -300,6 +313,15 @@ export default function ProductDetailPage() {
                     <div className={styles.metalOptions}>
                       {allOptions.map((opt) => {
                         const valid = isOptionValid(attrIdx, attr.slug, opt);
+                        
+                        // Find a variation that has this metal option to get its image
+                        const varForImage = product.variations.find(v => 
+                          v.attributes.some(a => a.slug === attr.slug && a.value === opt) &&
+                          v.images && v.images.length > 0
+                        );
+                        
+                        const btnImg = varForImage ? varForImage.images[0].url : images[0];
+
                         return (
                           <button
                             key={opt}
@@ -308,7 +330,7 @@ export default function ProductDetailPage() {
                             onClick={() => handleOptionSelect(attrIdx, attr.slug, opt)}
                             style={{ opacity: valid ? 1 : 0.3, cursor: valid ? 'pointer' : 'not-allowed' }}
                           >
-                            <img src={images[0]} alt={opt} className={styles.metalImg} />
+                            <img src={btnImg} alt={opt} className={styles.metalImg} />
                             <span className={styles.metalCode}>{opt}</span>
                           </button>
                         );
