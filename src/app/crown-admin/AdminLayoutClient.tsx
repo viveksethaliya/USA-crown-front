@@ -11,7 +11,7 @@ import {
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [adminUser, setAdminUser] = useState<{ username: string } | null>(null);
+  const [adminUser, setAdminUser] = useState<{ email: string, name?: string } | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -169,7 +169,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       <main className={styles.mainContent}>
         <header className={styles.topbar}>
           <div className={styles.userMenu}>
-            <span className={styles.userName}>{adminUser?.username || "Admin"}</span>
+            <span className={styles.userName}>{adminUser?.name || adminUser?.email || "Admin"}</span>
             <button onClick={handleLogout} className={styles.logoutBtn}>
               <FiLogOut style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
               Logout
