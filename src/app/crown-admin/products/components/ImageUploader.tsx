@@ -22,7 +22,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${productId}/images`, {
+      const res = await fetch(`/api/admin/products/${productId}/images`, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -47,7 +47,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
     if (!window.confirm("Delete this image?")) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/images/${imageId}`, {
+      const res = await fetch(`/api/admin/products/images/${imageId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

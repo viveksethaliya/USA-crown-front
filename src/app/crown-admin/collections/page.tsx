@@ -13,7 +13,7 @@ interface Collection {
   created_at: string;
 }
 
-const API = `${process.env.NEXT_PUBLIC_API_URL}/api/admin`;
+const API = '/api/admin';
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);

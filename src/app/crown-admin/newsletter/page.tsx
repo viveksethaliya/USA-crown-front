@@ -10,7 +10,7 @@ import {
   FiChevronDown, FiChevronUp, FiEye, FiRefreshCw, FiX
 } from "react-icons/fi";
 
-const API = `${process.env.NEXT_PUBLIC_API_URL}/api/admin`;
+const API = '/api/admin';
 
 import "react-quill-new/dist/quill.snow.css";
 

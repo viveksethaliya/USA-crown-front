@@ -55,7 +55,7 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
     // Fetch existing categories for suggestions
     async function fetchCategories() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/categories`);
+        const res = await fetch(`/api/blogs/categories`);
         if (res.ok) {
           const data = await res.json();
           setExistingCategories(data.categories || []);
@@ -102,7 +102,7 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
       formData.append("image", file);
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/upload-image`, {
+        const res = await fetch(`/api/admin/upload-image`, {
           method: "POST",
           body: formData,
           credentials: "include"
@@ -170,8 +170,8 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
       }
 
       const url = isEdit
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs/${initialData.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs`;
+        ? `/api/admin/blogs/${initialData.id}`
+        : `/api/admin/blogs`;
 
       const method = isEdit ? "PUT" : "POST";
 

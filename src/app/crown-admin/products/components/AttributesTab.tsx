@@ -18,7 +18,7 @@ export default function AttributesTab({ attributes, onChange }: AttributesTabPro
   const [selectedAttrId, setSelectedAttrId] = useState<string>('');
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/attributes`, { credentials: "include" })
+    fetch(`/api/admin/attributes`, { credentials: "include" })
       .then(res => res.json())
       .then(data => {
         setGlobalAttrs(data.attributes || []);

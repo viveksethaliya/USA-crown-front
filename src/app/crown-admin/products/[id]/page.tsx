@@ -32,7 +32,7 @@ export default function AdminProductEditPage() {
     const fetchProduct = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${productId}`,
+          `/api/admin/products/${productId}`,
           { credentials: "include" }
         );
         if (!res.ok) throw new Error('Not found');
@@ -82,7 +82,7 @@ export default function AdminProductEditPage() {
 
   const handleGenerateVariations = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${product?.id}/variations/generate`, {
+      const res = await fetch(`/api/admin/products/${product?.id}/variations/generate`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -103,7 +103,7 @@ export default function AdminProductEditPage() {
       // 1. Save general product fields if they changed
       if (Object.keys(editedFields).length > 0) {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${product.id}`,
+          `/api/admin/products/${product.id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -119,7 +119,7 @@ export default function AdminProductEditPage() {
       // 2. Sync categories if they changed
       // We'll just do it every time there are changes to be safe, or we could check if selectedCategories actually changed
       const catRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${product.id}/categories`,
+        `/api/admin/products/${product.id}/categories`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -131,7 +131,7 @@ export default function AdminProductEditPage() {
 
       // 3. Sync attributes
       const attrRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${product.id}/attributes`,
+        `/api/admin/products/${product.id}/attributes`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -144,7 +144,7 @@ export default function AdminProductEditPage() {
       // 4. Sync variations
       if (product.type === 'variable' && product.variations.length > 0) {
         const varRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${product.id}/variations`,
+          `/api/admin/products/${product.id}/variations`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../admin.module.css";
 import { FiSave } from "react-icons/fi";
 
-const API = `${process.env.NEXT_PUBLIC_API_URL}/api/admin`;
+const API = '/api/admin';
 
 interface MetalColorMapping {
   metal_name: string;

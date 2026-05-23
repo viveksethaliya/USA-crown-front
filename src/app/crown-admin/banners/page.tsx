@@ -25,7 +25,7 @@ export default function AdminBannersList() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/banners?status=${status}`,
+        `/api/admin/banners?status=${status}`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -45,7 +45,7 @@ export default function AdminBannersList() {
     if (!window.confirm("Are you sure you want to delete this banner?")) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/banners/${id}`,
+        `/api/admin/banners/${id}`,
         { method: "DELETE", credentials: "include" }
       );
       if (res.ok) {
@@ -62,7 +62,7 @@ export default function AdminBannersList() {
     setTogglingId(id);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/banners/${id}/toggle`,
+        `/api/admin/banners/${id}/toggle`,
         { method: "PATCH", credentials: "include" }
       );
       if (res.ok) {

@@ -14,7 +14,7 @@ export default function AdminBlogsList() {
   const fetchBlogs = async (status = 'all') => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs?status=${status}`, {
+      const res = await fetch(`/api/admin/blogs?status=${status}`, {
         credentials: "include"
       });
       const data = await res.json();
@@ -34,7 +34,7 @@ export default function AdminBlogsList() {
     if (!window.confirm("Are you sure you want to delete this blog?")) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs/${id}`, {
+      const res = await fetch(`/api/admin/blogs/${id}`, {
         method: 'DELETE',
         credentials: "include"
       });

@@ -110,7 +110,7 @@ export default function BannerEditor({
     const fetchCollections = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/collections`,
+          `/api/admin/collections`,
           { credentials: "include" }
         );
         if (res.ok) {
@@ -190,8 +190,8 @@ export default function BannerEditor({
       }
 
       const url = isEdit
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/banners/${initialData.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin/banners`;
+        ? `/api/admin/banners/${initialData.id}`
+        : `/api/admin/banners`;
 
       const method = isEdit ? "PUT" : "POST";
 

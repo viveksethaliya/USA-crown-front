@@ -17,7 +17,7 @@ export default function EditBannerPage() {
     const fetchBanner = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/banners/${bannerId}`,
+          `/api/admin/banners/${bannerId}`,
           { credentials: "include" }
         );
         if (!res.ok) throw new Error("Banner not found");

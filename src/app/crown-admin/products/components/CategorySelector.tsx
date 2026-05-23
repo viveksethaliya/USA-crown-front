@@ -13,7 +13,7 @@ export default function CategorySelector({ productId, selectedIds, onChange }: C
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, { credentials: "include" })
+    fetch(`/api/admin/categories`, { credentials: "include" })
       .then(res => res.json())
       .then(data => setCategories(data.categories || []))
       .catch(err => console.error("Failed to load categories", err))

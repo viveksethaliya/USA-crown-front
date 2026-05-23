@@ -55,7 +55,7 @@ export default function AdminProductsPage() {
 
   // Fetch Categories
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, { credentials: "include" })
+    fetch(`/api/admin/categories`, { credentials: "include" })
       .then(res => res.json())
       .then(data => setCategories(data.categories || []))
       .catch(err => console.error("Failed to load categories", err));
@@ -64,7 +64,7 @@ export default function AdminProductsPage() {
   // Fetch Stats
   const loadStats = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/stats`, { credentials: "include" });
+      const res = await fetch(`/api/admin/products/stats`, { credentials: "include" });
       const data = await res.json();
       if (data.stats) setStats(data.stats);
     } catch (err) {
@@ -88,7 +88,7 @@ export default function AdminProductsPage() {
       if (search) params.set('search', search);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products?${params}`,
+        `/api/admin/products?${params}`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -127,7 +127,7 @@ export default function AdminProductsPage() {
   const handleToggle = async (id: number) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${id}/toggle`,
+        `/api/admin/products/${id}/toggle`,
         { method: 'PATCH', credentials: "include" }
       );
       if (res.ok) {
@@ -143,7 +143,7 @@ export default function AdminProductsPage() {
     if (!window.confirm(`Delete "${name}"? This will also delete all its variations.`)) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${id}`,
+        `/api/admin/products/${id}`,
         { method: 'DELETE', credentials: "include" }
       );
       if (res.ok) {
@@ -176,7 +176,7 @@ export default function AdminProductsPage() {
     if (!window.confirm(`Are you sure you want to ${publish ? 'publish' : 'unpublish'} ${selectedIds.length} products?`)) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/bulk-toggle`, {
+      const res = await fetch(`/api/admin/products/bulk-toggle`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds, publish }),
@@ -197,7 +197,7 @@ export default function AdminProductsPage() {
     if (!window.confirm(`WARNING: Are you sure you want to permanently delete ${selectedIds.length} products and all their variations?`)) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/bulk`, {
+      const res = await fetch(`/api/admin/products/bulk`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds }),

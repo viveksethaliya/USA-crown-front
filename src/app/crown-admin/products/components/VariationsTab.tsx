@@ -27,7 +27,7 @@ export default function VariationsTab({ productId, variations, productImages, on
     setUploadingVarId(varId);
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/variations/${varId}/image`, {
+      const res = await fetch(`/api/admin/products/variations/${varId}/image`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl }),
@@ -50,7 +50,7 @@ export default function VariationsTab({ productId, variations, productImages, on
     if (!window.confirm("Delete this variation?")) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/variations/${varId}`, {
+      const res = await fetch(`/api/admin/products/variations/${varId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
