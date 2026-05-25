@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiUrl, getGuestCartId, type CartApiResponse } from '@/lib/cart';
 import styles from './Header.module.css';
 
 // Static fallback mega menu data
@@ -77,6 +78,7 @@ export default function Header() {
 
   const [user, setUser] = useState<UserSession | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   const router = useRouter();
 
@@ -104,12 +106,37 @@ export default function Header() {
       }
     }
 
+    async function loadCartCount() {
+      try {
+        const guestId = getGuestCartId();
+        const res = await fetch(apiUrl(`/api/cart?guestId=${encodeURIComponent(guestId)}`), {
+          credentials: 'include',
+        });
+
+        if (res.ok) {
+          const data = await res.json() as CartApiResponse;
+          setCartCount(data.cart.itemCount);
+        }
+      } catch {
+        // silently fail
+      }
+    }
+
     checkSession();
+    loadCartCount();
 
     // Listen for auth changes (from login/logout on other components)
-    const handleAuthChange = () => checkSession();
+    const handleAuthChange = () => {
+      checkSession();
+      loadCartCount();
+    };
+    const handleCartUpdated = () => loadCartCount();
     window.addEventListener('user-auth-change', handleAuthChange);
-    return () => window.removeEventListener('user-auth-change', handleAuthChange);
+    window.addEventListener('cart-updated', handleCartUpdated);
+    return () => {
+      window.removeEventListener('user-auth-change', handleAuthChange);
+      window.removeEventListener('cart-updated', handleCartUpdated);
+    };
   }, []);
 
   useEffect(() => {
@@ -205,6 +232,7 @@ export default function Header() {
       setUser(null);
       setUserMenuOpen(false);
       window.dispatchEvent(new Event('user-auth-change'));
+      window.dispatchEvent(new Event('cart-updated'));
       router.push('/');
     } catch (err) {
       console.error('Logout failed:', err);
@@ -231,6 +259,8 @@ export default function Header() {
             <Link href="/contact" className={styles.topLink}>Contact Us</Link>
             <span className={styles.divider}>|</span>
             <Link href="/about" className={styles.topLink}>About Us</Link>
+            <span className={styles.divider}>|</span>
+            <Link href="/cart" className={styles.topLink}>Cart{cartCount > 0 ? ` (${cartCount})` : ''}</Link>
             <span className={styles.divider}>|</span>
 
             {user ? (

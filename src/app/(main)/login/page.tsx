@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { mergeGuestCart } from '@/lib/cart';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -34,12 +35,18 @@ export default function LoginPage() {
         throw new Error(data.error || 'Login failed');
       }
 
+      try {
+        await mergeGuestCart();
+      } catch {
+        window.dispatchEvent(new Event('cart-updated'));
+      }
+
       // Dispatch a custom event so the Header updates immediately
       window.dispatchEvent(new Event('user-auth-change'));
 
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }

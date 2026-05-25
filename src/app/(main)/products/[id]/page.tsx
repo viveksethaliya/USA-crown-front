@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { apiUrl, formatMoney, getGuestCartId } from '@/lib/cart';
 import styles from './detail.module.css';
 
 interface ProductVariation {
   id: number;
   sku: string;
-  regular_price: number | null;
-  sale_price: number | null;
+  regular_price?: number | null;
+  sale_price?: number | null;
   weight_g: number | null;
   attributes: { name: string; slug: string; value: string }[];
   images: { url: string }[];
@@ -55,6 +56,10 @@ interface ProductApiResponse {
   product?: ProductData;
 }
 
+interface UserSessionResponse {
+  authenticated: boolean;
+}
+
 const uniqueUrls = (urls: string[]) => Array.from(new Set(urls.filter(Boolean)));
 
 export default function ProductDetailPage() {
@@ -66,11 +71,17 @@ export default function ProductDetailPage() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [isMember, setIsMember] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
+  const [cartError, setCartError] = useState('');
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`);
+        const res = await fetch(apiUrl(`/api/products/${productId}`), {
+          credentials: 'include',
+        });
         if (!res.ok) throw new Error('Not found');
         const data = await res.json() as ProductApiResponse;
         if (!data.product) throw new Error('Not found');
@@ -92,7 +103,21 @@ export default function ProductDetailPage() {
       }
     };
 
+    const checkSession = async () => {
+      try {
+        const res = await fetch(apiUrl('/api/user/session'), {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = await res.json() as UserSessionResponse;
+        setIsMember(data.authenticated);
+      } catch {
+        setIsMember(false);
+      }
+    };
+
     fetchProduct();
+    checkSession();
   }, [productId]);
 
   // --- Variation Logic ---
@@ -180,6 +205,50 @@ export default function ProductDetailPage() {
     )
   ) || null;
 
+  const selectedUnitPrice = currentVariation
+    ? (currentVariation.sale_price ?? currentVariation.regular_price ?? null)
+    : null;
+  const requiresVariation = product?.type === 'variable';
+  const canAddToCart = Boolean(product) && (!requiresVariation || Boolean(currentVariation));
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    setCartError('');
+    setCartMessage('');
+
+    if (requiresVariation && !currentVariation) {
+      setCartError('Please select product options first.');
+      return;
+    }
+
+    setAddingToCart(true);
+
+    try {
+      const res = await fetch(apiUrl('/api/cart/items'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          variationId: currentVariation?.id ?? null,
+          quantity,
+          guestId: getGuestCartId()
+        })
+      });
+
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error || 'Could not add this item to cart');
+
+      setCartMessage('Added to cart.');
+      window.dispatchEvent(new Event('cart-updated'));
+    } catch (err) {
+      setCartError(err instanceof Error ? err.message : 'Could not add this item to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   // --- Dynamic Data for UI ---
   const displaySku = currentVariation?.sku || product?.sku || 'N/A';
   const displayWeight = currentVariation?.weight_g ?? product?.weight_g;
@@ -190,12 +259,6 @@ export default function ProductDetailPage() {
       ? currentVariation.images.map(img => img.url)
       : (product?.images && product.images.length > 0 ? product.images.map(img => img.url) : ['/web-phts/a-17.jpg'])
   );
-
-  useEffect(() => {
-    if (activeImage >= images.length) {
-      setActiveImage(0);
-    }
-  }, [images.length, activeImage]);
 
   if (loading) {
     return (
@@ -387,10 +450,29 @@ export default function ProductDetailPage() {
                   +
                 </button>
               </div>
-              <Link href="/login" className={styles.priceBtn}>
-                Login to See Price
-              </Link>
+              <div className={styles.cartActions}>
+                {isMember ? (
+                  <p className={styles.priceLine}>
+                    {selectedUnitPrice !== null ? formatMoney(selectedUnitPrice) : 'Price pending'}
+                  </p>
+                ) : (
+                  <p className={styles.priceLine}>
+                    <Link href="/login">Login to see price</Link>
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className={styles.priceBtn}
+                  onClick={handleAddToCart}
+                  disabled={!canAddToCart || addingToCart}
+                >
+                  {addingToCart ? 'Adding...' : 'Add to Cart'}
+                </button>
+              </div>
             </div>
+
+            {cartMessage && <p className={styles.cartMessage}>{cartMessage}</p>}
+            {cartError && <p className={styles.cartError}>{cartError}</p>}
 
             <p className={styles.skuLine}><strong>SKU:</strong> {displaySku}</p>
           </div>

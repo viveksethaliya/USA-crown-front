@@ -302,6 +302,50 @@
   color: var(--color-inkblue);
 }
 
+.priceBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.priceBtn:disabled:hover {
+  background-color: var(--color-inkblue);
+  color: var(--color-white);
+}
+
+.cartActions {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.priceLine {
+  min-width: 140px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-inkblue);
+}
+
+.priceLine a {
+  color: var(--color-inkblue);
+  text-decoration: underline;
+}
+
+.cartMessage,
+.cartError {
+  margin: -0.75rem 0 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cartMessage {
+  color: #177245;
+}
+
+.cartError {
+  color: #b42318;
+}
+
 .skuLine {
   font-size: 0.95rem;
   color: var(--color-text-main);
@@ -410,6 +454,14 @@
   }
   .priceBtn {
     height: 48px;
+  }
+  .cartActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .priceLine {
+    min-width: 0;
+    text-align: center;
   }
   .additionalSection {
     padding: 1.5rem 1rem;
