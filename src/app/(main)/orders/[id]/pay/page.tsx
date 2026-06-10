@@ -3,13 +3,18 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import styles from "../../../account/account.module.css";
+import styles from "../../../profile/profile.module.css";
 
 export default function OrderPaymentPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [order, setOrder] = useState<any>(null);
+  interface Order {
+    id: string;
+    order_number: string;
+    total_amount: string | number;
+  }
+  const [order, setOrder] = useState<Order | null>(null);
   const [msg, setMsg] = useState({ type: "", text: "" });
 
   useEffect(() => {

@@ -169,8 +169,9 @@ export default function Header() {
         });
 
         if (res.ok) {
-          const data = await res.json() as CartApiResponse;
-          setCartCount(data.cart.itemCount);
+          const data = await res.json();
+          // Backend returns { cart: { id, status }, items: [] }
+          setCartCount(data.items?.length || 0);
         }
       } catch {
         // silently fail
@@ -249,17 +250,28 @@ export default function Header() {
           const data = await res.json();
 
           const formatPrice = (price: number) => {
+            if (!price || price === 0) return 'Login for pricing';
             return new Intl.NumberFormat('en-US', {
               style: 'currency',
               currency: 'USD'
             }).format(price);
           };
 
-          setMetalPrices({
-            gold: formatPrice(data.XAU.price),
-            silver: formatPrice(data.XAG.price),
-            platinum: formatPrice(data.XPT.price)
-          });
+          // Handle our backend format: { prices: { gold_14k, silver_925, platinum } }
+          if (data.prices) {
+            setMetalPrices({
+              gold: formatPrice(data.prices.gold_14k || 0),
+              silver: formatPrice(data.prices.silver_925 || 0),
+              platinum: formatPrice(data.prices.platinum || 0)
+            });
+          // Handle external metals API format: { XAU: { price }, XAG: { price }, XPT: { price } }
+          } else if (data.XAU && data.XAG && data.XPT) {
+            setMetalPrices({
+              gold: formatPrice(data.XAU.price),
+              silver: formatPrice(data.XAG.price),
+              platinum: formatPrice(data.XPT.price)
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to fetch metal prices:', error);

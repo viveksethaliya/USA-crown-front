@@ -1,19 +1,45 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import styles from "./user-detail.module.css";
 import { FiArrowLeft } from "react-icons/fi";
 
 export default function UserDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
 
-  const [user, setUser] = useState<any>(null);
+  interface UserAddress {
+    id: string;
+    first_name: string;
+    last_name: string;
+    address_line1: string;
+    address_line2: string;
+    city: string;
+    state: string;
+    postal_code: string;
+  }
+
+  interface UserData {
+    email: string;
+    full_name: string;
+    mobile: string;
+    username: string;
+    role_id: string;
+    customer_group_id: string;
+    is_active: boolean;
+    user_addresses?: UserAddress[];
+    company_profiles?: {
+      company_name: string;
+      tax_id: string;
+      industry: string;
+    };
+  }
+
+  const [user, setUser] = useState<UserData | null>(null);
   const [roles, setRoles] = useState<{id: string, name: string}[]>([]);
   const [groups, setGroups] = useState<{id: string, name: string}[]>([]);
 
@@ -31,10 +57,10 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       fetch(`/api/admin/users/${params.id}`).then(r => r.json()),
       fetch('/api/admin/roles').then(r => r.json()),
       fetch('/api/admin/customer-groups').then(r => r.json())
-    ]).then(([userData, rolesData]) => {
+    ]).then(([userData, rolesData, groupsData]) => {
       setUser(userData);
       setRoles(rolesData || []);
-      setGroups(arguments[0][2] || []); // the third promise result
+      setGroups(groupsData || []); // the third promise result
       if (userData) {
         setFormData({
           full_name: userData.full_name || "",
@@ -73,8 +99,8 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       });
       if (!res.ok) throw new Error("Failed to update user");
       setMsg({ type: "success", text: "User updated successfully." });
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message });
+    } catch (err: unknown) {
+      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
     } finally {
       setSaving(false);
     }
@@ -198,7 +224,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
           <h2>Addresses</h2>
           <ul className={styles.list}>
             {user.user_addresses?.length === 0 && <p>No addresses found.</p>}
-            {user.user_addresses?.map((a: any) => (
+            {user.user_addresses?.map((a) => (
               <li key={a.id} className={styles.listItem}>
                 <h4>{a.first_name} {a.last_name}</h4>
                 <p>{a.address_line1} {a.address_line2}</p>

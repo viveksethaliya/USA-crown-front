@@ -120,6 +120,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
         <div className={styles.imageGrid}>
           {images.map((img) => (
             <div key={img.id} className={styles.imageThumb} style={{ position: 'relative' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img.url} alt={img.alt_text || 'Product image'} />
               <button 
                 onClick={() => handleDelete(img.id)}

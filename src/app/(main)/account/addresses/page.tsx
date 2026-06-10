@@ -5,8 +5,24 @@ import styles from "./addresses.module.css";
 import profileStyles from "../profile/profile.module.css";
 import { FiPlus } from "react-icons/fi";
 
+interface Address {
+  id?: string;
+  first_name: string;
+  last_name: string;
+  company_name?: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  phone?: string;
+  is_default_shipping: boolean;
+  is_default_billing: boolean;
+}
+
 export default function AccountAddressesPage() {
-  const [addresses, setAddresses] = useState<any[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,6 +49,7 @@ export default function AccountAddressesPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAddresses();
   }, []);
 
@@ -74,7 +91,7 @@ export default function AccountAddressesPage() {
     setIsModalOpen(true);
   };
 
-  const openEdit = (addr: any) => {
+  const openEdit = (addr: Address) => {
     setEditId(addr.id);
     setFormData(addr);
     setIsModalOpen(true);

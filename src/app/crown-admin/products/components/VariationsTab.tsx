@@ -10,7 +10,7 @@ interface VariationsTabProps {
   onGenerate: () => Promise<void>;
 }
 
-export default function VariationsTab({ productId: _productId, variations, productImages, onChange, onGenerate }: VariationsTabProps) {
+export default function VariationsTab({ variations, productImages, onChange, onGenerate }: VariationsTabProps) {
   const [generating, setGenerating] = useState(false);
   const [uploadingVarId, setUploadingVarId] = useState<number | null>(null);
   const [expandedVarId, setExpandedVarId] = useState<number | null>(null);

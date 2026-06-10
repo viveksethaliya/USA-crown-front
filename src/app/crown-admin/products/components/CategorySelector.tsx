@@ -8,7 +8,7 @@ interface CategorySelectorProps {
   onChange: (ids: number[]) => void;
 }
 
-export default function CategorySelector({ productId, selectedIds, onChange }: CategorySelectorProps) {
+export default function CategorySelector({ selectedIds, onChange }: CategorySelectorProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 

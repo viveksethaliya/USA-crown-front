@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "../account.module.css";
+import styles from "../../profile/profile.module.css";
 
 type PaymentMethod = {
   id: string;
@@ -31,6 +31,7 @@ export default function PaymentMethodsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchMethods();
   }, []);
 

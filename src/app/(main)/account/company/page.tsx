@@ -53,8 +53,8 @@ export default function AccountCompanyPage() {
       if (!res.ok) throw new Error(data.error || "Failed to update company profile");
       
       setMsg({ type: "success", text: "Company details updated successfully." });
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message });
+    } catch (err: unknown) {
+      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
     } finally {
       setSaving(false);
     }

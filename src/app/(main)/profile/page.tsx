@@ -4,160 +4,195 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './profile.module.css';
-import { FiDownload, FiShoppingBag } from 'react-icons/fi';
-
-const hearAboutLabels: Record<string, string> = {
-  google: 'Google Search',
-  referral: 'Referral',
-  tradeshow: 'Trade Show',
-  social: 'Social Media',
-  'diamond-district': 'Diamond District Walk-in',
-  other: 'Other',
-};
+import { FiDownload, FiShoppingBag, FiPlus } from 'react-icons/fi';
 
 interface UserProfile {
   id: string;
-  first_name: string;
-  last_name: string;
+  username: string;
   email: string;
-  phone: string;
-  fax: string;
-  company_name: string;
-  company_website: string;
-  address_line: string;
-  city: string;
-  state_province: string;
-  zip_code: string;
-  country: string;
-  resale_tax_id: string;
-  hear_about: string;
-  credit_app: boolean;
-  certificate_urls: string[];
-  status: string;
+  full_name: string;
+  mobile: string;
   created_at: string;
-  newsletter_subscribed: boolean;
+  roles: { name: string }[];
+}
+
+interface CompanyProfile {
+  company_name: string;
+  company_address: string;
+  company_phone: string;
+  website: string;
+  tax_id: string;
+  resale_certificate_url: string;
+}
+
+interface SubUser {
+  id: string;
+  username: string;
+  email: string;
+  full_name: string;
+  mobile: string;
+  is_active: boolean;
+  created_at: string;
+  roles: { name: string }[];
 }
 
 export default function ProfilePage() {
   const router = useRouter();
 
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<'personal' | 'company' | 'subusers'>('personal');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
-  const [newsletterSaving, setNewsletterSaving] = useState(false);
 
-  // Editable fields
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  // Personal Form
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [fax, setFax] = useState('');
+
+  // Company Form
+  const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [companyName, setCompanyName] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
-  const [addressLine, setAddressLine] = useState('');
-  const [city, setCity] = useState('');
-  const [stateProvince, setStateProvince] = useState('');
-  const [zipCode, setZipCode] = useState('');
-  const [country, setCountry] = useState('');
+  const [companyAddress, setCompanyAddress] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
 
-  const [errorField, setErrorField] = useState('');
-
-  const firstNameRef = useRef<HTMLInputElement>(null);
-  const lastNameRef = useRef<HTMLInputElement>(null);
-  const phoneRef = useRef<HTMLInputElement>(null);
-  const companyNameRef = useRef<HTMLInputElement>(null);
-  const companyWebsiteRef = useRef<HTMLInputElement>(null);
-  const addressLineRef = useRef<HTMLInputElement>(null);
-  const cityRef = useRef<HTMLInputElement>(null);
-  const stateProvinceRef = useRef<HTMLInputElement>(null);
-  const zipCodeRef = useRef<HTMLInputElement>(null);
-  const countryRef = useRef<HTMLInputElement>(null);
+  // Sub-users
+  const [subUsers, setSubUsers] = useState<SubUser[]>([]);
+  const [newSubUserName, setNewSubUserName] = useState('');
+  const [newSubUserEmail, setNewSubUserEmail] = useState('');
+  const [newSubUserMobile, setNewSubUserMobile] = useState('');
+  const [newSubUserPassword, setNewSubUserPassword] = useState('');
 
   useEffect(() => {
-    async function fetchProfile() {
+    async function fetchData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/profile`, {
-          credentials: 'include',
-        });
+        const [profileRes, companyRes, usersRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/profile`, { credentials: 'include' }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/company`, { credentials: 'include' }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/users`, { credentials: 'include' }).catch(() => null)
+        ]);
 
-        if (res.status === 401) {
+        if (profileRes.status === 401) {
           router.push('/login');
           return;
         }
 
-        if (!res.ok) throw new Error('Failed to load profile');
+        if (profileRes.ok) {
+          const data = await profileRes.json();
+          setProfile(data);
+          setFullName(data.full_name || '');
+          setMobile(data.mobile || '');
+          setEmail(data.email || '');
+        }
 
-        const data = await res.json();
-        const u = data.user;
-        setProfile(u);
-        setFirstName(u.first_name || '');
-        setLastName(u.last_name || '');
-        setEmail(u.email || '');
-        setPhone(u.phone || '');
-        setFax(u.fax || '');
-        setCompanyName(u.company_name || '');
-        setCompanyWebsite(u.company_website || '');
-        setAddressLine(u.address_line || '');
-        setCity(u.city || '');
-        setStateProvince(u.state_province || '');
-        setZipCode(u.zip_code || '');
-        setCountry(u.country || '');
-        setNewsletterSubscribed(u.newsletter_subscribed || false);
+        if (companyRes.ok) {
+          const cData = await companyRes.json();
+          setCompany(cData);
+          setCompanyName(cData.company_name || '');
+          setCompanyWebsite(cData.website || '');
+          setCompanyAddress(cData.company_address || '');
+          setCompanyPhone(cData.company_phone || '');
+        }
+
+        if (usersRes && usersRes.ok) {
+          const uData = await usersRes.json();
+          if (Array.isArray(uData)) setSubUsers(uData);
+        }
+
       } catch (err: any) {
-        setError(err.message);
+        setError('Failed to load profile data.');
       } finally {
         setLoading(false);
       }
     }
-
-    fetchProfile();
+    fetchData();
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSavePersonal = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!firstName.trim()) { setErrorField('firstName'); firstNameRef.current?.focus(); return; }
-    if (!lastName.trim()) { setErrorField('lastName'); lastNameRef.current?.focus(); return; }
-    if (!phone.trim()) { setErrorField('phone'); phoneRef.current?.focus(); return; }
-    if (!companyName.trim()) { setErrorField('companyName'); companyNameRef.current?.focus(); return; }
-    if (companyWebsite.trim() && !/^(https?:\/\/)?([\w\d\.-]+)\.([a-z\.]{2,6})(\/[\w\d\.-]*)*\/?$/i.test(companyWebsite.trim())) { setErrorField('companyWebsite'); companyWebsiteRef.current?.focus(); return; }
-    if (!addressLine.trim()) { setErrorField('addressLine'); addressLineRef.current?.focus(); return; }
-    if (!city.trim()) { setErrorField('city'); cityRef.current?.focus(); return; }
-    if (!stateProvince.trim()) { setErrorField('stateProvince'); stateProvinceRef.current?.focus(); return; }
-    if (!zipCode.trim()) { setErrorField('zipCode'); zipCodeRef.current?.focus(); return; }
-    if (!country.trim()) { setErrorField('country'); countryRef.current?.focus(); return; }
-
-    setErrorField('');
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
+    setSaving(true); setError(''); setSuccess('');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/profile`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName, lastName, phone, fax,
-          companyName, companyWebsite, addressLine,
-          city, stateProvince, zipCode, country,
-        }),
+        body: JSON.stringify({ full_name: fullName, mobile }),
         credentials: 'include',
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to update profile');
-      }
-
+      if (!res.ok) throw new Error('Failed to update profile');
       setSuccess('Profile updated successfully!');
-      window.dispatchEvent(new Event('user-auth-change'));
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true); setError(''); setSuccess('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/company`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_name: companyName,
+          website: companyWebsite,
+          company_address: companyAddress,
+          company_phone: companyPhone
+        }),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to update company. Sub-users cannot update company profile.');
+      setSuccess('Company info updated successfully!');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddSubUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true); setError(''); setSuccess('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: newSubUserName,
+          email: newSubUserEmail,
+          mobile: newSubUserMobile,
+          password: newSubUserPassword
+        }),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to create sub-user. Sub-users cannot create other users.');
+      const data = await res.json();
+      setSubUsers([...subUsers, data]);
+      setSuccess('Sub-user created successfully!');
+      setNewSubUserName(''); setNewSubUserEmail(''); setNewSubUserMobile(''); setNewSubUserPassword('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleSubUser = async (id: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !currentStatus }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setSubUsers(subUsers.map(u => u.id === id ? { ...u, is_active: !currentStatus } : u));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -176,225 +211,158 @@ export default function ProfilePage() {
       <div className={styles.container}>
         <div className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1 className={styles.title}>My Profile</h1>
-            <p className={styles.subtitle}>
-              Manage your account details and company information.
-            </p>
+            <h1 className={styles.title}>My Account</h1>
+            <p className={styles.subtitle}>Manage your details, company, and team.</p>
           </div>
           <Link href="/orders" style={{
             display: 'flex', alignItems: 'center', gap: '0.5rem',
-            backgroundColor: '#000', color: '#fff', padding: '0.5rem 1rem', 
+            backgroundColor: '#000', color: '#fff', padding: '0.5rem 1rem',
             borderRadius: '4px', textDecoration: 'none', fontWeight: 600
           }}>
             <FiShoppingBag /> My Orders
           </Link>
         </div>
 
-        {/* Account Status Banner */}
-        {profile && (
-          <div className={styles.statusBanner} style={{
-            backgroundColor: profile.status === 'approved' ? '#d4edda' : profile.status === 'rejected' ? '#f8d7da' : '#fff3cd',
-            color: profile.status === 'approved' ? '#155724' : profile.status === 'rejected' ? '#721c24' : '#856404',
-            borderLeftColor: profile.status === 'approved' ? '#28a745' : profile.status === 'rejected' ? '#dc3545' : '#ffc107',
-          }}>
-            <strong>Account Status:</strong> {profile.status.charAt(0).toUpperCase() + profile.status.slice(1)} &nbsp;|&nbsp;
-            <strong>Member Since:</strong> {new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
-        )}
-
         {error && <div className={styles.alert} style={{ backgroundColor: '#f8d7da', color: '#721c24', borderLeftColor: '#dc3545' }}>{error}</div>}
         {success && <div className={styles.alert} style={{ backgroundColor: '#d4edda', color: '#155724', borderLeftColor: '#28a745' }}>{success}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form} noValidate>
+        <div className={styles.tabs}>
+          <button className={`${styles.tabBtn} ${activeTab === 'personal' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('personal')}>Personal Profile</button>
+          <button className={`${styles.tabBtn} ${activeTab === 'company' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('company')}>Company Info</button>
+          <button className={`${styles.tabBtn} ${activeTab === 'subusers' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('subusers')}>Team / Sub-Users</button>
+        </div>
 
-          {/* Personal Information */}
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Personal Information</h2>
-
-            <div className={styles.row}>
+        {activeTab === 'personal' && (
+          <form onSubmit={handleSavePersonal} className={styles.form}>
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Personal Details</h2>
               <div className={styles.inputGroup}>
-                <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
-                <input ref={firstNameRef} type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={`${styles.input} ${errorField === 'firstName' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
+                <label className={styles.label}>Full Name <span className={styles.req}>*</span></label>
+                <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={styles.input} required />
               </div>
               <div className={styles.inputGroup}>
-                <label className={styles.label}>Last Name <span className={styles.req}>*</span></label>
-                <input ref={lastNameRef} type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={`${styles.input} ${errorField === 'lastName' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
-              </div>
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Email</label>
-              <input type="email" value={email} className={styles.inputReadonly} disabled />
-              <span className={styles.hint}>Email cannot be changed. Contact support if needed.</span>
-            </div>
-
-            <div className={styles.row}>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Phone <span className={styles.req}>*</span></label>
-                <input ref={phoneRef} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={`${styles.input} ${errorField === 'phone' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
+                <label className={styles.label}>Email</label>
+                <input type="email" value={email} className={styles.inputReadonly} disabled />
+                <span className={styles.hint}>Email cannot be changed. Contact support to update.</span>
               </div>
               <div className={styles.inputGroup}>
-                <label className={styles.label}>Fax</label>
-                <input type="tel" value={fax} onChange={(e) => setFax(e.target.value)} className={styles.input} />
+                <label className={styles.label}>Mobile <span className={styles.req}>*</span></label>
+                <input type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} className={styles.input} required />
               </div>
             </div>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>How did you hear about us?</label>
-              <input
-                type="text"
-                value={profile ? (hearAboutLabels[profile.hear_about] || profile.hear_about || 'N/A') : ''}
-                className={styles.inputReadonly}
-                disabled
-              />
+            <div className={styles.actions}>
+              <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
             </div>
-          </div>
+          </form>
+        )}
 
-          {/* Company Information */}
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Company Information</h2>
-
-            <div className={styles.row}>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Company Name <span className={styles.req}>*</span></label>
-                <input ref={companyNameRef} type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={`${styles.input} ${errorField === 'companyName' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
+        {activeTab === 'company' && (
+          <form onSubmit={handleSaveCompany} className={styles.form}>
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Company Information</h2>
+              <div className={styles.row}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Company Name <span className={styles.req}>*</span></label>
+                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={styles.input} required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Company Website</label>
+                  <input type="text" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className={styles.input} />
+                </div>
               </div>
               <div className={styles.inputGroup}>
-                <label className={styles.label}>Company Website</label>
-                <input ref={companyWebsiteRef} type="text" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className={`${styles.input} ${errorField === 'companyWebsite' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} placeholder="https://" />
+                <label className={styles.label}>Company Address <span className={styles.req}>*</span></label>
+                <input type="text" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className={styles.input} required />
               </div>
+              <div className={styles.row}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Company Phone</label>
+                  <input type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className={styles.input} />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Tax ID</label>
+                  <input type="text" value={company?.tax_id || ''} className={styles.inputReadonly} disabled />
+                  <span className={styles.hint}>Tax ID cannot be changed. Contact support to update.</span>
+                </div>
+              </div>
+
+              {company?.resale_certificate_url && (
+                <div className={styles.docList} style={{ marginTop: '1rem' }}>
+                  <div className={styles.docItem}>
+                    <span className={styles.docName}>📄 Resale Certificate</span>
+                    <a href={company.resale_certificate_url} target="_blank" rel="noopener noreferrer" className={styles.docDownload}>
+                      <FiDownload /> View
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
-
-            <div className={styles.row}>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Resale / Tax ID</label>
-                <input
-                  type="text"
-                  value={profile?.resale_tax_id || 'N/A'}
-                  className={styles.inputReadonly}
-                  disabled
-                />
-                <span className={styles.hint}>Tax ID cannot be changed. Contact support to update.</span>
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Credit Application</label>
-                <input
-                  type="text"
-                  value={profile?.credit_app ? 'Yes — Applied for credit' : 'No'}
-                  className={styles.inputReadonly}
-                  disabled
-                />
-              </div>
+            <div className={styles.actions}>
+              <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
             </div>
-          </div>
+          </form>
+        )}
 
-          {/* Address */}
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Address</h2>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Address Line <span className={styles.req}>*</span></label>
-              <input ref={addressLineRef} type="text" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} className={`${styles.input} ${errorField === 'addressLine' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
-            </div>
-
-            <div className={styles.row}>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>City <span className={styles.req}>*</span></label>
-                <input ref={cityRef} type="text" value={city} onChange={(e) => setCity(e.target.value)} className={`${styles.input} ${errorField === 'city' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>State / Province <span className={styles.req}>*</span></label>
-                <input ref={stateProvinceRef} type="text" value={stateProvince} onChange={(e) => setStateProvince(e.target.value)} className={`${styles.input} ${errorField === 'stateProvince' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
-              </div>
-            </div>
-
-            <div className={styles.row}>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Zip / Postal Code <span className={styles.req}>*</span></label>
-                <input ref={zipCodeRef} type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className={`${styles.input} ${errorField === 'zipCode' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
-              </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Country <span className={styles.req}>*</span></label>
-                <input ref={countryRef} type="text" value={country} onChange={(e) => setCountry(e.target.value)} className={`${styles.input} ${errorField === 'country' ? styles.errorBlink : ''}`} onAnimationEnd={() => setErrorField('')} required />
-              </div>
-            </div>
-          </div>
-
-          {/* Uploaded Documents (Read-only) */}
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Resale Certificates / Documents</h2>
-
-            {profile?.certificate_urls && profile.certificate_urls.length > 0 ? (
-              <div className={styles.docList}>
-                {profile.certificate_urls.map((url, index) => {
-                  const fileName = decodeURIComponent(url.split('/').pop() || `Document ${index + 1}`);
-                  return (
-                    <div key={index} className={styles.docItem}>
-                      <span className={styles.docName}>📄 {fileName}</span>
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.docDownload}
-                      >
-                        <FiDownload /> View / Download
-                      </a>
+        {activeTab === 'subusers' && (
+          <div className={styles.form}>
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Team Members</h2>
+              {subUsers.length === 0 ? (
+                <p className={styles.noDocText}>You do not have any sub-users. Add team members below.</p>
+              ) : (
+                <div className={styles.subUserList}>
+                  {subUsers.map(user => (
+                    <div key={user.id} className={styles.subUserCard}>
+                      <div className={styles.subUserInfo}>
+                        <div className={styles.subUserName}>{user.full_name} ({user.username})</div>
+                        <div className={styles.subUserEmail}>{user.email} | {user.mobile}</div>
+                        <div style={{ fontSize: '0.8rem', color: user.is_active ? 'green' : 'red', fontWeight: 600 }}>
+                          Status: {user.is_active ? 'Active' : 'Deactivated'}
+                        </div>
+                      </div>
+                      <div className={styles.subUserActions}>
+                        <button 
+                          className={`${styles.btnSmall} ${user.is_active ? styles.btnSmallDanger : ''}`} 
+                          onClick={() => handleToggleSubUser(user.id, user.is_active)}
+                        >
+                          {user.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className={styles.noDocText}>No documents on file. Contact support to upload certificates.</p>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          {/* Newsletter Preferences */}
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Newsletter Preferences</h2>
-            <div className={styles.newsletterToggleRow}>
-              <div className={styles.newsletterInfo}>
-                <span className={styles.newsletterLabel}>Email Newsletter</span>
-                <span className={styles.hint}>
-                  {newsletterSubscribed
-                    ? 'You are receiving updates on new arrivals, metal prices, and deals.'
-                    : 'Subscribe to get exclusive updates on new arrivals and wholesale deals.'}
-                </span>
-              </div>
-              <button
-                type="button"
-                className={`${styles.toggleSwitch} ${newsletterSubscribed ? styles.toggleActive : ''}`}
-                disabled={newsletterSaving}
-                onClick={async () => {
-                  setNewsletterSaving(true);
-                  try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/newsletter`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ subscribed: !newsletterSubscribed }),
-                      credentials: 'include',
-                    });
-                    if (!res.ok) throw new Error('Failed to update');
-                    setNewsletterSubscribed(!newsletterSubscribed);
-                    setSuccess(newsletterSubscribed ? 'Unsubscribed from newsletter.' : 'Subscribed to newsletter!');
-                    setError('');
-                  } catch {
-                    setError('Failed to update newsletter preference.');
-                  } finally {
-                    setNewsletterSaving(false);
-                  }
-                }}
-              >
-                <span className={styles.toggleKnob} />
-              </button>
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Add New Team Member</h2>
+              <form onSubmit={handleAddSubUser} className={styles.row}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Full Name <span className={styles.req}>*</span></label>
+                  <input type="text" value={newSubUserName} onChange={(e) => setNewSubUserName(e.target.value)} className={styles.input} required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Email <span className={styles.req}>*</span></label>
+                  <input type="email" value={newSubUserEmail} onChange={(e) => setNewSubUserEmail(e.target.value)} className={styles.input} required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Mobile <span className={styles.req}>*</span></label>
+                  <input type="tel" value={newSubUserMobile} onChange={(e) => setNewSubUserMobile(e.target.value)} className={styles.input} required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Password <span className={styles.req}>*</span></label>
+                  <input type="password" value={newSubUserPassword} onChange={(e) => setNewSubUserPassword(e.target.value)} className={styles.input} required minLength={8} />
+                </div>
+                <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
+                  <button type="submit" className={styles.saveBtn} disabled={saving}>
+                    {saving ? 'Creating...' : <><FiPlus /> Create User</>}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
+        )}
 
-          <div className={styles.actions}>
-            <button type="submit" className={styles.saveBtn} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

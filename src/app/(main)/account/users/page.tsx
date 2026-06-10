@@ -5,8 +5,18 @@ import styles from "../addresses/addresses.module.css"; // Reuse modal and grid 
 import profileStyles from "../profile/profile.module.css";
 import { FiPlus, FiUser } from "react-icons/fi";
 
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  mobile: string;
+  username: string;
+  is_active: boolean;
+  roles?: { name: string };
+}
+
 export default function AccountUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,6 +37,7 @@ export default function AccountUsersPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, []);
 
@@ -37,7 +48,7 @@ export default function AccountUsersPage() {
       const method = editId ? 'PUT' : 'POST';
       const url = editId ? `/api/account/users/${editId}` : '/api/account/users';
       
-      const payload: any = {};
+      const payload: Record<string, string | boolean> = {};
       if (!editId) {
         payload.full_name = formData.full_name;
         payload.email = formData.email;
@@ -71,7 +82,7 @@ export default function AccountUsersPage() {
     setIsModalOpen(true);
   };
 
-  const openEdit = (u: any) => {
+  const openEdit = (u: User) => {
     setEditId(u.id);
     setFormData({ ...emptyForm, full_name: u.full_name, email: u.email, is_active: u.is_active });
     setIsModalOpen(true);

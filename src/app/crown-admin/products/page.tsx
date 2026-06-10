@@ -179,23 +179,23 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!window.confirm(`Delete "${name}"? This will also delete all its variations.`)) return;
-    try {
-      const res = await fetch(
-        `/api/admin/products/${id}`,
-        { method: 'DELETE', credentials: "include" }
-      );
-      if (res.ok) {
-        loadProducts();
-        loadStats();
-      } else {
-        alert("Failed to delete product.");
-      }
-    } catch {
-      alert("Error deleting product.");
-    }
-  };
+  // const handleDelete = async (id: number, name: string) => {
+  //   if (!window.confirm(`Delete "${name}"? This will also delete all its variations.`)) return;
+  //   try {
+  //     const res = await fetch(
+  //       `/api/admin/products/${id}`,
+  //       { method: 'DELETE', credentials: "include" }
+  //     );
+  //     if (res.ok) {
+  //       loadProducts();
+  //       loadStats();
+  //     } else {
+  //       alert("Failed to delete product.");
+  //     }
+  //   } catch {
+  //     alert("Error deleting product.");
+  //   }
+  // };
 
   // Bulk Actions
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -430,7 +430,10 @@ export default function AdminProductsPage() {
                     <td>
                       <div className={styles.thumbCell}>
                         {product.image ? (
-                          <img src={product.image} alt={product.name} />
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={product.image} alt={product.name} />
+                          </>
                         ) : (
                           <div className={styles.thumbPlaceholder}>N/A</div>
                         )}

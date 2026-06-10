@@ -135,6 +135,7 @@ function ProductsContent() {
   }, []);
 
   // Sync URL params to state
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setSelectedCategories(categoryParam ? categoryParam.split(',') : []);
     setSelectedMetals(metalParam ? metalParam.split(',') : []);
@@ -145,6 +146,7 @@ function ProductsContent() {
   }, [categoryParam, metalParam, searchParams]);
 
   // Fetch products
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fetchProducts = useCallback(async (
     p: number,
     search: string,
@@ -289,18 +291,17 @@ function ProductsContent() {
 
   const toggleAttribute = (attrSlug: string, termName: string) => {
     setLoading(true);
-    setSelectedAttributes(prev => {
-      const current = prev[attrSlug] || [];
-      const updated = current.includes(termName)
-        ? current.filter(t => t !== termName)
-        : [...current, termName];
-      const next = { ...prev };
-      if (updated.length > 0) next[attrSlug] = updated;
-      else delete next[attrSlug];
-      updateUrlParams(selectedCategories, next);
-      setPage(1);
-      return next;
-    });
+    const current = selectedAttributes[attrSlug] || [];
+    const updated = current.includes(termName)
+      ? current.filter(t => t !== termName)
+      : [...current, termName];
+    const next = { ...selectedAttributes };
+    if (updated.length > 0) next[attrSlug] = updated;
+    else delete next[attrSlug];
+
+    setSelectedAttributes(next);
+    updateUrlParams(selectedCategories, next);
+    setPage(1);
   };
 
   const toggleMetal = (metal: string) => {
@@ -475,6 +476,7 @@ function ProductsContent() {
                         ))}
                       </div>
                     )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={product.image || '/web-phts/a-17.jpg'}
                       alt={product.name}

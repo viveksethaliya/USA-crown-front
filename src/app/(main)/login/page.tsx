@@ -38,8 +38,8 @@ export default function LoginPage() {
       window.dispatchEvent(new Event('user-auth-change'));
 
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
@@ -51,6 +51,7 @@ export default function LoginPage() {
         {/* Left Side: Branding */}
         <div className={styles.brandSide}>
           <div className={styles.brandContent}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="Crown Findings" className={styles.brandLogo} />
             <h2 className={styles.brandTagline}>Your Trusted Partner in Wholesale Jewelry Findings</h2>
             <p className={styles.brandText}>

@@ -19,6 +19,7 @@ const ReactQuill = dynamic(() => import("react-quill-new"), {
   loading: () => <p style={{ padding: 20 }}>Loading editor...</p>,
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const QuillEditor = ReactQuill as React.ComponentType<any>;
 interface Subscriber {
   id: string;
@@ -42,6 +43,7 @@ type Tab = "compose" | "subscribers" | "campaigns";
 
 export default function NewsletterPage() {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const quillRef = useRef<any>(null);
   const subjectRef = useRef<HTMLInputElement>(null);
   const testEmailRef = useRef<HTMLInputElement>(null);
@@ -81,8 +83,8 @@ export default function NewsletterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setSubscribers(data.subscribers || []);
-    } catch (err: any) {
-      showToast("error", err.message || "Failed to load subscribers");
+    } catch (err: unknown) {
+      showToast("error", err instanceof Error ? err.message : "Failed to load subscribers");
     } finally {
       setSubsLoading(false);
     }
@@ -96,14 +98,15 @@ export default function NewsletterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setCampaigns(data.campaigns || []);
-    } catch (err: any) {
-      showToast("error", err.message || "Failed to load campaigns");
+    } catch (err: unknown) {
+      showToast("error", err instanceof Error ? err.message : "Failed to load campaigns");
     } finally {
       setCampaignsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (tab === "subscribers") fetchSubscribers();
     if (tab === "campaigns") fetchCampaigns();
   }, [tab, fetchSubscribers, fetchCampaigns]);
@@ -200,8 +203,8 @@ export default function NewsletterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       showToast("success", data.message || "Test sent!");
-    } catch (err: any) {
-      showToast("error", err.message);
+    } catch (err: unknown) {
+      showToast("error", err instanceof Error ? err.message : String(err));
     } finally {
       setTestSending(false);
     }
@@ -236,8 +239,8 @@ export default function NewsletterPage() {
       showToast("success", data.message || "Newsletter sent!");
       setSubject("");
       setContent("");
-    } catch (err: any) {
-      showToast("error", err.message);
+    } catch (err: unknown) {
+      showToast("error", err instanceof Error ? err.message : String(err));
     } finally {
       setSending(false);
     }

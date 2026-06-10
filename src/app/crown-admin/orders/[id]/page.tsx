@@ -1,16 +1,66 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import styles from "../orders.module.css";
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const id = unwrappedParams.id;
-  const router = useRouter();
 
-  const [order, setOrder] = useState<any>(null);
+
+  interface OrderItem {
+    id: number;
+    image_url: string | null;
+    product_name: string;
+    sku: string;
+    variation_label: string | null;
+    unit_price: string | number;
+    quantity: number;
+    line_total: string | number;
+  }
+  interface OrderAddress {
+    firstName: string;
+    lastName: string;
+    companyName: string | null;
+    addressLine: string;
+    city: string;
+    stateProvince: string;
+    zipCode: string;
+    country: string;
+    phone: string;
+  }
+  interface OrderLog {
+    id: number;
+    is_customer_note: boolean;
+    admin_id: string | null;
+    admin_name: string | null;
+    created_at: string;
+    note: string;
+  }
+  interface Refund {
+    amount: string | number;
+  }
+  interface Order {
+    status: string;
+    order_number: string;
+    created_at: string;
+    customer_email: string;
+    shipping_method: string;
+    subtotal_amount: string | number;
+    shipping_amount: string | number;
+    tax_amount: string | number;
+    total_amount: string | number;
+    payment_link_url: string | null;
+    payment_status: string;
+    billing_address?: OrderAddress;
+    shipping_address?: OrderAddress;
+    items?: OrderItem[];
+    refunds?: Refund[];
+    activity_logs?: OrderLog[];
+  }
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Status state
@@ -44,6 +94,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrder();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -116,7 +167,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   if (loading) return <div className={styles.container}>Loading order...</div>;
   if (!order) return <div className={styles.container}>Order not found.</div>;
 
-  const totalRefunded = order.refunds?.reduce((sum: number, r: any) => sum + Number(r.amount), 0) || 0;
+  const totalRefunded = order.refunds?.reduce((sum: number, r) => sum + Number(r.amount), 0) || 0;
 
   return (
     <div className={styles.container}>
@@ -193,8 +244,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               <h2>Line Items</h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {order.items?.map((item: any) => (
+              {order.items?.map((item) => (
                 <div key={item.id} className={styles.itemRow}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={item.image_url || '/placeholder.png'} alt={item.product_name} className={styles.itemImage} />
                   <div className={styles.itemInfo} style={{ flex: 1 }}>
                     <h4>{item.product_name}</h4>
@@ -270,7 +322,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
             </div>
             
             <div className={styles.timeline}>
-              {order.activity_logs?.map((log: any) => {
+              {order.activity_logs?.map((log) => {
                 let logClass = styles.system;
                 if (log.is_customer_note) logClass = styles.customer;
                 else if (log.admin_id) logClass = styles.admin;

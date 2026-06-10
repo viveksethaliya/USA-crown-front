@@ -4,12 +4,20 @@ import { useEffect, useState } from "react";
 import styles from "./profile.module.css";
 import { FiInfo } from "react-icons/fi";
 
+interface UserProfile {
+  username?: string;
+  full_name?: string;
+  mobile?: string;
+  email?: string;
+  roles?: { name: string };
+}
+
 export default function AccountProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
 
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -57,8 +65,8 @@ export default function AccountProfilePage() {
       if (!res.ok) throw new Error(data.error || "Failed to update profile");
       
       setMsg({ type: "success", text: "Profile updated successfully." });
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message });
+    } catch (err: unknown) {
+      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
     } finally {
       setSaving(false);
     }

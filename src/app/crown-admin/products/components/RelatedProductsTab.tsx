@@ -34,7 +34,9 @@ export default function RelatedProductsTab({ productId }: { productId: number })
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRelated();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,14 +77,16 @@ export default function RelatedProductsTab({ productId }: { productId: number })
     }
   };
 
-  const handleRemove = async (relatedProductId: number) => {
+  const handleRemove = async (relatedProductId: number, type: string) => {
     try {
-      const res = await fetch(`/api/admin/products/${productId}/related/${relatedProductId}`, {
+      const res = await fetch(`/api/admin/products/${productId}/related/${relatedProductId}?type=${encodeURIComponent(type)}`, {
         method: 'DELETE',
         credentials: 'include'
       });
       if (res.ok) {
         fetchRelated();
+      } else {
+        alert('Failed to remove related product');
       }
     } catch (e) {
       console.error(e);
@@ -154,13 +158,13 @@ export default function RelatedProductsTab({ productId }: { productId: number })
           {related.length === 0 ? (
             <tr><td colSpan={4} style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>No linked products.</td></tr>
           ) : related.map(r => (
-            <tr key={r.related_product_id} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '0.5rem' }}>{r.related_product.name}</td>
-              <td style={{ padding: '0.5rem' }}>{r.related_product.sku}</td>
+            <tr key={`${r.related_product_id}-${r.type}`} style={{ borderBottom: '1px solid #eee' }}>
+              <td style={{ padding: '0.5rem' }}>{r.related_product?.name || 'Unknown'}</td>
+              <td style={{ padding: '0.5rem' }}>{r.related_product?.sku || 'N/A'}</td>
               <td style={{ padding: '0.5rem', textTransform: 'capitalize' }}>{r.type.replace('_', '-')}</td>
               <td style={{ padding: '0.5rem', textAlign: 'right' }}>
                 <button 
-                  onClick={() => handleRemove(r.related_product_id)}
+                  onClick={() => handleRemove(r.related_product_id, r.type)}
                   style={{ background: '#dc3545', color: '#fff', border: 'none', padding: '0.25rem 0.5rem', borderRadius: 4, cursor: 'pointer' }}
                 >
                   Remove

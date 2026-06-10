@@ -2,8 +2,8 @@ import React from 'react';
 import styles from '../products.module.css';
 
 interface SEOTabProps {
-  getFieldValue: (field: string) => any;
-  handleFieldChange: (field: string, value: any) => void;
+  getFieldValue: (field: string) => unknown;
+  handleFieldChange: (field: string, value: unknown) => void;
 }
 
 export default function SEOTab({ getFieldValue, handleFieldChange }: SEOTabProps) {

@@ -2,7 +2,7 @@ import { Metadata, ResolvingMetadata } from 'next';
 import ProductDetailClient from './ProductDetailClient';
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 async function getProduct(id: string) {
@@ -20,7 +20,8 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const id = params.id;
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
   const product = await getProduct(id);
 
   if (!product) {
@@ -39,7 +40,8 @@ export async function generateMetadata(
 }
 
 export default async function ProductPage({ params }: Props) {
-  const product = await getProduct(params.id);
+  const resolvedParams = await params;
+  const product = await getProduct(resolvedParams.id);
 
   const jsonLd = product ? {
     '@context': 'https://schema.org',

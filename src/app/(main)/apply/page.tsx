@@ -158,8 +158,8 @@ export default function ApplyPage() {
       }
 
       setSubmitSuccess(true);
-    } catch (err: any) {
-      setSubmitError(err.message || 'An error occurred during submission');
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : 'An error occurred during submission');
     } finally {
       setIsSubmitting(false);
     }

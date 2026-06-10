@@ -90,6 +90,12 @@ export default function CheckoutPage() {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState('');
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
+  interface ShippingMethod {
+    id: string;
+    name: string;
+    cost: number;
+  }
+  const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([]);
 
   const loadCheckout = async () => {
     setError('');
@@ -102,6 +108,15 @@ export default function CheckoutPage() {
       const cartData = await cartResponse.json() as CartApiResponse;
 
       if (!cartResponse.ok) throw new Error(cartData.error || 'Failed to load cart');
+
+      const shippingResponse = await fetch(apiUrl('/api/checkout/shipping-methods'));
+      if (shippingResponse.ok) {
+        const smData = await shippingResponse.json();
+        if (Array.isArray(smData) && smData.length > 0) {
+          setAvailableShippingMethods(smData);
+          setShippingMethod(smData[0].id);
+        }
+      }
 
       setCart(cartData.cart);
 
@@ -298,8 +313,16 @@ export default function CheckoutPage() {
                 <label className={styles.field}>
                   <span>Shipping method</span>
                   <select value={shippingMethod} onChange={(event) => setShippingMethod(event.target.value)}>
-                    <option value="standard_review">Standard wholesale shipping, reviewed by staff</option>
-                    <option value="customer_pickup">Customer pickup, reviewed by staff</option>
+                    {availableShippingMethods.length > 0 ? (
+                      availableShippingMethods.map(m => (
+                        <option key={m.id} value={m.id}>{m.name} {m.cost > 0 ? `(${formatMoney(m.cost)})` : '(Calculated later)'}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="standard_review">Standard wholesale shipping, reviewed by staff</option>
+                        <option value="customer_pickup">Customer pickup, reviewed by staff</option>
+                      </>
+                    )}
                   </select>
                 </label>
                 <label className={styles.field}>

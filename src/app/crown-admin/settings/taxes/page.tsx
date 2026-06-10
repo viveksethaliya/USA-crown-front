@@ -6,7 +6,13 @@ import styles from "../../admin.module.css";
 import { FiArrowLeft } from "react-icons/fi";
 
 export default function TaxesSettingsPage() {
-  const [taxClasses, setTaxClasses] = useState<any[]>([]);
+  interface TaxClass {
+    id: string;
+    name: string;
+    description: string;
+    tax_rates?: { length: number };
+  }
+  const [taxClasses, setTaxClasses] = useState<TaxClass[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +49,7 @@ export default function TaxesSettingsPage() {
               </tr>
             </thead>
             <tbody>
-              {taxClasses.map((c: any) => (
+              {taxClasses.map((c) => (
                 <tr key={c.id}>
                   <td>{c.name}</td>
                   <td>{c.description}</td>

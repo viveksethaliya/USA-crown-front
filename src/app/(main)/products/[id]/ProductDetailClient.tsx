@@ -46,6 +46,7 @@ interface ProductData {
   description: string;
   short_description: string;
   weight_g: number | null;
+  measurement_type: 'none' | 'inch' | 'plate';
   attributes: ProductAttribute[];
   variations: ProductVariation[];
   categories: ProductCategory[];
@@ -58,7 +59,7 @@ interface ProductApiResponse {
 
 const uniqueUrls = (urls: string[]) => Array.from(new Set(urls.filter(Boolean)));
 
-export default function ProductDetailClient({ initialProduct }: { initialProduct: ProductData | null }) {
+export default function ProductDetailClient({ initialProduct: _initialProduct }: { initialProduct: ProductData | null }) {
   const params = useParams();
   const productId = params.id as string;
 
@@ -74,7 +75,12 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   // Custom Measurements
   const [customLength, setCustomLength] = useState<number | ''>('');
   const [customWidth, setCustomWidth] = useState<number | ''>('');
-  const [metalPriceMultiplier, setMetalPriceMultiplier] = useState(1);
+  const [_metalPriceMultiplier, setMetalPriceMultiplier] = useState(1);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+  const [basePrice, setBasePrice] = useState<number | null>(null);
+  
+  interface Discount { id: number; min_quantity: number; type: string; amount: number; }
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
 
   useEffect(() => {
     async function fetchMetalPrice() {
@@ -228,7 +234,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           productId: product.id,
           variationId: currentVariation ? currentVariation.id : null,
           quantity,
-          guestId
+          guestId,
+          length: customLength || undefined,
+          width: customWidth || undefined
         })
       });
       if (!res.ok) {
@@ -237,12 +245,13 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       }
       alert("Added to cart successfully!");
       if (typeof window !== 'undefined') window.dispatchEvent(new Event('cart-updated'));
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : String(err));
     } finally {
       setAddingToCart(false);
     }
   };
+
 
   // 4. Determine current active variation
   const currentVariation = product?.variations?.find(v => 
@@ -252,9 +261,57 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   ) || null;
 
   // --- Dynamic Data for UI ---
-  const displaySku = currentVariation?.sku || product?.sku || 'N/A';
+  // const displaySku = currentVariation?.sku || product?.sku || 'N/A';
   const displayWeight = currentVariation?.weight_g ?? product?.weight_g;
   const weightDisplay = displayWeight ? `${displayWeight}g` : 'N/A';
+
+  useEffect(() => {
+    async function fetchDiscounts() {
+      if (!productId) return;
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}/discounts`);
+        if (res.ok) {
+          const data = await res.json();
+          setDiscounts(data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    fetchDiscounts();
+  }, [productId]);
+
+  useEffect(() => {
+    async function fetchPrice() {
+      if (!product) return;
+      try {
+        const body: Record<string, string | number | null> = {
+          productId: product.id,
+          variationId: currentVariation ? currentVariation.id : null,
+        };
+        if (product.measurement_type === 'inch') body.length = customLength;
+        if (product.measurement_type === 'plate') {
+          body.length = customLength;
+          body.width = customWidth;
+        }
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/calculate-price`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCalculatedPrice(data.price);
+          setBasePrice(data.originalBasePrice);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    fetchPrice();
+  }, [product, currentVariation, customLength, customWidth]);
+
 
   const images = uniqueUrls(
     (currentVariation && currentVariation.images && currentVariation.images.length > 0)
@@ -264,6 +321,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   useEffect(() => {
     if (activeImage >= images.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveImage(0);
     }
   }, [images.length, activeImage]);
@@ -330,6 +388,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           {/* Left: Images */}
           <div className={styles.imageSide}>
             <div className={styles.mainImage}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={images[activeImageIndex] || images[0]}
                 alt={product.name}
@@ -344,6 +403,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     className={`${styles.thumbBtn} ${activeImageIndex === idx ? styles.thumbActive : ''}`}
                     onClick={() => setActiveImage(idx)}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img} alt={`${product.name} view ${idx + 1}`} className={styles.thumbImg} />
                   </button>
                 ))}
@@ -371,7 +431,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
             {/* Dynamic Variation Selectors */}
             {variationAttributes.map((attr, attrIdx) => {
-              let allOptions = Array.from(new Set(
+              const allOptions = Array.from(new Set(
                 product.variations.flatMap(v => v.attributes.filter(a => a.slug === attr.slug).map(a => a.value))
               ));
 
@@ -415,6 +475,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                             onClick={() => handleOptionSelect(attrIdx, attr.slug, opt)}
                             style={{ opacity: valid ? 1 : 0.3, cursor: valid ? 'pointer' : 'not-allowed' }}
                           >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={btnImg} alt={opt} className={styles.metalImg} />
                             <span className={styles.metalCode}>{opt}</span>
                           </button>
@@ -449,6 +510,90 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               );
             })}
 
+
+            {/* Custom Dimensions */}
+            {product.measurement_type === 'inch' && (
+              <div className={styles.sizeSection} style={{ marginTop: '1.5rem' }}>
+                <h4 className={styles.sectionLabel}>Length (Inches)</h4>
+                <input 
+                  type="number" 
+                  min="1" 
+                  step="0.25"
+                  value={customLength} 
+                  onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')} 
+                  className={styles.sizeSelect} 
+                  placeholder="Enter inches..."
+                />
+              </div>
+            )}
+            {product.measurement_type === 'plate' && (
+              <div className={styles.sizeSection} style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <h4 className={styles.sectionLabel}>Length (Inches)</h4>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    step="0.25"
+                    value={customLength} 
+                    onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')} 
+                    className={styles.sizeSelect} 
+                    placeholder="Length"
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h4 className={styles.sectionLabel}>Width (Inches)</h4>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    step="0.25"
+                    value={customWidth} 
+                    onChange={(e) => setCustomWidth(parseFloat(e.target.value) || '')} 
+                    className={styles.sizeSelect} 
+                    placeholder="Width"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Pricing Display */}
+            <div style={{ marginTop: '2rem', marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
+              {isAuthenticated ? (
+                <>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-gold)' }}>
+                    $\{calculatedPrice !== null ? calculatedPrice.toFixed(2) : (basePrice ? basePrice.toFixed(2) : '0.00')}
+                    <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}> / each</span>
+                  </div>
+                  {discounts.length > 0 && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--color-inkblue)' }}>Bulk Order Discounts:</p>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
+                            <th style={{ padding: '0.3rem 0' }}>Quantity</th>
+                            <th style={{ padding: '0.3rem 0' }}>Discount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {discounts.map(d => (
+                            <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
+                              <td style={{ padding: '0.4rem 0' }}>\{d.min_quantity}+</td>
+                              <td style={{ padding: '0.4rem 0', color: 'green', fontWeight: 600 }}>
+                                \{d.type === 'percentage' ? `\${d.amount}% off` : `$\${d.amount} off`}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                  Please login to view wholesale pricing and bulk discounts.
+                </div>
+              )}
+            </div>
+
             {/* Quantity + Add to Cart */}
             <div className={styles.orderRow}>
               <div className={styles.quantityBox}>
@@ -472,9 +617,22 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   +
                 </button>
               </div>
-              <Link href="/login" className={styles.priceBtn}>
-                Login to See Price
-              </Link>
+              
+              {isAuthenticated ? (
+                <button 
+                  onClick={handleAddToCart} 
+                  disabled={addingToCart}
+                  className={styles.priceBtn}
+                  style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-inkblue)' }}
+                >
+                  {addingToCart ? 'Adding...' : 'Add to Cart'}
+                </button>
+              ) : (
+                <Link href="/login" className={styles.priceBtn}>
+                  Login to See Price
+                </Link>
+              )}
+
             </div>
 
 

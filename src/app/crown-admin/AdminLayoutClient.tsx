@@ -224,15 +224,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                 <span className={styles.navLinkText}>Users</span>
               </Link>
             </li>
-            <li>
-              <Link
-                href="/crown-admin/roles"
-                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/roles") ? styles.navLinkActive : ""}`}
-              >
-                <span className={styles.navLinkIcon}><FiShield /></span>
-                <span className={styles.navLinkText}>Roles</span>
-              </Link>
-            </li>
+
             <li>
               <Link
                 href="/crown-admin/registrations"
@@ -255,6 +247,15 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
               >
                 <span className={styles.navLinkIcon}><FiFolder /></span>
                 <span className={styles.navLinkText}>Media Library</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/crown-admin/roles"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/roles") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiShield /></span>
+                <span className={styles.navLinkText}>Roles & Permissions</span>
               </Link>
             </li>
             </>)}

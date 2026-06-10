@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
     setMsg({ type: "", text: "" });
 
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -25,8 +25,8 @@ export default function ForgotPasswordPage() {
       
       setMsg({ type: "success", text: data.message || "Reset link sent to your email." });
       setEmail("");
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message });
+    } catch (err: unknown) {
+      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
     } finally {
       setLoading(false);
     }

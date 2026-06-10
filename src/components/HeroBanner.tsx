@@ -37,14 +37,23 @@ export default function HeroBanner() {
 
   useEffect(() => {
     const fetchBanner = async () => {
+      // Client-side fallback check
+      const views = parseInt(sessionStorage.getItem('bannerViews') || '0', 10);
+      if (views >= 2) {
+        setLoaded(true);
+        return;
+      }
+
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/banners/active`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/banners/active`,
+          { credentials: 'include' }
         );
         if (!res.ok) return;
         const data = await res.json();
         if (data.banner) {
           setBanner(data.banner);
+          sessionStorage.setItem('bannerViews', (views + 1).toString());
         }
       } catch {
         // Silently fail — homepage still works without a banner

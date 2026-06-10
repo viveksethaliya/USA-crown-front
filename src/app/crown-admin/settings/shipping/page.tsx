@@ -6,7 +6,13 @@ import styles from "../../admin.module.css";
 import { FiArrowLeft } from "react-icons/fi";
 
 export default function ShippingSettingsPage() {
-  const [zones, setZones] = useState<any[]>([]);
+  interface ShippingZone {
+    id: string;
+    name: string;
+    regions?: string[];
+    shipping_methods?: { length: number };
+  }
+  const [zones, setZones] = useState<ShippingZone[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +49,7 @@ export default function ShippingSettingsPage() {
               </tr>
             </thead>
             <tbody>
-              {zones.map((z: any) => (
+              {zones.map((z) => (
                 <tr key={z.id}>
                   <td>{z.name}</td>
                   <td>{z.regions?.join(', ')}</td>

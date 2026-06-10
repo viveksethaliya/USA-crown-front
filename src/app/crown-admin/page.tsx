@@ -10,7 +10,7 @@ interface DashboardData {
     publishedBlogs: number;
     draftBlogs: number;
   };
-  recentBlogs: any[];
+  recentBlogs: { id: number; title: string; status: string; created_at: string }[];
 }
 
 export default function AdminDashboard() {
@@ -27,7 +27,7 @@ export default function AdminDashboard() {
         if (!res.ok) throw new Error("Failed to fetch dashboard");
         const json = await res.json();
         setData(json);
-      } catch (err) {
+      } catch {
         setError("Could not load dashboard data.");
       } finally {
         setLoading(false);
