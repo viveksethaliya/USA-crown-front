@@ -100,7 +100,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   }, [id]);
 
   const handleStatusUpdate = async () => {
-    if (status === order.status) return;
+    if (!order || status === order.status) return;
     setIsUpdatingStatus(true);
     try {
       const res = await fetch(`/api/admin/orders/${id}/status`, {

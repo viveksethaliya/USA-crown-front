@@ -2,8 +2,8 @@ import React from 'react';
 import styles from '../products.module.css';
 
 interface AdvancedTabProps {
-  getFieldValue: (field: string) => unknown;
-  handleFieldChange: (field: string, value: unknown) => void;
+  getFieldValue: (field: string) => any;
+  handleFieldChange: (field: string, value: string | number | boolean | null) => void;
 }
 
 export default function AdvancedTab({ getFieldValue, handleFieldChange }: AdvancedTabProps) {
