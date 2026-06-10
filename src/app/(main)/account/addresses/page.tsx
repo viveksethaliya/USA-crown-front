@@ -92,8 +92,21 @@ export default function AccountAddressesPage() {
   };
 
   const openEdit = (addr: Address) => {
-    setEditId(addr.id);
-    setFormData(addr);
+    setEditId(addr.id || null);
+    setFormData({
+      first_name: addr.first_name || "",
+      last_name: addr.last_name || "",
+      company_name: addr.company_name || "",
+      address_line1: addr.address_line1 || "",
+      address_line2: addr.address_line2 || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      postal_code: addr.postal_code || "",
+      country: addr.country || "US",
+      phone: addr.phone || "",
+      is_default_shipping: addr.is_default_shipping || false,
+      is_default_billing: addr.is_default_billing || false
+    });
     setIsModalOpen(true);
   };
 
@@ -122,7 +135,7 @@ export default function AccountAddressesPage() {
 
             <div className={styles.actions}>
               <button onClick={() => openEdit(a)} className={styles.actionBtn}>Edit</button>
-              <button onClick={() => handleDelete(a.id)} className={`${styles.actionBtn} ${styles.delete}`}>Delete</button>
+              <button onClick={() => a.id && handleDelete(a.id)} className={`${styles.actionBtn} ${styles.delete}`}>Delete</button>
             </div>
           </div>
         ))}

@@ -45,7 +45,7 @@ export default function OrderPaymentPage(props: { params: Promise<{ id: string }
       <h2>Payment for Order #{order.order_number}</h2>
       
       <div className={styles.card}>
-        <h3>Order Total: ${parseFloat(order.total_amount).toFixed(2)}</h3>
+        <h3>Order Total: ${parseFloat(String(order.total_amount)).toFixed(2)}</h3>
         <p>This is a dummy payment page as requested.</p>
         
         <div style={{ marginTop: '2rem' }}>

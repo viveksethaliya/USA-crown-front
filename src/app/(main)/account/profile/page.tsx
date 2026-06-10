@@ -96,7 +96,7 @@ export default function AccountProfilePage() {
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formGroup}>
           <label>Username (Login ID)</label>
-          <input type="text" className={styles.input} value={profile.username} disabled />
+          <input type="text" className={styles.input} value={profile?.username || ''} disabled />
         </div>
 
         <div className={styles.formGroup}>
