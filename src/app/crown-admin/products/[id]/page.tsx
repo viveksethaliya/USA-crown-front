@@ -5,14 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../products.module.css";
-import { ProductData, ProductImage } from "../components/types";
+import { ProductData, ProductImage, ProductAttribute, Variation } from "../components/types";
 import ProductTabs from "../components/ProductTabs";
 import GeneralTab from "../components/GeneralTab";
 import InventoryTab from "../components/InventoryTab";
 import CategorySelector from "../components/CategorySelector";
+import TagSelector from "../components/TagSelector";
 import ImageUploader from "../components/ImageUploader";
 import AttributesTab from "../components/AttributesTab";
 import VariationsTab from "../components/VariationsTab";
+import PricingTab from "../components/PricingTab";
+import ShippingTab from "../components/ShippingTab";
+import SEOTab from "../components/SEOTab";
+import AdvancedTab from "../components/AdvancedTab";
+import RelatedProductsTab from "../components/RelatedProductsTab";
 
 export default function AdminProductEditPage() {
   const params = useParams();
@@ -22,11 +28,12 @@ export default function AdminProductEditPage() {
   const [product, setProduct] = useState<ProductData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editedFields, setEditedFields] = useState<Record<string, any>>({});
+  const [editedFields, setEditedFields] = useState<Record<string, string | number | boolean | null>>({});
   const [hasChanges, setHasChanges] = useState(false);
   
   const [activeTab, setActiveTab] = useState('general');
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -38,7 +45,8 @@ export default function AdminProductEditPage() {
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         setProduct(data.product);
-        setSelectedCategories(data.product.categories.map((c: any) => c.id));
+        setSelectedCategories(data.product.categories?.map((c: {id: number}) => c.id) || []);
+        setSelectedTags(data.product.tags?.map((t: {id: number}) => t.id) || []);
       } catch (err) {
         console.error("Failed to fetch product", err);
       } finally {
@@ -51,14 +59,15 @@ export default function AdminProductEditPage() {
     }
   }, [productId]);
 
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = (field: string, value: string | number | boolean | null) => {
     setEditedFields(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
-  const getFieldValue = (field: string) => {
+  const getFieldValue = (field: string): string | number | boolean | null => {
     if (editedFields[field] !== undefined) return editedFields[field];
-    return (product as any)?.[field] ?? '';
+    if (!product) return '';
+    return (product as unknown as Record<string, string | number | boolean | null>)[field] ?? '';
   };
 
   const handleCategoryChange = (ids: number[]) => {
@@ -66,16 +75,21 @@ export default function AdminProductEditPage() {
     setHasChanges(true);
   };
 
+  const handleTagChange = (ids: number[]) => {
+    setSelectedTags(ids);
+    setHasChanges(true);
+  };
+
   const handleImagesChange = (newImages: ProductImage[]) => {
     setProduct(prev => prev ? { ...prev, images: newImages } : prev);
   };
 
-  const handleAttributesChange = (newAttrs: any[]) => {
+  const handleAttributesChange = (newAttrs: ProductAttribute[]) => {
     setProduct(prev => prev ? { ...prev, attributes: newAttrs } : prev);
     setHasChanges(true);
   };
 
-  const handleVariationsChange = (newVars: any[]) => {
+  const handleVariationsChange = (newVars: Variation[]) => {
     setProduct(prev => prev ? { ...prev, variations: newVars } : prev);
     setHasChanges(true);
   };
@@ -90,8 +104,8 @@ export default function AdminProductEditPage() {
       if (!res.ok) throw new Error(data.error);
       alert(data.message);
       window.location.reload();
-    } catch (err: any) {
-      alert(`Error generating variations: ${err.message}`);
+    } catch (err) {
+      alert(`Error generating variations: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -129,6 +143,17 @@ export default function AdminProductEditPage() {
       );
       if (!catRes.ok) throw new Error('Failed to sync categories');
 
+      const tagRes = await fetch(
+        `/api/admin/products/${product.id}/tags`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: "include",
+          body: JSON.stringify({ tagIds: selectedTags })
+        }
+      );
+      if (!tagRes.ok) throw new Error('Failed to sync tags');
+
       // 3. Sync attributes
       const attrRes = await fetch(
         `/api/admin/products/${product.id}/attributes`,
@@ -158,8 +183,8 @@ export default function AdminProductEditPage() {
       setEditedFields({});
       setHasChanges(false);
       alert('Product saved successfully!');
-    } catch (err: any) {
-      alert(`Error saving: ${err.message}`);
+    } catch (err) {
+      alert(`Error saving: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }
@@ -229,12 +254,30 @@ export default function AdminProductEditPage() {
                 selectedIds={selectedCategories}
                 onChange={handleCategoryChange}
               />
+              <TagSelector
+                selectedIds={selectedTags}
+                onChange={handleTagChange}
+              />
             </div>
           </div>
         )}
 
+        {activeTab === 'pricing' && (
+          <PricingTab 
+            getFieldValue={getFieldValue} 
+            handleFieldChange={handleFieldChange} 
+          />
+        )}
+
         {activeTab === 'inventory' && (
           <InventoryTab 
+            getFieldValue={getFieldValue} 
+            handleFieldChange={handleFieldChange} 
+          />
+        )}
+
+        {activeTab === 'shipping' && (
+          <ShippingTab 
             getFieldValue={getFieldValue} 
             handleFieldChange={handleFieldChange} 
           />
@@ -262,6 +305,24 @@ export default function AdminProductEditPage() {
             productImages={product.images}
             onChange={handleVariationsChange}
             onGenerate={handleGenerateVariations}
+          />
+        )}
+
+        {activeTab === 'related' && (
+          <RelatedProductsTab productId={product.id} />
+        )}
+
+        {activeTab === 'seo' && (
+          <SEOTab 
+            getFieldValue={getFieldValue} 
+            handleFieldChange={handleFieldChange} 
+          />
+        )}
+
+        {activeTab === 'advanced' && (
+          <AdvancedTab 
+            getFieldValue={getFieldValue} 
+            handleFieldChange={handleFieldChange} 
           />
         )}
       </div>

@@ -1,0 +1,138 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import styles from "../profile/profile.module.css";
+import { FiBriefcase } from "react-icons/fi";
+
+export default function AccountCompanyPage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState({ type: "", text: "" });
+
+  const [formData, setFormData] = useState({
+    company_name: "",
+    tax_id: "",
+    industry: "",
+    company_notes: "",
+    resale_certificate_url: ""
+  });
+
+  useEffect(() => {
+    fetch('/api/account/company')
+      .then(r => r.json())
+      .then(data => {
+        if (data && !data.error) {
+          setFormData({
+            company_name: data.company_name || "",
+            tax_id: data.tax_id || "",
+            industry: data.industry || "",
+            company_notes: data.company_notes || "",
+            resale_certificate_url: data.resale_certificate_url || ""
+          });
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setMsg({ type: "", text: "" });
+
+    try {
+      const res = await fetch('/api/account/company', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update company profile");
+      
+      setMsg({ type: "success", text: "Company details updated successfully." });
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div>Loading company details...</div>;
+
+  return (
+    <div>
+      <div className={styles.header}>
+        <h1><FiBriefcase /> Company Details</h1>
+        <p>Manage your wholesale business information.</p>
+      </div>
+
+      {msg.text && (
+        <div className={msg.type === 'error' ? styles.error : styles.success}>
+          {msg.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.formGroup}>
+          <label>Company Name *</label>
+          <input 
+            required type="text" className={styles.input} 
+            value={formData.company_name} 
+            onChange={e => setFormData({...formData, company_name: e.target.value})}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Tax ID / EIN</label>
+          <input 
+            type="text" className={styles.input} 
+            value={formData.tax_id} 
+            onChange={e => setFormData({...formData, tax_id: e.target.value})}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Industry</label>
+          <select 
+            className={styles.input} 
+            value={formData.industry} 
+            onChange={e => setFormData({...formData, industry: e.target.value})}
+          >
+            <option value="">Select Industry...</option>
+            <option value="Retailer">Retailer</option>
+            <option value="Wholesaler">Wholesaler</option>
+            <option value="Manufacturer">Manufacturer</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Additional Notes</label>
+          <textarea 
+            className={styles.input} 
+            rows={4}
+            value={formData.company_notes} 
+            onChange={e => setFormData({...formData, company_notes: e.target.value})}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Resale Certificate Link (Optional)</label>
+          <input 
+            type="url" className={styles.input} 
+            placeholder="https://..."
+            value={formData.resale_certificate_url} 
+            onChange={e => setFormData({...formData, resale_certificate_url: e.target.value})}
+          />
+        </div>
+
+        <button type="submit" disabled={saving} className={styles.submitBtn}>
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </form>
+    </div>
+  );
+}

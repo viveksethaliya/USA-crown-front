@@ -66,6 +66,20 @@
   gap: 0.5rem;
 }
 
+.navGroupTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1.5rem 1rem 0.5rem 1rem;
+  margin: 0;
+}
+
+.sidebarCollapsed .navGroupTitle {
+  display: none;
+}
+
 .navLink {
   display: flex;
   align-items: center;

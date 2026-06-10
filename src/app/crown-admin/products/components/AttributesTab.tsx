@@ -13,6 +13,97 @@ interface GlobalAttribute {
   slug: string;
 }
 
+interface Term {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+function TermSelector({ attrId, selectedTermIds, onTermsChange, legacyValues, onLegacyChange }: { attrId: number, selectedTermIds: number[], onTermsChange: (ids: number[]) => void, legacyValues: string, onLegacyChange: (val: string) => void }) {
+  const [terms, setTerms] = useState<Term[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/admin/attributes/${attrId}/terms`, { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        setTerms(data.terms || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to load terms", err);
+        setLoading(false);
+      });
+  }, [attrId]);
+
+  const toggleTerm = (term: Term) => {
+    let newIds = [...selectedTermIds];
+    if (newIds.includes(term.id)) {
+      newIds = newIds.filter(id => id !== term.id);
+    } else {
+      newIds.push(term.id);
+    }
+    onTermsChange(newIds);
+    
+    // Auto-update legacy comma-separated string for fallback
+    const selectedTerms = terms.filter(t => newIds.includes(t.id)).map(t => t.name);
+    onLegacyChange(selectedTerms.join(', '));
+  };
+
+  if (loading) return <div style={{ fontSize: '0.85rem', color: '#666' }}>Loading terms...</div>;
+
+  return (
+    <div style={{ marginBottom: '1rem' }}>
+      <label className={styles.fieldLabel}>Select Terms</label>
+      {terms.length === 0 ? (
+        <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+          No terms defined for this attribute yet. Go to Attributes manager to add some.
+          <div style={{ marginTop: '0.5rem' }}>
+            <input 
+              type="text" 
+              className={styles.fieldInput} 
+              placeholder="Fallback comma-separated values" 
+              value={legacyValues} 
+              onChange={e => onLegacyChange(e.target.value)} 
+            />
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '4px', background: '#f8fafc', maxHeight: '150px', overflowY: 'auto' }}>
+          {terms.map(term => {
+            const isSelected = selectedTermIds.includes(term.id);
+            return (
+              <label 
+                key={term.id} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.3rem', 
+                  padding: '0.3rem 0.6rem', 
+                  background: isSelected ? '#3b82f6' : '#fff', 
+                  color: isSelected ? '#fff' : '#1e293b', 
+                  border: `1px solid ${isSelected ? '#3b82f6' : '#cbd5e1'}`, 
+                  borderRadius: '16px', 
+                  fontSize: '0.85rem', 
+                  cursor: 'pointer' 
+                }}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={isSelected} 
+                  onChange={() => toggleTerm(term)} 
+                  style={{ display: 'none' }} 
+                />
+                {term.name}
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AttributesTab({ attributes, onChange }: AttributesTabProps) {
   const [globalAttrs, setGlobalAttrs] = useState<GlobalAttribute[]>([]);
   const [selectedAttrId, setSelectedAttrId] = useState<string>('');
@@ -45,6 +136,7 @@ export default function AttributesTab({ attributes, onChange }: AttributesTabPro
       name: attrDef.name,
       slug: attrDef.slug,
       values: '',
+      term_ids: [],
       is_visible: true,
       is_for_variation: true
     };
@@ -56,7 +148,7 @@ export default function AttributesTab({ attributes, onChange }: AttributesTabPro
     onChange(attributes.filter(a => a.attribute_id !== attrId));
   };
 
-  const updateAttribute = (attrId: number, field: keyof ProductAttribute, value: any) => {
+  const updateAttribute = <K extends keyof ProductAttribute>(attrId: number, field: K, value: ProductAttribute[K]) => {
     onChange(attributes.map(a => 
       a.attribute_id === attrId ? { ...a, [field]: value } : a
     ));
@@ -103,16 +195,13 @@ export default function AttributesTab({ attributes, onChange }: AttributesTabPro
                 </button>
               </div>
 
-              <div className={styles.fieldGroup} style={{ marginBottom: '1rem' }}>
-                <label className={styles.fieldLabel}>Values (Comma separated)</label>
-                <input
-                  type="text"
-                  className={styles.fieldInput}
-                  value={attr.values}
-                  onChange={(e) => updateAttribute(attr.attribute_id, 'values', e.target.value)}
-                  placeholder="e.g. Small, Medium, Large"
-                />
-              </div>
+              <TermSelector 
+                attrId={attr.attribute_id} 
+                selectedTermIds={attr.term_ids || []}
+                onTermsChange={(ids) => updateAttribute(attr.attribute_id, 'term_ids', ids)}
+                legacyValues={attr.values}
+                onLegacyChange={(val) => updateAttribute(attr.attribute_id, 'values', val)}
+              />
 
               <div style={{ display: 'flex', gap: '1.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', cursor: 'pointer' }}>

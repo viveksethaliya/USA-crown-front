@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import styles from './profile.module.css';
-import { FiDownload } from 'react-icons/fi';
+import { FiDownload, FiShoppingBag } from 'react-icons/fi';
 
 const hearAboutLabels: Record<string, string> = {
   google: 'Google Search',
@@ -173,11 +174,20 @@ export default function ProfilePage() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>My Profile</h1>
-          <p className={styles.subtitle}>
-            Manage your account details and company information.
-          </p>
+        <div className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 className={styles.title}>My Profile</h1>
+            <p className={styles.subtitle}>
+              Manage your account details and company information.
+            </p>
+          </div>
+          <Link href="/orders" style={{
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
+            backgroundColor: '#000', color: '#fff', padding: '0.5rem 1rem', 
+            borderRadius: '4px', textDecoration: 'none', fontWeight: 600
+          }}>
+            <FiShoppingBag /> My Orders
+          </Link>
         </div>
 
         {/* Account Status Banner */}

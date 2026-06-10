@@ -104,10 +104,50 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
-    loadProducts();
-    loadStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, status, type, category, sortField, sortOrder]);
+    let cancelled = false;
+    (async () => {
+      // Load products
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ 
+          page: String(page), 
+          limit: '50',
+          status,
+          type,
+          category,
+          sortField,
+          sortOrder
+        });
+        if (search) params.set('search', search);
+
+        const res = await fetch(
+          `/api/admin/products?${params}`,
+          { credentials: "include" }
+        );
+        const data = await res.json();
+        if (!cancelled) {
+          setProducts(data.products || []);
+          setTotalPages(data.totalPages || 1);
+          setTotal(data.total || 0);
+          setSelectedIds([]);
+        }
+      } catch (err) {
+        if (!cancelled) console.error("Failed to fetch products", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+
+      // Load stats
+      try {
+        const statsRes = await fetch(`/api/admin/products/stats`, { credentials: "include" });
+        const statsData = await statsRes.json();
+        if (!cancelled && statsData.stats) setStats(statsData.stats);
+      } catch (err) {
+        if (!cancelled) console.error("Failed to fetch stats", err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [page, search, status, type, category, sortField, sortOrder, setProducts]);
 
   const handleSearch = (val: string) => {
     setSearch(val);

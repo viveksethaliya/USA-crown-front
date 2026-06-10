@@ -13,12 +13,12 @@
 
 /* --- Top Tier --- */
 .topTier {
-  background-color: var(--color-white);
-  padding: 0.3rem 0;
-  color: var(--color-inkblue);
+  background-color: var(--color-inkblue);
+  padding: 0.4rem 0;
+  color: var(--color-white);
   font-size: 0.8rem;
   font-weight: 600;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .topTierContainer {
@@ -41,9 +41,10 @@
 }
 
 .topLink {
-  color: var(--color-inkblue);
+  color: var(--color-white);
   text-decoration: none;
   text-transform: uppercase;
+  transition: color 0.2s;
 }
 
 .topLink:hover {
@@ -70,10 +71,11 @@
   border: none;
   cursor: pointer;
   padding: 0.2rem 0;
-  color: var(--color-inkblue);
+  color: var(--color-white);
   font-weight: 600;
   font-size: 0.8rem;
   text-transform: uppercase;
+  transition: color 0.2s;
 }
 
 .userBtn:hover {
@@ -86,8 +88,8 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  background-color: var(--color-inkblue);
-  color: var(--color-gold);
+  background-color: var(--color-gold);
+  color: var(--color-inkblue);
   font-weight: 800;
   font-size: 0.75rem;
 }
@@ -259,6 +261,7 @@
 /* --- Bottom Tier --- */
 .bottomTier {
   background-color: var(--color-gold);
+  position: relative;
 }
 
 .nav {
@@ -274,7 +277,7 @@
 }
 
 .navItem {
-  position: relative;
+  position: static;
 }
 
 .navLink {
@@ -287,47 +290,61 @@
   transition: all 0.2s;
 }
 
-.navItem:hover > .navLink {
+.navItem:hover>.navLink {
   background-color: var(--color-inkblue);
   color: var(--color-gold);
 }
 
-/* --- Mega Menu (Tabbed) --- */
+/* Button variant of navLink (for ALL PRODUCTS toggle) */
+.navLinkBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+/* --- Mega Menu (Full Width) --- */
 .megaMenu {
   position: absolute;
   top: 100%;
   left: 0;
-  width: 1000px;
+  width: 100%;
   background-color: var(--color-white);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   border-top: 4px solid var(--color-inkblue);
   z-index: 200;
 }
 
 .megaMenuContainer {
   display: flex;
-  min-height: 350px;
+  height: calc(100dvh - 55px);
+  min-height: 0;
 }
 
-/* Mega Menu Sidebar */
+/* Mega Menu Sidebar — scrollable */
 .megaMenuSidebar {
-  width: 250px;
+  width: 280px;
+  flex-shrink: 0;
   background-color: #f8f9fa;
   border-right: 1px solid #eee;
-  padding: 1rem 0;
+  padding: 0.5rem 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .sidebarItem {
-  padding: 1rem 2rem;
+  padding: 0.55rem 1.25rem;
   color: var(--color-inkblue);
   font-weight: 600;
+  font-size: 0.82rem;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .sidebarItem:hover,
@@ -338,7 +355,7 @@
 }
 
 .sidebarArrow {
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   color: #ccc;
 }
 
@@ -347,17 +364,18 @@
   color: var(--color-gold);
 }
 
-/* Mega Menu Content */
+/* Mega Menu Content — scrollable */
 .megaMenuContent {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
 }
 
 .megaMenuTitle {
   color: var(--color-inkblue);
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1px solid #eee;
   text-transform: uppercase;
   font-weight: 800;
@@ -365,17 +383,17 @@
 
 .megaMenuLinksGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.3rem 1.5rem;
 }
 
 .megaMenuLink {
   color: #555;
   text-decoration: none;
-  padding: 0.5rem 0;
-  font-size: 0.95rem;
+  padding: 0.25rem 0;
+  font-size: 0.83rem;
   transition: color 0.2s;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .megaMenuLink:hover {
@@ -384,13 +402,15 @@
 
 /* Mega Menu Promo */
 .megaMenuPromo {
-  width: 250px;
+  width: 220px;
+  flex-shrink: 0;
   background-color: var(--color-inkblue);
-  padding: 2rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  overflow-y: auto;
 }
 
 .promoImagePlaceholder {
@@ -440,6 +460,10 @@
   gap: 5px;
 }
 
+.mobileAllProductsBtn {
+  display: none;
+}
+
 .hamburgerLine {
   display: block;
   width: 24px;
@@ -452,19 +476,26 @@
   display: none;
 }
 
+.mobileCatalogOverlay {
+  display: none;
+}
+
 /* =============================================
    RESPONSIVE: TABLET (≤1024px)
    ============================================= */
 @media (max-width: 1024px) {
+
   /* Top Tier */
   .topTierContainer {
     flex-direction: column;
     gap: 0.3rem;
     text-align: center;
   }
+
   .topContact {
     justify-content: center;
   }
+
   .topLinks {
     justify-content: center;
     flex-wrap: wrap;
@@ -475,25 +506,30 @@
     flex-wrap: wrap;
     gap: 1rem;
   }
+
   .logoContainer {
     flex: 0 0 auto;
   }
+
   .searchContainer {
     flex: 1 1 100%;
     order: 3;
   }
+
   .metalPrices {
     flex: 0 0 auto;
     gap: 1rem;
   }
+
   .metalPrice {
     font-size: 0.95rem;
   }
 
   /* Mega Menu */
   .megaMenu {
-    width: 700px;
+    width: 100%;
   }
+
   .megaMenuPromo {
     display: none;
   }
@@ -503,21 +539,26 @@
    RESPONSIVE: MOBILE (≤768px)
    ============================================= */
 @media (max-width: 768px) {
+
   /* Top Tier */
   .topTier {
     font-size: 0.7rem;
     padding: 0.4rem 0;
   }
+
   .topContact {
     gap: 0.5rem;
     font-size: 0.7rem;
   }
+
   .topLinks {
     gap: 0.5rem;
   }
+
   .divider {
     display: none;
   }
+
   .topLink {
     font-size: 0.7rem;
   }
@@ -526,30 +567,38 @@
   .middleTier {
     padding: 1rem 0;
   }
+
   .middleContent {
     flex-wrap: wrap;
     gap: 0.8rem;
   }
+
   .logoImage {
     max-height: 35px;
   }
+
   .metalPrices {
     gap: 0.8rem;
   }
+
   .metalName {
     font-size: 0.65rem;
   }
+
   .metalPrice {
     font-size: 0.85rem;
   }
+
   .searchContainer {
     flex: 1 1 100%;
     order: 3;
   }
+
   .searchInput {
     padding: 0.6rem 0.8rem;
     font-size: 0.85rem;
   }
+
   .searchButton {
     padding: 0 1rem;
     font-size: 0.8rem;
@@ -560,6 +609,19 @@
     display: flex;
   }
 
+  .mobileAllProductsBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--color-inkblue);
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
   .bottomTier .container {
     display: flex;
     justify-content: space-between;
@@ -568,7 +630,7 @@
   }
 
   .nav {
-    width: 100%;
+    width: auto;
   }
 
   .navList {
@@ -581,6 +643,11 @@
     width: 100%;
     background-color: var(--color-gold);
     border-top: 2px solid var(--color-inkblue);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
 
   .mobileNav .navLink {
@@ -589,42 +656,179 @@
     font-size: 0.85rem;
   }
 
-  /* Mega Menu on mobile */
+  /* Hide desktop mega menu on mobile — we use inline version instead */
   .megaMenu {
-    position: fixed;
-    top: auto;
-    left: 0;
-    width: 100%;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  .megaMenuContainer {
-    flex-direction: column;
-    min-height: auto;
-  }
-  .megaMenuSidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #eee;
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 0.5rem;
-    gap: 0;
-  }
-  .sidebarItem {
-    padding: 0.8rem 1.2rem;
-    white-space: nowrap;
-    font-size: 0.85rem;
-  }
-  .sidebarArrow {
     display: none;
   }
-  .megaMenuContent {
-    padding: 1.5rem;
+
+  /* BROWSE CATALOG button in mobile nav */
+  .mobileNavAllProducts {
+    width: 100%;
+    text-align: left;
+    background-color: var(--color-inkblue);
+    color: var(--color-gold) !important;
+    font-weight: 700;
+    border-bottom: 2px solid var(--color-gold);
   }
-  .megaMenuLinksGrid {
-    grid-template-columns: 1fr;
+
+  /* Mobile Root Category List */
+  .mobileCategoryList {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-white);
   }
+
+  .mobileDrillDownItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-inkblue);
+    background: none;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: left;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  .mobileChevron {
+    font-size: 1.2rem;
+    color: #ccc;
+  }
+
+  /* Full-Screen Overlay & Drawer */
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  .mobileCatalogOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: var(--color-white);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.35s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  }
+
+  .mobileOverlayScreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-white);
+    z-index: 1;
+  }
+
+  .mobileSubcategoryScreen {
+    z-index: 2;
+    animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  }
+
+  .mobileFullScreenHeader {
+    display: flex;
+    align-items: center;
+    background-color: var(--color-inkblue);
+    color: var(--color-gold);
+    padding: 0.8rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .mobileFullScreenBackBtn {
+    background: none;
+    border: none;
+    color: var(--color-gold);
+    font-weight: 800;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+  }
+
+  .mobileFullScreenCloseBtn {
+    background: none;
+    border: none;
+    color: var(--color-gold);
+    font-weight: 800;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: auto;
+  }
+
+  .mobileFullScreenTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    text-transform: uppercase;
+    flex: 1;
+    text-align: left;
+  }
+
+  .mobileFullScreenBody {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 2rem;
+  }
+
+  .mobileAlphabetGroup {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobileAlphabetHeader {
+    background-color: #f3f4f6;
+    color: #555;
+    padding: 0.4rem 1rem;
+    font-weight: 800;
+    font-size: 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .mobileAlphabetLinks {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobileFullScreenLink {
+    padding: 0.8rem 1rem 0.8rem 1.5rem;
+    color: var(--color-inkblue);
+    text-decoration: none;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+  }
+
+  .mobileFullScreenLink:active {
+    background-color: #f8f9fa;
+  }
+
   .megaMenuPromo {
     display: none;
   }

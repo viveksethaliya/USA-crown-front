@@ -5,13 +5,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./admin.module.css";
 import {
-  FiMenu, FiGrid, FiFileText, FiUsers, FiSettings, FiLogOut, FiLayers, FiMail, FiImage, FiPackage
+  FiMenu, FiGrid, FiFileText, FiUsers, FiSettings, FiLogOut, FiLayers, FiMail, FiImage, FiPackage, FiShoppingCart, FiPercent,
+  FiList, FiTag, FiSliders, FiShield, FiUserPlus, FiFolder
 } from "react-icons/fi";
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [adminUser, setAdminUser] = useState<{ email: string, name?: string } | null>(null);
+  const [adminUser, setAdminUser] = useState<{ email: string, name?: string, role?: string } | null>(null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -74,6 +75,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     return <>{children}</>;
   }
 
+  const role = adminUser?.role || '';
+  const isSuperAdmin = role === 'super_admin';
+  const isCatalog = isSuperAdmin || role === 'catalog_manager';
+  const isOrders = isSuperAdmin || role === 'order_manager';
+
   return (
     <div className={styles.adminContainer}>
       <aside className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}>
@@ -90,6 +96,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
         <nav>
           <ul className={styles.navLinks}>
+            {/* Store Group */}
+            <li className={styles.navGroupTitle}>Store</li>
             <li>
               <Link
                 href="/crown-admin"
@@ -101,6 +109,18 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
             </li>
             <li>
               <Link
+                href="/crown-admin/orders"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/orders") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiShoppingCart /></span>
+                <span className={styles.navLinkText}>Orders</span>
+              </Link>
+            </li>
+
+            {isCatalog && (<>\n            {/* Products Group */}
+            <li className={styles.navGroupTitle}>Products</li>
+            <li>
+              <Link
                 href="/crown-admin/products"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/products") ? styles.navLinkActive : ""}`}
               >
@@ -110,29 +130,50 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
             </li>
             <li>
               <Link
+                href="/crown-admin/categories"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/categories") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiList /></span>
+                <span className={styles.navLinkText}>Categories</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/crown-admin/tags"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/tags") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiTag /></span>
+                <span className={styles.navLinkText}>Tags</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/crown-admin/attributes"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/attributes") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiSliders /></span>
+                <span className={styles.navLinkText}>Attributes</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/crown-admin/metal-colors"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/metal-colors") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiSettings /></span>
+                <span className={styles.navLinkText}>Metal Colors</span>
+              </Link>
+            </li>
+
+            </>)}\n\n            {isCatalog && (<>\n            {/* Content/Marketing Group */}
+            <li className={styles.navGroupTitle}>Content/Marketing</li>
+            <li>
+              <Link
                 href="/crown-admin/blogs"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/blogs") ? styles.navLinkActive : ""}`}
               >
                 <span className={styles.navLinkIcon}><FiFileText /></span>
                 <span className={styles.navLinkText}>Blogs</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/crown-admin/registrations"
-                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/registrations") ? styles.navLinkActive : ""}`}
-              >
-                <span className={styles.navLinkIcon}><FiUsers /></span>
-                <span className={styles.navLinkText}>Registrations</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/crown-admin/collections"
-                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/collections") ? styles.navLinkActive : ""}`}
-              >
-                <span className={styles.navLinkIcon}><FiLayers /></span>
-                <span className={styles.navLinkText}>Collections</span>
               </Link>
             </li>
             <li>
@@ -146,6 +187,24 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
             </li>
             <li>
               <Link
+                href="/crown-admin/collections"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/collections") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiLayers /></span>
+                <span className={styles.navLinkText}>Collections</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/crown-admin/discounts"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/discounts") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiPercent /></span>
+                <span className={styles.navLinkText}>Discounts</span>
+              </Link>
+            </li>
+            <li>
+              <Link
                 href="/crown-admin/newsletter"
                 className={`${styles.navLink} ${pathname.startsWith("/crown-admin/newsletter") ? styles.navLinkActive : ""}`}
               >
@@ -153,15 +212,52 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                 <span className={styles.navLinkText}>Newsletter</span>
               </Link>
             </li>
+
+            </>)}\n\n            {isSuperAdmin && (<>\n            {/* Customers Group */}
+            <li className={styles.navGroupTitle}>Customers</li>
             <li>
               <Link
-                href="/crown-admin/metal-colors"
-                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/metal-colors") ? styles.navLinkActive : ""}`}
+                href="/crown-admin/users"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/users") ? styles.navLinkActive : ""}`}
               >
-                <span className={styles.navLinkIcon}><FiSettings /></span>
-                <span className={styles.navLinkText}>Metal Colors</span>
+                <span className={styles.navLinkIcon}><FiUsers /></span>
+                <span className={styles.navLinkText}>Users</span>
               </Link>
             </li>
+            <li>
+              <Link
+                href="/crown-admin/roles"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/roles") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiShield /></span>
+                <span className={styles.navLinkText}>Roles</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/crown-admin/registrations"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/registrations") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiUserPlus /></span>
+                <span className={styles.navLinkText}>Registrations</span>
+              </Link>
+            </li>
+
+            </>)}
+
+            {isSuperAdmin && (<>
+            {/* Settings/System Group */}
+            <li className={styles.navGroupTitle}>Settings/System</li>
+            <li>
+              <Link
+                href="/crown-admin/media"
+                className={`${styles.navLink} ${pathname.startsWith("/crown-admin/media") ? styles.navLinkActive : ""}`}
+              >
+                <span className={styles.navLinkIcon}><FiFolder /></span>
+                <span className={styles.navLinkText}>Media Library</span>
+              </Link>
+            </li>
+            </>)}
           </ul>
         </nav>
       </aside>

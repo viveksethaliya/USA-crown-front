@@ -10,7 +10,7 @@ interface VariationsTabProps {
   onGenerate: () => Promise<void>;
 }
 
-export default function VariationsTab({ productId, variations, productImages, onChange, onGenerate }: VariationsTabProps) {
+export default function VariationsTab({ productId: _productId, variations, productImages, onChange, onGenerate }: VariationsTabProps) {
   const [generating, setGenerating] = useState(false);
   const [uploadingVarId, setUploadingVarId] = useState<number | null>(null);
   const [expandedVarId, setExpandedVarId] = useState<number | null>(null);
@@ -65,9 +65,11 @@ export default function VariationsTab({ productId, variations, productImages, on
     }
   };
 
-  const updateVariation = (varId: number, field: keyof Variation, value: any) => {
+  const updateVariation = <K extends keyof Variation>(varId: number, field: K, value: Variation[K]) => {
     onChange(variations.map(v => v.id === varId ? { ...v, [field]: value } : v));
   };
+
+  const parseNum = (val: string) => val === '' ? null : parseFloat(val);
 
   return (
     <div>
@@ -75,7 +77,7 @@ export default function VariationsTab({ productId, variations, productImages, on
         <div>
           <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1a1a2e' }}>Manage Variations</h3>
           <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
-            Before generating, ensure your attributes are marked as "Used for variations" and saved.
+            Before generating, ensure your attributes are marked as &quot;Used for variations&quot; and saved.
           </p>
         </div>
         <button 
@@ -108,7 +110,10 @@ export default function VariationsTab({ productId, variations, productImages, on
                       {isExpanded ? '▼' : '▶'}
                     </span>
                     {v.image && (
-                      <img src={v.image.url} alt="thumbnail" style={{ width: 24, height: 24, objectFit: 'cover', borderRadius: 2 }} />
+                      <React.Fragment>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={v.image.url} alt="thumbnail" style={{ width: 24, height: 24, objectFit: 'cover', borderRadius: 2 }} />
+                      </React.Fragment>
                     )}
                     #{v.id} — {title}
                   </div>
@@ -132,6 +137,7 @@ export default function VariationsTab({ productId, variations, productImages, on
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                           {v.image ? (
                             <div style={{ width: 80, height: 80, border: '1px solid #e2e8f0', borderRadius: 4, overflow: 'hidden' }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={v.image.url} alt="Variation" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
                           ) : (
@@ -159,6 +165,25 @@ export default function VariationsTab({ productId, variations, productImages, on
                         </div>
                       </div>
 
+                      <div className={styles.fieldGroup} style={{ gridColumn: '1 / -1', display: 'flex', gap: '1.5rem', marginBottom: '1rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={v.enabled !== false}
+                            onChange={(e) => updateVariation(v.id, 'enabled', e.target.checked)}
+                          />
+                          Enabled
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={v.manage_stock === true}
+                            onChange={(e) => updateVariation(v.id, 'manage_stock', e.target.checked)}
+                          />
+                          Manage stock
+                        </label>
+                      </div>
+
                       <div className={styles.fieldGroup}>
                         <label className={styles.fieldLabel}>SKU</label>
                         <input
@@ -175,7 +200,7 @@ export default function VariationsTab({ productId, variations, productImages, on
                           step="0.01"
                           className={styles.fieldInput}
                           value={v.regular_price ?? ''}
-                          onChange={(e) => updateVariation(v.id, 'regular_price', e.target.value)}
+                          onChange={(e) => updateVariation(v.id, 'regular_price', parseNum(e.target.value))}
                         />
                       </div>
                       <div className={styles.fieldGroup}>
@@ -185,9 +210,70 @@ export default function VariationsTab({ productId, variations, productImages, on
                           step="0.01"
                           className={styles.fieldInput}
                           value={v.sale_price ?? ''}
-                          onChange={(e) => updateVariation(v.id, 'sale_price', e.target.value)}
+                          onChange={(e) => updateVariation(v.id, 'sale_price', parseNum(e.target.value))}
                         />
                       </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Sale Start Date</label>
+                        <input
+                          type="date"
+                          className={styles.fieldInput}
+                          value={v.date_sale_starts || ''}
+                          onChange={(e) => updateVariation(v.id, 'date_sale_starts', e.target.value)}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Sale End Date</label>
+                        <input
+                          type="date"
+                          className={styles.fieldInput}
+                          value={v.date_sale_ends || ''}
+                          onChange={(e) => updateVariation(v.id, 'date_sale_ends', e.target.value)}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Stock Status</label>
+                        <select
+                          className={styles.fieldSelect}
+                          value={v.in_stock !== false ? 'true' : 'false'}
+                          onChange={(e) => updateVariation(v.id, 'in_stock', e.target.value === 'true')}
+                        >
+                          <option value="true">In Stock</option>
+                          <option value="false">Out of Stock</option>
+                        </select>
+                      </div>
+                      {v.manage_stock && (
+                        <React.Fragment>
+                          <div className={styles.fieldGroup}>
+                            <label className={styles.fieldLabel}>Stock Quantity</label>
+                            <input
+                              type="number"
+                              className={styles.fieldInput}
+                              value={v.stock_qty ?? ''}
+                              onChange={(e) => updateVariation(v.id, 'stock_qty', parseNum(e.target.value))}
+                            />
+                          </div>
+                          <div className={styles.fieldGroup}>
+                            <label className={styles.fieldLabel}>Low Stock Threshold</label>
+                            <input
+                              type="number"
+                              className={styles.fieldInput}
+                              value={v.low_stock_amount ?? ''}
+                              onChange={(e) => updateVariation(v.id, 'low_stock_amount', parseNum(e.target.value))}
+                            />
+                          </div>
+                          <div className={styles.fieldGroup}>
+                            <label className={styles.fieldLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '1.5rem' }}>
+                              <input
+                                type="checkbox"
+                                checked={v.backorders_allowed === true}
+                                onChange={(e) => updateVariation(v.id, 'backorders_allowed', e.target.checked)}
+                              />
+                              Allow Backorders
+                            </label>
+                          </div>
+                        </React.Fragment>
+                      )}
                       <div className={styles.fieldGroup}>
                         <label className={styles.fieldLabel}>Weight (grams)</label>
                         <input
@@ -195,7 +281,37 @@ export default function VariationsTab({ productId, variations, productImages, on
                           step="0.01"
                           className={styles.fieldInput}
                           value={v.weight_g ?? ''}
-                          onChange={(e) => updateVariation(v.id, 'weight_g', e.target.value)}
+                          onChange={(e) => updateVariation(v.id, 'weight_g', parseNum(e.target.value))}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Length (in)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className={styles.fieldInput}
+                          value={v.length_in ?? ''}
+                          onChange={(e) => updateVariation(v.id, 'length_in', parseNum(e.target.value))}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Width (in)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className={styles.fieldInput}
+                          value={v.width_in ?? ''}
+                          onChange={(e) => updateVariation(v.id, 'width_in', parseNum(e.target.value))}
+                        />
+                      </div>
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.fieldLabel}>Height (in)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className={styles.fieldInput}
+                          value={v.height_in ?? ''}
+                          onChange={(e) => updateVariation(v.id, 'height_in', parseNum(e.target.value))}
                         />
                       </div>
                     </div>

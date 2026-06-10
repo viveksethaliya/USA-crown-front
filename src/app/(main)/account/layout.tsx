@@ -1,0 +1,59 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import styles from "./account-layout.module.css";
+import { FiUser, FiMapPin, FiBriefcase, FiUsers, FiLogOut } from "react-icons/fi";
+
+export default function AccountLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/login';
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      <aside className={styles.sidebar}>
+        <h3>My Account</h3>
+        <Link 
+          href="/account/profile" 
+          className={`${styles.navLink} ${pathname === '/account/profile' ? styles.navLinkActive : ''}`}
+        >
+          <FiUser /> Profile
+        </Link>
+        <Link 
+          href="/account/company" 
+          className={`${styles.navLink} ${pathname === '/account/company' ? styles.navLinkActive : ''}`}
+        >
+          <FiBriefcase /> Company Details
+        </Link>
+        <Link 
+          href="/account/addresses" 
+          className={`${styles.navLink} ${pathname === '/account/addresses' ? styles.navLinkActive : ''}`}
+        >
+          <FiMapPin /> Addresses
+        </Link>
+        <Link 
+          href="/account/users" 
+          className={`${styles.navLink} ${pathname === '/account/users' ? styles.navLinkActive : ''}`}
+        >
+          <FiUsers /> Sub-Users
+        </Link>
+        <a href="#" onClick={handleLogout} className={styles.navLink} style={{ marginTop: '1rem', color: '#c62828' }}>
+          <FiLogOut /> Logout
+        </a>
+      </aside>
+      
+      <main className={styles.content}>
+        {children}
+      </main>
+    </div>
+  );
+}

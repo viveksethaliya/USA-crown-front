@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import styles from "../../admin.module.css";
 import { FiArrowLeft, FiCheck, FiX, FiDownload, FiUserX, FiRefreshCw } from "react-icons/fi";
@@ -39,7 +39,6 @@ const hearAboutLabels: Record<string, string> = {
 
 export default function RegistrationDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { id } = params;
 
   const [reg, setReg] = useState<RegistrationDetail | null>(null);
@@ -59,8 +58,8 @@ export default function RegistrationDetailPage() {
         }
         const data = await res.json();
         setReg(data.registration);
-      } catch (err: any) {
-        setError(err.message || "An error occurred");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
@@ -83,8 +82,8 @@ export default function RegistrationDetailPage() {
       if (!res.ok) throw new Error("Failed to update status");
 
       setReg((prev) => prev ? { ...prev, status } : null);
-    } catch (err: any) {
-      alert(err.message || "Failed to update status");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update status");
     }
   };
 

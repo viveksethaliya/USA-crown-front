@@ -79,6 +79,19 @@ export default function GeneralTab({ getFieldValue, handleFieldChange }: General
           </select>
         </div>
 
+        <div className={styles.fieldGroup}>
+          <label className={styles.fieldLabel}>Measurement Type</label>
+          <select
+            className={styles.fieldSelect}
+            value={getFieldValue('measurement_type') || 'none'}
+            onChange={(e) => handleFieldChange('measurement_type', e.target.value)}
+          >
+            <option value="none">Standard (None)</option>
+            <option value="inch">Custom Length (Chain/Wire)</option>
+            <option value="plate">Custom Dimensions (Plate LxW)</option>
+          </select>
+        </div>
+
         <div className={`${styles.fieldGroup} ${styles.full}`}>
           <label className={styles.fieldLabel}>Short Description</label>
           <textarea

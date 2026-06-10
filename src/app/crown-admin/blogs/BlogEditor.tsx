@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import styles from "../admin.module.css";
 import "react-quill-new/dist/quill.snow.css";
+import MediaPicker from "../../../components/media/MediaPicker";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), {
   ssr: false,
@@ -24,6 +25,7 @@ interface BlogData {
   category: string;
   meta_description: string;
   cover_image?: string;
+  cover_image_media_id?: string;
 }
 
 export default function BlogEditor({ initialData, isEdit = false }: { initialData?: any, isEdit?: boolean }) {
@@ -40,10 +42,12 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
     category: initialData?.category || "",
     meta_description: initialData?.meta_description || "",
     cover_image: initialData?.cover_image || "",
+    cover_image_media_id: initialData?.cover_image_media_id || "",
   });
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_image || null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -147,6 +151,18 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
     }
   }), []);
 
+  const handleMediaSelect = (selected: { url: string; mediaId: string; alt_text?: string; title?: string }[]) => {
+    if (selected.length > 0) {
+      setCoverFile(null);
+      setCoverPreview(selected[0].url);
+      setFormData(prev => ({
+        ...prev,
+        cover_image: selected[0].url,
+        cover_image_media_id: selected[0].mediaId
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -167,6 +183,10 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
         data.append("cover_image", coverFile);
       } else if (formData.cover_image) {
         data.append("existing_cover", formData.cover_image);
+      }
+
+      if (formData.cover_image_media_id) {
+        data.append("cover_image_media_id", formData.cover_image_media_id);
       }
 
       const url = isEdit
@@ -230,17 +250,41 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
 
         <div className={styles.formGroup}>
           <label>Cover Image (Required for new blogs)</label>
-          <input
-            type="file"
-            name="cover_image"
-            accept="image/jpeg, image/png, image/webp"
-            className={styles.formControl}
-            onChange={handleFileChange}
-            required={!isEdit && !formData.cover_image}
-          />
+          
           {coverPreview && (
-            <img src={coverPreview} alt="Cover Preview" className={styles.coverImagePreview} />
+            <div style={{ marginBottom: '1rem', maxWidth: '300px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={coverPreview} alt="Cover Preview" style={{ width: '100%', display: 'block' }} />
+            </div>
           )}
+
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => setIsPickerOpen(true)}
+              style={{
+                padding: '0.6rem 1.25rem',
+                background: '#1a1a2e',
+                color: '#d4af37',
+                border: '1px solid #d4af37',
+                borderRadius: '6px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Choose from Media Library
+            </button>
+
+            <span style={{ color: '#64748b', fontSize: '0.9rem' }}>or upload:</span>
+            
+            <input
+              type="file"
+              name="cover_image"
+              accept="image/jpeg, image/png, image/webp"
+              onChange={handleFileChange}
+              required={!isEdit && !formData.cover_image && !coverFile}
+            />
+          </div>
         </div>
 
         <div className={styles.formGroup}>
@@ -367,6 +411,13 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
           </button>
         </div>
       </form>
+
+      <MediaPicker 
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={handleMediaSelect}
+        selectedUrls={formData.cover_image ? [formData.cover_image] : []}
+      />
     </>
   );
 }

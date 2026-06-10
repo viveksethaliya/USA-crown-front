@@ -34,8 +34,8 @@ export default function NewProductPage() {
         // Redirect to the full editor page for this new product
         router.push(`/crown-admin/products/${data.product.id}`);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create product");
       setLoading(false);
     }
   };

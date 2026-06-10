@@ -22,22 +22,36 @@ export default function RegistrationsPage() {
 
   const fetchRegistrations = async () => {
     try {
-      setLoading(true);
       const res = await fetch(`/api/admin/registrations`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch registrations");
       const data = await res.json();
       setRegistrations(data.registrations || []);
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRegistrations();
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/registrations`, {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to fetch registrations");
+        const data = await res.json();
+        if (!cancelled) setRegistrations(data.registrations || []);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const handleUpdateStatus = async (id: number, status: string) => {
@@ -54,9 +68,10 @@ export default function RegistrationsPage() {
       if (!res.ok) throw new Error("Failed to update status");
 
       // Refresh list
+      setLoading(true);
       fetchRegistrations();
-    } catch (err: any) {
-      alert(err.message || "Failed to update status");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update status");
     }
   };
 

@@ -8,6 +8,7 @@ import {
   FiAlignLeft, FiAlignCenter, FiAlignRight,
   FiUpload, FiTrash2, FiRefreshCw, FiEye
 } from "react-icons/fi";
+import MediaPicker from "../../../components/media/MediaPicker";
 
 interface BannerData {
   id?: string;
@@ -18,7 +19,9 @@ interface BannerData {
   cta_text: string;
   cta_link: string;
   bg_image_desktop: string;
+  bg_image_desktop_media_id?: string;
   bg_image_mobile: string;
+  bg_image_mobile_media_id?: string;
   overlay_color: string;
   overlay_opacity: number;
   text_color: string;
@@ -37,7 +40,9 @@ const defaultBanner: BannerData = {
   cta_text: "",
   cta_link: "",
   bg_image_desktop: "",
+  bg_image_desktop_media_id: "",
   bg_image_mobile: "",
+  bg_image_mobile_media_id: "",
   overlay_color: "#000000",
   overlay_opacity: 40,
   text_color: "#FFFFFF",
@@ -83,6 +88,8 @@ export default function BannerEditor({
   const [mobilePreview, setMobilePreview] = useState<string>(
     initialData?.bg_image_mobile || ""
   );
+  const [isDesktopPickerOpen, setIsDesktopPickerOpen] = useState(false);
+  const [isMobilePickerOpen, setIsMobilePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -144,6 +151,7 @@ export default function BannerEditor({
     setDesktopFile(null);
     setDesktopPreview("");
     updateField("bg_image_desktop", "");
+    updateField("bg_image_desktop_media_id", "");
     if (desktopInputRef.current) desktopInputRef.current.value = "";
   };
 
@@ -151,6 +159,7 @@ export default function BannerEditor({
     setMobileFile(null);
     setMobilePreview("");
     updateField("bg_image_mobile", "");
+    updateField("bg_image_mobile_media_id", "");
     if (mobileInputRef.current) mobileInputRef.current.value = "";
   };
 
@@ -182,11 +191,17 @@ export default function BannerEditor({
       } else if (form.bg_image_desktop) {
         data.append("existing_bg_desktop", form.bg_image_desktop);
       }
+      if (form.bg_image_desktop_media_id) {
+        data.append("bg_image_desktop_media_id", form.bg_image_desktop_media_id);
+      }
 
       if (mobileFile) {
         data.append("bg_image_mobile", mobileFile);
       } else if (form.bg_image_mobile) {
         data.append("existing_bg_mobile", form.bg_image_mobile);
+      }
+      if (form.bg_image_mobile_media_id) {
+        data.append("bg_image_mobile_media_id", form.bg_image_mobile_media_id);
       }
 
       const url = isEdit
@@ -196,7 +211,7 @@ export default function BannerEditor({
       const method = isEdit ? "PUT" : "POST";
 
       const res = await fetch(url, {
-        method,
+        method: method,
         body: data,
         credentials: "include",
       });
@@ -373,7 +388,14 @@ export default function BannerEditor({
                       className={styles.imageActionBtn}
                       onClick={() => desktopInputRef.current?.click()}
                     >
-                      <FiRefreshCw style={{ marginRight: 4 }} /> Replace
+                      <FiRefreshCw style={{ marginRight: 4 }} /> Replace File
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.imageActionBtn}
+                      onClick={() => setIsDesktopPickerOpen(true)}
+                    >
+                      Choose from Library
                     </button>
                     <button
                       type="button"
@@ -385,18 +407,34 @@ export default function BannerEditor({
                   </div>
                 </>
               ) : (
-                <div
-                  className={styles.imageUploadZone}
-                  onClick={() => desktopInputRef.current?.click()}
-                >
-                  <div className={styles.imageUploadIcon}>
-                    <FiUpload />
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
+                  <div
+                    className={styles.imageUploadZone}
+                    onClick={() => desktopInputRef.current?.click()}
+                    style={{ flex: 1 }}
+                  >
+                    <div className={styles.imageUploadIcon}>
+                      <FiUpload />
+                    </div>
+                    <div className={styles.imageUploadText}>
+                      <strong>Click to upload</strong> desktop background image
+                    </div>
                   </div>
-                  <div className={styles.imageUploadText}>
-                    <strong>Click to upload</strong> or drag and drop
-                    <br />
-                    JPG, PNG, or WebP (max 5MB)
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsDesktopPickerOpen(true)}
+                    style={{
+                      padding: '0 1.25rem',
+                      background: '#1a1a2e',
+                      color: '#d4af37',
+                      border: '1px solid #d4af37',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 600
+                    }}
+                  >
+                    Choose from Library
+                  </button>
                 </div>
               )}
             </div>
@@ -428,7 +466,14 @@ export default function BannerEditor({
                       className={styles.imageActionBtn}
                       onClick={() => mobileInputRef.current?.click()}
                     >
-                      <FiRefreshCw style={{ marginRight: 4 }} /> Replace
+                      <FiRefreshCw style={{ marginRight: 4 }} /> Replace File
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.imageActionBtn}
+                      onClick={() => setIsMobilePickerOpen(true)}
+                    >
+                      Choose from Library
                     </button>
                     <button
                       type="button"
@@ -440,18 +485,34 @@ export default function BannerEditor({
                   </div>
                 </>
               ) : (
-                <div
-                  className={styles.imageUploadZone}
-                  onClick={() => mobileInputRef.current?.click()}
-                >
-                  <div className={styles.imageUploadIcon}>
-                    <FiUpload />
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
+                  <div
+                    className={styles.imageUploadZone}
+                    onClick={() => mobileInputRef.current?.click()}
+                    style={{ flex: 1 }}
+                  >
+                    <div className={styles.imageUploadIcon}>
+                      <FiUpload />
+                    </div>
+                    <div className={styles.imageUploadText}>
+                      <strong>Click to upload</strong> mobile-optimized image
+                    </div>
                   </div>
-                  <div className={styles.imageUploadText}>
-                    <strong>Click to upload</strong> mobile-optimized image
-                    <br />
-                    Falls back to desktop image if empty
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobilePickerOpen(true)}
+                    style={{
+                      padding: '0 1.25rem',
+                      background: '#1a1a2e',
+                      color: '#d4af37',
+                      border: '1px solid #d4af37',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 600
+                    }}
+                  >
+                    Choose from Library
+                  </button>
                 </div>
               )}
             </div>
@@ -737,6 +798,34 @@ export default function BannerEditor({
           </button>
         </div>
       </form>
+
+      <MediaPicker
+        isOpen={isDesktopPickerOpen}
+        onClose={() => setIsDesktopPickerOpen(false)}
+        onSelect={(selected) => {
+          if (selected.length > 0) {
+            setDesktopFile(null);
+            setDesktopPreview(selected[0].url);
+            updateField("bg_image_desktop", selected[0].url);
+            updateField("bg_image_desktop_media_id", selected[0].mediaId);
+          }
+        }}
+        selectedUrls={desktopPreview ? [desktopPreview] : []}
+      />
+
+      <MediaPicker
+        isOpen={isMobilePickerOpen}
+        onClose={() => setIsMobilePickerOpen(false)}
+        onSelect={(selected) => {
+          if (selected.length > 0) {
+            setMobileFile(null);
+            setMobilePreview(selected[0].url);
+            updateField("bg_image_mobile", selected[0].url);
+            updateField("bg_image_mobile_media_id", selected[0].mediaId);
+          }
+        }}
+        selectedUrls={mobilePreview ? [mobilePreview] : []}
+      />
     </>
   );
 }

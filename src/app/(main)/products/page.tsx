@@ -14,6 +14,25 @@ interface Product {
   type: string;
   image: string | null;
   metalTypes: string[];
+  tags?: { id: number; name: string }[];
+  sizeRanges?: { name: string; range: string }[];
+  priceRange?: string | null;
+}
+
+interface AttributeTerm {
+  id: number;
+  name: string;
+  slug: string;
+  color_hex?: string;
+  image_url?: string;
+}
+
+interface DynamicFilter {
+  id: number;
+  name: string;
+  slug: string;
+  type: string;
+  terms: AttributeTerm[];
 }
 
 interface CategoryTree {
@@ -23,8 +42,6 @@ interface CategoryTree {
   children: CategoryTree[];
 }
 
-
-
 function ProductsContent() {
   const router = useRouter();
   const pathname = usePathname();
@@ -33,14 +50,26 @@ function ProductsContent() {
   const metalParam = searchParams.get('metal');
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [filters, setFilters] = useState<DynamicFilter[]>([]);
+
+  // Parse initial selected attributes from URL
+  const initialSelectedAttrs: Record<string, string[]> = {};
+  for (const [key, val] of searchParams.entries()) {
+    if (key.startsWith('attr_') && val) {
+      initialSelectedAttrs[key.replace('attr_', '')] = val.split(',');
+    }
+  }
+
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>(initialSelectedAttrs);
   const [categories, setCategories] = useState<CategoryTree[]>([]);
   const [allMetalTypes, setAllMetalTypes] = useState<string[]>([]);
   const [metalColorMap, setMetalColorMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const [sortBy, setSortBy] = useState('name');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const searchParamVal = searchParams.get('search') || '';
+  const [searchQuery, setSearchQuery] = useState(searchParamVal);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParamVal);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     categoryParam ? categoryParam.split(',') : []
   );
@@ -52,6 +81,28 @@ function ProductsContent() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check user session on mount
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/session`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            setIsAuthenticated(true);
+          }
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    checkSession();
+  }, []);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -67,14 +118,7 @@ function ProductsContent() {
     fetchCategories();
   }, []);
 
-  // Update selected categories and metals if the URL search params change 
-  // (e.g. clicking a mega menu link while already on the products page)
-  useEffect(() => {
-    setSelectedCategories(categoryParam ? categoryParam.split(',') : []);
-    setSelectedMetals(metalParam ? metalParam.split(',') : []);
-    setPage(1);
-  }, [categoryParam, metalParam]);
-
+  // Fetch attribute filters
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -82,13 +126,23 @@ function ProductsContent() {
         const data = await res.json();
         setAllMetalTypes(data.metalTypes || []);
         setMetalColorMap(data.metalColors || {});
+        setFilters(data.filters || []);
       } catch (err) {
         console.error('Failed to fetch product filters', err);
       }
     };
-
     fetchFilters();
   }, []);
+
+  // Sync URL params to state
+  useEffect(() => {
+    setSelectedCategories(categoryParam ? categoryParam.split(',') : []);
+    setSelectedMetals(metalParam ? metalParam.split(',') : []);
+    const s = searchParams.get('search') || '';
+    setSearchQuery(s);
+    setDebouncedSearchQuery(s);
+    setPage(1);
+  }, [categoryParam, metalParam, searchParams]);
 
   // Fetch products
   const fetchProducts = useCallback(async (
@@ -97,17 +151,17 @@ function ProductsContent() {
     sort: string,
     categorySlugs: string[],
     metalTypes: string[],
+    attrs: Record<string, string[]>,
     signal?: AbortSignal
   ) => {
     try {
-      const params = new URLSearchParams({
-        page: String(p),
-        limit: '24',
-        sort
-      });
+      const params = new URLSearchParams({ page: String(p), limit: '24', sort });
       if (search) params.set('search', search);
       if (categorySlugs.length > 0) params.set('category', categorySlugs.join(','));
       if (metalTypes.length > 0) params.set('metal', metalTypes.join(','));
+      Object.entries(attrs).forEach(([slug, values]) => {
+        if (Array.isArray(values) && values.length > 0) params.set(`attr_${slug}`, values.join(','));
+      });
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?${params}`, { signal });
       const data = await res.json();
@@ -126,40 +180,42 @@ function ProductsContent() {
     }
   }, []);
 
+  // Debounce search
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
       setPage(1);
     }, 400);
-
     return () => clearTimeout(timeout);
   }, [searchQuery]);
 
+  // Trigger fetch
   useEffect(() => {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
-      fetchProducts(page, debouncedSearchQuery, sortBy, selectedCategories, selectedMetals, controller.signal);
+      fetchProducts(page, debouncedSearchQuery, sortBy, selectedCategories, selectedMetals, selectedAttributes, controller.signal);
     }, 0);
-
     return () => {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [page, debouncedSearchQuery, sortBy, selectedCategories, selectedMetals, fetchProducts]);
+  }, [page, debouncedSearchQuery, sortBy, selectedCategories, selectedMetals, selectedAttributes, fetchProducts]);
 
   const handleSearch = (val: string) => {
     setSearchQuery(val);
     setLoading(true);
   };
 
-  const updateUrlParams = (cats: string[], metals: string[]) => {
+  const updateUrlParams = (cats: string[], attrs: Record<string, string[]>) => {
     const params = new URLSearchParams(searchParams.toString());
     if (cats.length > 0) params.set('category', cats.join(','));
     else params.delete('category');
-    
-    if (metals.length > 0) params.set('metal', metals.join(','));
-    else params.delete('metal');
-    
+    const keys = Array.from(params.keys());
+    keys.forEach(k => { if (k.startsWith('attr_')) params.delete(k); });
+    params.delete('metal');
+    Object.entries(attrs).forEach(([slug, values]) => {
+      if (values.length > 0) params.set(`attr_${slug}`, values.join(','));
+    });
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -172,7 +228,7 @@ function ProductsContent() {
       newCats = [...selectedCategories, slug];
     }
     setSelectedCategories(newCats);
-    updateUrlParams(newCats, selectedMetals);
+    updateUrlParams(newCats, selectedAttributes);
     setPage(1);
   };
 
@@ -185,17 +241,28 @@ function ProductsContent() {
       newCats = [...selectedCategories, slug];
     }
     setSelectedCategories(newCats);
-    updateUrlParams(newCats, selectedMetals);
+    updateUrlParams(newCats, selectedAttributes);
     setPage(1);
   };
 
   const getCategoryDescendantSlugs = (category: CategoryTree): string[] =>
     category.children.flatMap(child => [child.slug, ...getCategoryDescendantSlugs(child)]);
 
+  const getCategoryName = (slug: string) => {
+    let foundName = slug;
+    const findInTree = (nodes: CategoryTree[]) => {
+      for (const node of nodes) {
+        if (node.slug === slug) foundName = node.name;
+        if (node.children) findInTree(node.children);
+      }
+    };
+    findInTree(categories);
+    return foundName;
+  };
+
   const renderCategoryFilter = (category: CategoryTree) => {
     const childSlugs = getCategoryDescendantSlugs(category);
     const isParentSelected = selectedCategories.includes(category.slug);
-
     return (
       <div key={category.id} className={styles.categoryItem}>
         <label className={styles.checkLabel}>
@@ -220,6 +287,22 @@ function ProductsContent() {
     );
   };
 
+  const toggleAttribute = (attrSlug: string, termName: string) => {
+    setLoading(true);
+    setSelectedAttributes(prev => {
+      const current = prev[attrSlug] || [];
+      const updated = current.includes(termName)
+        ? current.filter(t => t !== termName)
+        : [...current, termName];
+      const next = { ...prev };
+      if (updated.length > 0) next[attrSlug] = updated;
+      else delete next[attrSlug];
+      updateUrlParams(selectedCategories, next);
+      setPage(1);
+      return next;
+    });
+  };
+
   const toggleMetal = (metal: string) => {
     setLoading(true);
     let newMetals: string[];
@@ -229,7 +312,7 @@ function ProductsContent() {
       newMetals = [...selectedMetals, metal];
     }
     setSelectedMetals(newMetals);
-    updateUrlParams(selectedCategories, newMetals);
+    updateUrlParams(selectedCategories, selectedAttributes);
     setPage(1);
   };
 
@@ -240,7 +323,7 @@ function ProductsContent() {
     setSearchQuery('');
     setDebouncedSearchQuery('');
     setPage(1);
-    updateUrlParams([], []);
+    updateUrlParams([], {});
   };
 
   return (
@@ -271,7 +354,7 @@ function ProductsContent() {
             </span>
           </div>
 
-          {/* Categories — from API */}
+          {/* Categories */}
           <div className={styles.filterBlock}>
             <h3 className={styles.filterTitle}>Categories</h3>
             <div className={styles.filterList}>
@@ -279,7 +362,7 @@ function ProductsContent() {
             </div>
           </div>
 
-          {/* Metal Type — from product data */}
+          {/* Metal Type */}
           <div className={styles.filterBlock}>
             <h3 className={styles.filterTitle}>Metal Type</h3>
             <div className={styles.filterList}>
@@ -296,13 +379,70 @@ function ProductsContent() {
               ))}
             </div>
           </div>
+
+          {/* Dynamic attribute filters */}
+          {filters.map(filter => (
+            <div key={filter.id} className={styles.filterBlock}>
+              <h3 className={styles.filterTitle}>{filter.name}</h3>
+              <div className={styles.filterList}>
+                {filter.terms.map(term => (
+                  <label key={term.id} className={styles.checkLabel}>
+                    <input
+                      type="checkbox"
+                      checked={(selectedAttributes[filter.slug] || []).includes(term.name)}
+                      onChange={() => toggleAttribute(filter.slug, term.name)}
+                      className={styles.checkInput}
+                    />
+                    {term.color_hex && (
+                      <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: term.color_hex, marginRight: 4, border: '1px solid #ccc' }} />
+                    )}
+                    {term.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
         </aside>
 
         {/* Main Content */}
         <main className={styles.main}>
           {/* Top Bar */}
           <div className={styles.topBar}>
-            <button onClick={resetFilters} className={styles.resetBtn}>Reset Filters</button>
+            <div className={styles.activeFiltersGroup}>
+              <button onClick={resetFilters} className={styles.resetBtn}>Reset Filters</button>
+
+              {searchQuery && (
+                <span className={styles.activeFilterTag}>
+                  Search: {searchQuery}
+                  <button className={styles.activeFilterRemoveBtn} onClick={() => {
+                    setSearchQuery('');
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('search');
+                    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+                  }}><FiX /></button>
+                </span>
+              )}
+
+              {selectedCategories.map(cat => (
+                <span key={cat} className={styles.activeFilterTag}>
+                  {getCategoryName(cat)}
+                  <button className={styles.activeFilterRemoveBtn} onClick={() => toggleSubcategory(cat)}><FiX /></button>
+                </span>
+              ))}
+
+              {Object.entries(selectedAttributes).map(([slug, values]) =>
+                values.map(val => {
+                  const filterName = filters.find(f => f.slug === slug)?.name || slug;
+                  return (
+                    <span key={`${slug}-${val}`} className={styles.activeFilterTag}>
+                      {filterName}: {val}
+                      <button className={styles.activeFilterRemoveBtn} onClick={() => toggleAttribute(slug, val)}><FiX /></button>
+                    </span>
+                  );
+                })
+              )}
+            </div>
+
             <span className={styles.resultCount}>
               Showing {products.length} of {total.toLocaleString()} results
             </span>
@@ -326,6 +466,15 @@ function ProductsContent() {
               {products.map(product => (
                 <div key={product.id} className={styles.productCard}>
                   <div className={styles.productImageWrap}>
+                    {product.tags && product.tags.length > 0 && (
+                      <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        {product.tags.map((t) => (
+                          <span key={t.id} style={{ background: '#111', color: '#fff', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', borderRadius: 4 }}>
+                            {t.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <img
                       src={product.image || '/web-phts/a-17.jpg'}
                       alt={product.name}
@@ -351,6 +500,18 @@ function ProductsContent() {
                         ))}
                       </div>
                     </div>
+                    {product.sizeRanges && product.sizeRanges.map((sz, i) => (
+                      <div key={i} className={styles.metalRow}>
+                        <span className={styles.metalLabel}>{sz.name}:</span>
+                        <span className={styles.metalValue}>{sz.range}</span>
+                      </div>
+                    ))}
+                    {isAuthenticated && product.priceRange && (
+                      <div className={styles.metalRow}>
+                        <span className={styles.metalLabel}>Price:</span>
+                        <span className={styles.priceValue}>{product.priceRange}</span>
+                      </div>
+                    )}
                   </div>
                   <Link href={`/products/${product.id}`} className={styles.viewBtn}>
                     View Details
@@ -362,18 +523,11 @@ function ProductsContent() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div style={{
-              display: 'flex', justifyContent: 'center', gap: '0.5rem',
-              padding: '2rem 0', flexWrap: 'wrap'
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', padding: '2rem 0', flexWrap: 'wrap' }}>
               <button
                 onClick={() => { setLoading(true); setPage(p => Math.max(1, p - 1)); }}
                 disabled={page <= 1}
-                style={{
-                  padding: '0.5rem 1rem', border: '1px solid #d0d5dd',
-                  background: page <= 1 ? '#f4f6f8' : '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit'
-                }}
+                style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: page <= 1 ? '#f4f6f8' : '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
               >
                 ← Previous
               </button>
@@ -383,11 +537,7 @@ function ProductsContent() {
               <button
                 onClick={() => { setLoading(true); setPage(p => Math.min(totalPages, p + 1)); }}
                 disabled={page >= totalPages}
-                style={{
-                  padding: '0.5rem 1rem', border: '1px solid #d0d5dd',
-                  background: page >= totalPages ? '#f4f6f8' : '#fff', cursor: page >= totalPages ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit'
-                }}
+                style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: page >= totalPages ? '#f4f6f8' : '#fff', cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
               >
                 Next →
               </button>

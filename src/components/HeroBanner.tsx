@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { FiX } from "react-icons/fi";
 import styles from "./HeroBanner.module.css";
 
 interface Banner {
@@ -32,6 +33,7 @@ const heightMap: Record<string, string> = {
 export default function HeroBanner() {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
     const fetchBanner = async () => {
@@ -54,8 +56,8 @@ export default function HeroBanner() {
     fetchBanner();
   }, []);
 
-  // Don't render anything if no active banner
-  if (!loaded || !banner) return null;
+  // Don't render anything if no active banner or if user closed it
+  if (!loaded || !banner || isHidden) return null;
 
   const bannerHeight = heightMap[banner.banner_height] || "600px";
 
@@ -76,6 +78,13 @@ export default function HeroBanner() {
 
   return (
     <section className={`${styles.bannerWrapper} ${styles.bannerFadeIn}`}>
+      <button 
+        className={styles.closeBannerBtn} 
+        onClick={() => setIsHidden(true)}
+        aria-label="Close Banner"
+      >
+        <FiX size={20} />
+      </button>
       <div
         className={styles.bannerInner}
         style={{

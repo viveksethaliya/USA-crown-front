@@ -10,10 +10,15 @@ interface ProductTabsProps {
 export default function ProductTabs({ activeTab, setActiveTab, isVariable }: ProductTabsProps) {
   const tabs = [
     { id: 'general', label: 'General' },
-    { id: 'inventory', label: 'Inventory & Shipping' },
+    { id: 'pricing', label: 'Pricing' },
+    { id: 'inventory', label: 'Inventory' },
+    { id: 'shipping', label: 'Shipping' },
+    { id: 'images', label: 'Images' },
     { id: 'attributes', label: 'Attributes' },
     { id: 'variations', label: 'Variations', hide: !isVariable },
-    { id: 'images', label: 'Images' },
+    { id: 'related', label: 'Related Products' },
+    { id: 'seo', label: 'SEO' },
+    { id: 'advanced', label: 'Advanced' }
   ];
 
   return (
