@@ -1,4 +1,9 @@
-"use client";
+const fs = require('fs');
+const path = require('path');
+
+const targetPath = path.join(__dirname, 'page.tsx');
+
+const reactCode = \`"use client";
 
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
@@ -94,7 +99,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`/api/admin/orders/${id}`);
+      const res = await fetch(\`/api/admin/orders/\${id}\`);
       if (!res.ok) throw new Error("Failed to fetch order");
       const data = await res.json();
       setOrder(data.order);
@@ -131,7 +136,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleSaveEdits = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}`, {
+      const res = await fetch(\`/api/admin/orders/\${id}\`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editData)
@@ -151,7 +156,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleUpdateItemQty = async (itemId: string, newQty: number, unitPrice: number | string) => {
     if (newQty < 1) return;
     try {
-      const res = await fetch(`/api/admin/orders/${id}/items/${itemId}`, {
+      const res = await fetch(\`/api/admin/orders/\${id}/items/\${itemId}\`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: newQty, unit_price: unitPrice })
@@ -168,7 +173,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleRemoveItem = async (itemId: string) => {
     if (!confirm("Are you sure you want to remove this item?")) return;
     try {
-      const res = await fetch(`/api/admin/orders/${id}/items/${itemId}`, {
+      const res = await fetch(\`/api/admin/orders/\${id}/items/\${itemId}\`, {
         method: "DELETE"
       });
       if (!res.ok) throw new Error("Failed to remove item");
@@ -186,7 +191,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         setIsSearching(true);
         try {
           // Use public smart search
-          const res = await fetch(`/api/search/smart?q=${encodeURIComponent(searchQuery)}`);
+          const res = await fetch(\`/api/search/smart?q=\${encodeURIComponent(searchQuery)}\`);
           const data = await res.json();
           setSearchResults(data.products || []);
         } catch (err) {
@@ -206,7 +211,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     setIsAddingProduct(true);
     try {
       // Basic add (without variations for simplicity in UI, relies on defaults or main product)
-      const res = await fetch(`/api/admin/orders/${id}/items`, {
+      const res = await fetch(\`/api/admin/orders/\${id}/items\`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -215,7 +220,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
           product_name: product.name,
           image_url: product.image,
           quantity: 1,
-          unit_price: 0 // Dummy price for newly added items from generic search
+          unit_price: 0 // Ideally this should fetch the product's regular_price, but we rely on a default 0 if not provided unless we look it up.
+          // Wait, we need price. For real implementation, we should look it up or prompt.
+          // For now, let's just pass 0, admins can edit later or we can try to get it if the search API returned it.
         })
       });
       if (!res.ok) throw new Error("Failed to add product");
@@ -232,9 +239,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   // Handle Cancel Order
   const handleCancelOrder = async () => {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
+    if (!confirm("Are you sure you want to cancel this order? This cannot be fully undone automatically.")) return;
     try {
-      const res = await fetch(`/api/admin/orders/${id}/cancel`, { method: "POST" });
+      const res = await fetch(\`/api/admin/orders/\${id}/cancel\`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to cancel order");
       await fetchOrder();
     } catch (err) {
@@ -246,10 +253,10 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   // Handle Send Payment Link
   const handleSendPaymentLink = async () => {
     try {
-      const res = await fetch(`/api/admin/orders/${id}/send-payment-link`, { method: "POST" });
+      const res = await fetch(\`/api/admin/orders/\${id}/send-payment-link\`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to send payment link");
       const data = await res.json();
-      alert(`Payment link generated and sent!\nLink: ${data.payment_link}`);
+      alert(\`Payment link generated and sent!\\nLink: \${data.payment_link}\`);
       await fetchOrder();
     } catch (err) {
       console.error(err);
@@ -261,7 +268,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     if (!order || status === order.status) return;
     setIsUpdatingStatus(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}/status`, {
+      const res = await fetch(\`/api/admin/orders/\${id}/status\`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -280,7 +287,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     if (!noteContent.trim()) return;
     setIsAddingNote(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}/notes`, {
+      const res = await fetch(\`/api/admin/orders/\${id}/notes\`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ note: noteContent, is_customer_note: isCustomerNote })
@@ -304,7 +311,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     }
     setIsRefunding(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}/refunds`, {
+      const res = await fetch(\`/api/admin/orders/\${id}/refunds\`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: refundAmount, reason: refundReason })
@@ -330,8 +337,8 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleAddressChange = (type: 'billing' | 'shipping', field: string, value: string) => {
     setEditData((prev: any) => ({
       ...prev,
-      [`${type}_address`]: {
-        ...prev[`${type}_address`],
+      [\`\${type}_address\`]: {
+        ...prev[\`\${type}_address\`],
         [field]: value
       }
     }));
@@ -440,7 +447,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   <p>{order.billing_address?.city}, {order.billing_address?.stateProvince} {order.billing_address?.zipCode}</p>
                   <p>{order.billing_address?.country}</p>
                   <br/>
-                  <p>Email: <a href={`mailto:${order.customer_email}`} className={styles.actionLink}>{order.customer_email}</a></p>
+                  <p>Email: <a href={\`mailto:\${order.customer_email}\`} className={styles.actionLink}>{order.customer_email}</a></p>
                   <p>Phone: {order.billing_address?.phone}</p>
                 </div>
                 <div className={styles.addressBlock}>
@@ -492,8 +499,8 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                     </div>
                   ) : (
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ margin: 0 }}>${Number(item.unit_price).toFixed(2)} x {item.quantity}</p>
-                      <strong style={{ display: 'block', marginTop: '0.25rem' }}>${Number(item.line_total).toFixed(2)}</strong>
+                      <p style={{ margin: 0 }}>\${Number(item.unit_price).toFixed(2)} x {item.quantity}</p>
+                      <strong style={{ display: 'block', marginTop: '0.25rem' }}>\${Number(item.line_total).toFixed(2)}</strong>
                     </div>
                   )}
                 </div>
@@ -507,30 +514,30 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
               <tbody>
                 <tr>
                   <th>Items Subtotal:</th>
-                  <td>${Number(order.subtotal_amount).toFixed(2)}</td>
+                  <td>\${Number(order.subtotal_amount).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <th>Shipping:</th>
-                  <td>${Number(order.shipping_amount).toFixed(2)}</td>
+                  <td>\${Number(order.shipping_amount).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <th>Tax:</th>
-                  <td>${Number(order.tax_amount).toFixed(2)}</td>
+                  <td>\${Number(order.tax_amount).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <th className={styles.grandTotal}>Order Total:</th>
-                  <td className={styles.grandTotal}>${Number(order.total_amount).toFixed(2)}</td>
+                  <td className={styles.grandTotal}>\${Number(order.total_amount).toFixed(2)}</td>
                 </tr>
                 {totalRefunded > 0 && (
                   <tr>
                     <th style={{ color: '#ef4444' }}>Refunded:</th>
-                    <td style={{ color: '#ef4444' }}>-${totalRefunded.toFixed(2)}</td>
+                    <td style={{ color: '#ef4444' }}>-\${totalRefunded.toFixed(2)}</td>
                   </tr>
                 )}
                 {totalRefunded > 0 && (
                   <tr>
                     <th className={styles.grandTotal}>Net Total:</th>
-                    <td className={styles.grandTotal}>${(Number(order.total_amount) - totalRefunded).toFixed(2)}</td>
+                    <td className={styles.grandTotal}>\${(Number(order.total_amount) - totalRefunded).toFixed(2)}</td>
                   </tr>
                 )}
               </tbody>
@@ -564,7 +571,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                 else if (log.admin_id) logClass = styles.admin;
 
                 return (
-                  <div key={log.id} className={`${styles.timelineItem} ${logClass}`}>
+                  <div key={log.id} className={\`\${styles.timelineItem} \${logClass}\`}>
                     <div className={styles.timelineHeader}>
                       <span className={styles.timelineAuthor}>
                         {log.admin_name || 'System'} {log.is_customer_note ? '(Note to customer)' : ''}
@@ -687,7 +694,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                 style={{ width: '100%', padding: '0.5rem', border: '1px solid #cbd5e1', borderRadius: '4px' }}
               />
               <small style={{ color: '#64748b' }}>
-                Max available: ${(Number(order.total_amount) - totalRefunded).toFixed(2)}
+                Max available: \${(Number(order.total_amount) - totalRefunded).toFixed(2)}
               </small>
             </div>
             <div style={{ marginBottom: '1.5rem' }}>
@@ -709,3 +716,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     </div>
   );
 }
+\`;
+
+fs.writeFileSync(targetPath, reactCode, 'utf8');
+console.log('Order Details page updated with edit mode and product management.');

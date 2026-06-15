@@ -42,6 +42,36 @@ interface CategoryTree {
   children: CategoryTree[];
 }
 
+const CATEGORY_ORDER = [
+  "DISC",
+  "SETTINGS",
+  "EARRINGS",
+  "PENDANTS",
+  "CLASPS",
+  "CHAINS",
+  "BEADS",
+  "PINS",
+  "SOLDER",
+  "RELIGIOUS ITEMS",
+  "RINGS",
+  "LETTERS",
+  "NUMBERS",
+  "MENS",
+  "COIN FRAMES",
+  "WATCH BEZELS FOR DIAMONDS",
+  "MILL PRODUCTS"
+];
+
+function sortCategories(aTitle: string, bTitle: string) {
+  const aIdx = CATEGORY_ORDER.indexOf(aTitle.toUpperCase());
+  const bIdx = CATEGORY_ORDER.indexOf(bTitle.toUpperCase());
+  
+  if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+  if (aIdx !== -1) return -1;
+  if (bIdx !== -1) return 1;
+  return aTitle.localeCompare(bTitle);
+}
+
 function ProductsContent() {
   const router = useRouter();
   const pathname = usePathname();
@@ -359,7 +389,7 @@ function ProductsContent() {
           <div className={styles.filterBlock}>
             <h3 className={styles.filterTitle}>Categories</h3>
             <div className={styles.filterList}>
-              {categories.map(renderCategoryFilter)}
+              {[...categories].sort((a, b) => sortCategories(a.name, b.name)).map(renderCategoryFilter)}
             </div>
           </div>
 

@@ -74,6 +74,36 @@ interface UserSession {
   companyName: string;
 }
 
+const CATEGORY_ORDER = [
+  "DISC",
+  "SETTINGS",
+  "EARRINGS",
+  "PENDANTS",
+  "CLASPS",
+  "CHAINS",
+  "BEADS",
+  "PINS",
+  "SOLDER",
+  "RELIGIOUS ITEMS",
+  "RINGS",
+  "LETTERS",
+  "NUMBERS",
+  "MENS",
+  "COIN FRAMES",
+  "WATCH BEZELS FOR DIAMONDS",
+  "MILL PRODUCTS"
+];
+
+function sortCategories(aTitle: string, bTitle: string) {
+  const aIdx = CATEGORY_ORDER.indexOf(aTitle.toUpperCase());
+  const bIdx = CATEGORY_ORDER.indexOf(bTitle.toUpperCase());
+  
+  if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+  if (aIdx !== -1) return -1;
+  if (bIdx !== -1) return 1;
+  return aTitle.localeCompare(bTitle);
+}
+
 export default function Header() {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('findings');
@@ -126,7 +156,7 @@ export default function Header() {
         const rect = bottomTierRef.current.getBoundingClientRect();
         const top = rect.top + window.scrollY;
         window.scrollTo({ top, behavior: 'smooth' });
-        
+
         // Wait for smooth scroll to finish before locking body
         const timer = setTimeout(() => {
           document.body.style.overflow = 'hidden';
@@ -264,7 +294,7 @@ export default function Header() {
               silver: formatPrice(data.prices.silver_925 || 0),
               platinum: formatPrice(data.prices.platinum || 0)
             });
-          // Handle external metals API format: { XAU: { price }, XAG: { price }, XPT: { price } }
+            // Handle external metals API format: { XAU: { price }, XAG: { price }, XPT: { price } }
           } else if (data.XAU && data.XAG && data.XPT) {
             setMetalPrices({
               gold: formatPrice(data.XAU.price),
@@ -324,6 +354,8 @@ export default function Header() {
             <Link href="/contact" className={styles.topLink}>Contact Us</Link>
             <span className={styles.divider}>|</span>
             <Link href="/about" className={styles.topLink}>About Us</Link>
+            <span className={styles.divider}>|</span>
+            <Link href="/catalog" className={styles.topLink}>Catalog</Link>
             <span className={styles.divider}>|</span>
             <Link href="/cart" className={styles.topLink}>Cart{cartCount > 0 ? ` (${cartCount})` : ''}</Link>
             <span className={styles.divider}>|</span>
@@ -450,23 +482,23 @@ export default function Header() {
                       {/* Left Side: Categories */}
                       <div className={styles.megaMenuSidebar}>
                         {Object.keys(megaMenuData)
-                          .sort((a, b) => megaMenuData[a].title.localeCompare(megaMenuData[b].title))
+                          .sort((a, b) => sortCategories(megaMenuData[a].title, megaMenuData[b].title))
                           .map((catKey) => (
-                          <div
-                            key={catKey}
-                            className={`${styles.sidebarItem} ${activeCategory === catKey ? styles.sidebarItemActive : ''}`}
-                            onMouseEnter={() => setActiveCategory(catKey)}
-                            onClick={() => {
-                              if (megaMenuData[catKey].links.length === 0) {
-                                setIsMegaMenuOpen(false);
-                                router.push(`/products?category=${megaMenuData[catKey].slug}`);
-                              }
-                            }}
-                          >
-                            {megaMenuData[catKey].title}
-                            <span className={styles.sidebarArrow}>›</span>
-                          </div>
-                        ))}
+                            <div
+                              key={catKey}
+                              className={`${styles.sidebarItem} ${activeCategory === catKey ? styles.sidebarItemActive : ''}`}
+                              onMouseEnter={() => setActiveCategory(catKey)}
+                              onClick={() => {
+                                if (megaMenuData[catKey].links.length === 0) {
+                                  setIsMegaMenuOpen(false);
+                                  router.push(`/products?category=${megaMenuData[catKey].slug}`);
+                                }
+                              }}
+                            >
+                              {megaMenuData[catKey].title}
+                              <span className={styles.sidebarArrow}>›</span>
+                            </div>
+                          ))}
                       </div>
 
                       {/* Right Side: Category Links */}
@@ -476,10 +508,10 @@ export default function Header() {
                           {[...currentCategoryData.links]
                             .sort((a, b) => a.label.localeCompare(b.label))
                             .map((link, idx) => (
-                            <Link key={idx} href={link.href} className={styles.megaMenuLink}>
-                              {link.label}
-                            </Link>
-                          ))}
+                              <Link key={idx} href={link.href} className={styles.megaMenuLink}>
+                                {link.label}
+                              </Link>
+                            ))}
                         </div>
                       </div>
 
@@ -531,8 +563,8 @@ export default function Header() {
             <div className={styles.mobileOverlayScreen}>
               <div className={styles.mobileFullScreenHeader}>
                 <h2 className={styles.mobileFullScreenTitle}>BROWSE CATALOG</h2>
-                <button 
-                  className={styles.mobileFullScreenCloseBtn} 
+                <button
+                  className={styles.mobileFullScreenCloseBtn}
                   onClick={() => {
                     setIsMegaMenuOpen(false);
                   }}
@@ -542,7 +574,7 @@ export default function Header() {
               </div>
               <div className={styles.mobileFullScreenBody}>
                 {Object.keys(megaMenuData)
-                  .sort((a, b) => megaMenuData[a].title.localeCompare(megaMenuData[b].title))
+                  .sort((a, b) => sortCategories(megaMenuData[a].title, megaMenuData[b].title))
                   .map((catKey) => (
                     <button
                       key={catKey}
@@ -567,8 +599,8 @@ export default function Header() {
             {mobileViewCategory && megaMenuData[mobileViewCategory] && (
               <div className={`${styles.mobileOverlayScreen} ${styles.mobileSubcategoryScreen}`}>
                 <div className={styles.mobileFullScreenHeader}>
-                  <button 
-                    className={styles.mobileFullScreenBackBtn} 
+                  <button
+                    className={styles.mobileFullScreenBackBtn}
                     onClick={() => setMobileViewCategory(null)}
                   >
                     ‹ BACK
@@ -579,28 +611,28 @@ export default function Header() {
                   {Object.entries(getGroupedLinks(megaMenuData[mobileViewCategory].links))
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([letter, groupLinks]) => (
-                    <div key={letter} className={styles.mobileAlphabetGroup}>
-                      <div className={styles.mobileAlphabetHeader}>{letter}</div>
-                      <div className={styles.mobileAlphabetLinks}>
-                        {[...groupLinks]
-                          .sort((a, b) => a.label.localeCompare(b.label))
-                          .map((link, idx) => (
-                          <Link
-                            key={idx}
-                            href={link.href}
-                            className={styles.mobileFullScreenLink}
-                            onClick={() => { 
-                              setIsMobileMenuOpen(false); 
-                              setIsMegaMenuOpen(false); 
-                              setMobileViewCategory(null); 
-                            }}
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
+                      <div key={letter} className={styles.mobileAlphabetGroup}>
+                        <div className={styles.mobileAlphabetHeader}>{letter}</div>
+                        <div className={styles.mobileAlphabetLinks}>
+                          {[...groupLinks]
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map((link, idx) => (
+                              <Link
+                                key={idx}
+                                href={link.href}
+                                className={styles.mobileFullScreenLink}
+                                onClick={() => {
+                                  setIsMobileMenuOpen(false);
+                                  setIsMegaMenuOpen(false);
+                                  setMobileViewCategory(null);
+                                }}
+                              >
+                                {link.label}
+                              </Link>
+                            ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}

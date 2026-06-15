@@ -71,14 +71,14 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
-  
+
   // Custom Measurements
   const [customLength, setCustomLength] = useState<number | ''>('');
   const [customWidth, setCustomWidth] = useState<number | ''>('');
   const [_metalPriceMultiplier, setMetalPriceMultiplier] = useState(1);
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [basePrice, setBasePrice] = useState<number | null>(null);
-  
+
   interface Discount { id: number; min_quantity: number; type: string; amount: number; }
   const [discounts, setDiscounts] = useState<Discount[]>([]);
 
@@ -87,8 +87,8 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/metal-prices`);
         if (res.ok) {
-           // simple placeholder for multiplier
-           setMetalPriceMultiplier(1.05); 
+          // simple placeholder for multiplier
+          setMetalPriceMultiplier(1.05);
         }
       } catch (e) {
         console.error(e);
@@ -106,7 +106,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
           const data = await res.json();
           if (data.authenticated) setIsAuthenticated(true);
         }
-      } catch {}
+      } catch { }
     }
     checkSession();
   }, []);
@@ -123,11 +123,11 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
 
         // Initialize options with the first variation if available
         if (data.product?.variations?.length > 0) {
-           const initialOptions: Record<string, string> = {};
-           data.product.variations[0].attributes.forEach((a) => {
-              initialOptions[a.slug] = a.value;
-           });
-           setSelectedOptions(initialOptions);
+          const initialOptions: Record<string, string> = {};
+          data.product.variations[0].attributes.forEach((a) => {
+            initialOptions[a.slug] = a.value;
+          });
+          setSelectedOptions(initialOptions);
         }
       } catch (err) {
         console.error('Failed to fetch product', err);
@@ -140,13 +140,13 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   }, [productId]);
 
   // --- Variation Logic ---
-  
+
   // 1. Extract unique attributes used by variations to build the UI
   const variationAttributes = (() => {
     if (!product || !product.variations || product.variations.length === 0) return [];
     const usedSlugs = new Set<string>();
     product.variations.forEach(v => v.attributes.forEach(a => usedSlugs.add(a.slug)));
-    
+
     // Return attributes in the order they are defined on the parent product
     return product.attributes.filter(a => usedSlugs.has(a.slug));
   })();
@@ -154,7 +154,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   // 2. Determine validity of an option based on higher-level selections (top-down hierarchy)
   const isOptionValid = (attrIdx: number, slug: string, value: string) => {
     if (!product || !product.variations) return false;
-    
+
     const testSelections: Record<string, string> = {};
     for (let i = 0; i < attrIdx; i++) {
       const earlierSlug = variationAttributes[i].slug;
@@ -164,8 +164,8 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     }
     testSelections[slug] = value;
 
-    return product.variations.some(v => 
-      Object.entries(testSelections).every(([k, val]) => 
+    return product.variations.some(v =>
+      Object.entries(testSelections).every(([k, val]) =>
         v.attributes.find(a => a.slug === k)?.value === val
       )
     );
@@ -176,7 +176,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     setSelectedOptions(prev => {
       const next = { ...prev, [slug]: value };
       const validated: Record<string, string> = {};
-      
+
       // Keep everything above and including the changed option
       for (let i = 0; i <= attrIdx; i++) {
         const s = variationAttributes[i].slug;
@@ -188,8 +188,8 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
         const s = variationAttributes[i].slug;
         if (next[s]) {
           const testSelections = { ...validated, [s]: next[s] };
-          const isValid = product?.variations?.some(v => 
-             Object.entries(testSelections).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
+          const isValid = product?.variations?.some(v =>
+            Object.entries(testSelections).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
           );
           if (isValid) {
             validated[s] = next[s];
@@ -199,18 +199,18 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
 
       // Try to auto-fill missing downstream attributes with valid choices
       for (let i = attrIdx + 1; i < variationAttributes.length; i++) {
-         const s = variationAttributes[i].slug;
-         if (!validated[s]) {
-            const validVars = product?.variations?.filter(v => 
-               Object.entries(validated).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
-            );
-            if (validVars && validVars.length > 0) {
-               const firstAvailableValue = validVars[0].attributes.find(a => a.slug === s)?.value;
-               if (firstAvailableValue) {
-                  validated[s] = firstAvailableValue;
-               }
+        const s = variationAttributes[i].slug;
+        if (!validated[s]) {
+          const validVars = product?.variations?.filter(v =>
+            Object.entries(validated).every(([k, val]) => v.attributes.find(a => a.slug === k)?.value === val)
+          );
+          if (validVars && validVars.length > 0) {
+            const firstAvailableValue = validVars[0].attributes.find(a => a.slug === s)?.value;
+            if (firstAvailableValue) {
+              validated[s] = firstAvailableValue;
             }
-         }
+          }
+        }
       }
 
       return validated;
@@ -254,8 +254,8 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
 
 
   // 4. Determine current active variation
-  const currentVariation = product?.variations?.find(v => 
-    variationAttributes.every(attr => 
+  const currentVariation = product?.variations?.find(v =>
+    variationAttributes.every(attr =>
       v.attributes.find(a => a.slug === attr.slug)?.value === selectedOptions[attr.slug]
     )
   ) || null;
@@ -438,12 +438,12 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
               const isNumericSize = attr.name.toLowerCase().includes('size') && allOptions.some(opt => !isNaN(parseFloat(opt)));
               if (isNumericSize) {
                 allOptions.sort((a, b) => {
-                   const numA = parseFloat(a);
-                   const numB = parseFloat(b);
-                   if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                   if (!isNaN(numA)) return -1;
-                   if (!isNaN(numB)) return 1;
-                   return a.localeCompare(b);
+                  const numA = parseFloat(a);
+                  const numB = parseFloat(b);
+                  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                  if (!isNaN(numA)) return -1;
+                  if (!isNaN(numB)) return 1;
+                  return a.localeCompare(b);
                 });
               } else {
                 allOptions.sort((a, b) => a.localeCompare(b));
@@ -458,13 +458,13 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                     <div className={styles.metalOptions}>
                       {allOptions.map((opt) => {
                         const valid = isOptionValid(attrIdx, attr.slug, opt);
-                        
+
                         // Find a variation that has this metal option to get its image
-                        const varForImage = product.variations.find(v => 
+                        const varForImage = product.variations.find(v =>
                           v.attributes.some(a => a.slug === attr.slug && a.value === opt) &&
                           v.images && v.images.length > 0
                         );
-                        
+
                         const btnImg = varForImage ? varForImage.images[0].url : images[0];
 
                         return (
@@ -515,13 +515,13 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
             {product.measurement_type === 'inch' && (
               <div className={styles.sizeSection} style={{ marginTop: '1.5rem' }}>
                 <h4 className={styles.sectionLabel}>Length (Inches)</h4>
-                <input 
-                  type="number" 
-                  min="1" 
+                <input
+                  type="number"
+                  min="1"
                   step="0.25"
-                  value={customLength} 
-                  onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')} 
-                  className={styles.sizeSelect} 
+                  value={customLength}
+                  onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')}
+                  className={styles.sizeSelect}
                   placeholder="Enter inches..."
                 />
               </div>
@@ -530,25 +530,25 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
               <div className={styles.sizeSection} style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <h4 className={styles.sectionLabel}>Length (Inches)</h4>
-                  <input 
-                    type="number" 
-                    min="1" 
+                  <input
+                    type="number"
+                    min="1"
                     step="0.25"
-                    value={customLength} 
-                    onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')} 
-                    className={styles.sizeSelect} 
+                    value={customLength}
+                    onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')}
+                    className={styles.sizeSelect}
                     placeholder="Length"
                   />
                 </div>
                 <div style={{ flex: 1 }}>
                   <h4 className={styles.sectionLabel}>Width (Inches)</h4>
-                  <input 
-                    type="number" 
-                    min="1" 
+                  <input
+                    type="number"
+                    min="1"
                     step="0.25"
-                    value={customWidth} 
-                    onChange={(e) => setCustomWidth(parseFloat(e.target.value) || '')} 
-                    className={styles.sizeSelect} 
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(parseFloat(e.target.value) || '')}
+                    className={styles.sizeSelect}
                     placeholder="Width"
                   />
                 </div>
@@ -560,7 +560,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
               {isAuthenticated ? (
                 <>
                   <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-gold)' }}>
-                    $\{calculatedPrice !== null ? calculatedPrice.toFixed(2) : (basePrice ? basePrice.toFixed(2) : '0.00')}
+                    ${calculatedPrice !== null ? calculatedPrice.toFixed(2) : (basePrice ? basePrice.toFixed(2) : '0.00')}
                     <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}> / each</span>
                   </div>
                   {discounts.length > 0 && (
@@ -617,10 +617,10 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                   +
                 </button>
               </div>
-              
+
               {isAuthenticated ? (
-                <button 
-                  onClick={handleAddToCart} 
+                <button
+                  onClick={handleAddToCart}
                   disabled={addingToCart}
                   className={styles.priceBtn}
                   style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-inkblue)' }}
