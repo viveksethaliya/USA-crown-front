@@ -9,9 +9,9 @@ interface Address {
   id?: string;
   first_name: string;
   last_name: string;
-  company_name?: string;
-  address_line1: string;
-  address_line2?: string;
+  company?: string;
+  address_line_1: string;
+  address_line_2?: string;
   city: string;
   state: string;
   postal_code: string;
@@ -29,9 +29,9 @@ export default function AccountAddressesPage() {
   const [editId, setEditId] = useState<string | null>(null);
 
   const emptyForm = {
-    first_name: "", last_name: "", company_name: "",
-    address_line1: "", address_line2: "",
-    city: "", state: "", postal_code: "", country: "US",
+    first_name: "", last_name: "", company: "",
+    address_line_1: "", address_line_2: "",
+    city: "", state: "", postal_code: "", country: "USA",
     phone: "",
     is_default_shipping: false, is_default_billing: false
   };
@@ -96,9 +96,9 @@ export default function AccountAddressesPage() {
     setFormData({
       first_name: addr.first_name || "",
       last_name: addr.last_name || "",
-      company_name: addr.company_name || "",
-      address_line1: addr.address_line1 || "",
-      address_line2: addr.address_line2 || "",
+      company: addr.company || "",
+      address_line_1: addr.address_line_1 || "",
+      address_line_2: addr.address_line_2 || "",
       city: addr.city || "",
       state: addr.state || "",
       postal_code: addr.postal_code || "",
@@ -125,17 +125,19 @@ export default function AccountAddressesPage() {
             {a.is_default_shipping && <span className={styles.defaultBadge}>Default Shipping</span>}
             {a.is_default_billing && <span className={styles.defaultBadge} style={{top: a.is_default_shipping ? 15 : -10}}>Default Billing</span>}
             
-            <h3>{a.first_name} {a.last_name}</h3>
-            {a.company_name && <p>{a.company_name}</p>}
-            <p>{a.address_line1}</p>
-            {a.address_line2 && <p>{a.address_line2}</p>}
-            <p>{a.city}, {a.state} {a.postal_code}</p>
-            <p>{a.country}</p>
-            <p>Phone: {a.phone}</p>
+            <div className={styles.addressCard}>
+              <h4>{a.first_name} {a.last_name}</h4>
+              {a.company && <p>{a.company}</p>}
+              <p>{a.address_line_1}</p>
+              {a.address_line_2 && <p>{a.address_line_2}</p>}
+              <p>{a.city}, {a.state} {a.postal_code}</p>
+              <p>{a.country}</p>
+              <p>Phone: {a.phone}</p>
 
-            <div className={styles.actions}>
-              <button onClick={() => openEdit(a)} className={styles.actionBtn}>Edit</button>
-              <button onClick={() => a.id && handleDelete(a.id)} className={`${styles.actionBtn} ${styles.delete}`}>Delete</button>
+              <div className={styles.actions}>
+                <button onClick={() => openEdit(a)} className={styles.actionBtn}>Edit</button>
+                <button onClick={() => a.id && handleDelete(a.id)} className={`${styles.actionBtn} ${styles.delete}`}>Delete</button>
+              </div>
             </div>
           </div>
         ))}
@@ -159,13 +161,17 @@ export default function AccountAddressesPage() {
                 <label>Last Name *</label>
                 <input required type="text" className={profileStyles.input} value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
               </div>
-              <div className={`${profileStyles.formGroup} ${styles.fullWidth}`}>
-                <label>Address Line 1 *</label>
-                <input required type="text" className={profileStyles.input} value={formData.address_line1} onChange={e => setFormData({...formData, address_line1: e.target.value})} />
+              <div className={profileStyles.formGroup}>
+                <label>Company (Optional)</label>
+                <input type="text" className={profileStyles.input} value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
               </div>
-              <div className={`${profileStyles.formGroup} ${styles.fullWidth}`}>
-                <label>Address Line 2 (Optional)</label>
-                <input type="text" className={profileStyles.input} value={formData.address_line2} onChange={e => setFormData({...formData, address_line2: e.target.value})} />
+              <div className={profileStyles.formGroup}>
+                <label>Address Line 1 *</label>
+                <input required type="text" className={profileStyles.input} value={formData.address_line_1} onChange={e => setFormData({...formData, address_line_1: e.target.value})} />
+              </div>
+              <div className={profileStyles.formGroup}>
+                <label>Address Line 2</label>
+                <input type="text" className={profileStyles.input} value={formData.address_line_2} onChange={e => setFormData({...formData, address_line_2: e.target.value})} />
               </div>
               <div className={profileStyles.formGroup}>
                 <label>City *</label>

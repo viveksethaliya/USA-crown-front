@@ -576,9 +576,9 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                         <tbody>
                           {discounts.map(d => (
                             <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
-                              <td style={{ padding: '0.4rem 0' }}>\{d.min_quantity}+</td>
+                              <td style={{ padding: '0.4rem 0' }}>{d.min_quantity}+</td>
                               <td style={{ padding: '0.4rem 0', color: 'green', fontWeight: 600 }}>
-                                \{d.type === 'percentage' ? `\${d.amount}% off` : `$\${d.amount} off`}
+                                {d.type === 'percentage' ? `${d.amount}% off` : `$${d.amount} off`}
                               </td>
                             </tr>
                           ))}

@@ -8,6 +8,11 @@ interface Exclusion {
   category_id: number | null;
 }
 
+interface CustomerGroup {
+  id: string;
+  name: string;
+}
+
 interface Discount {
   id: string;
   name: string;
@@ -15,11 +20,13 @@ interface Discount {
   value: number;
   min_quantity: number;
   is_active: boolean;
+  customer_group_id: string | null;
   exclusions?: Exclusion[];
 }
 
 export default function DiscountsAdminPage() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [customerGroups, setCustomerGroups] = useState<CustomerGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -29,27 +36,37 @@ export default function DiscountsAdminPage() {
   const [value, setValue] = useState(0);
   const [minQuantity, setMinQuantity] = useState(1);
   const [isActive, setIsActive] = useState(true);
+  const [customerGroupId, setCustomerGroupId] = useState('');
   const [exclusions, setExclusions] = useState<Exclusion[]>([]);
 
   // For adding new exclusion
   const [exclType, setExclType] = useState('product');
   const [exclId, setExclId] = useState('');
 
-  const fetchDiscounts = async () => {
+  const fetchData = async () => {
     try {
-      const response = await fetch(apiUrl('/api/admin/discounts'), { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch discounts');
-      const data = await response.json();
-      setDiscounts(data.discounts);
+      const [discRes, groupsRes] = await Promise.all([
+        fetch(apiUrl('/api/admin/discounts'), { credentials: 'include' }),
+        fetch(apiUrl('/api/admin/customer-groups'), { credentials: 'include' })
+      ]);
+      
+      if (!discRes.ok) throw new Error('Failed to fetch discounts');
+      const discData = await discRes.json();
+      setDiscounts(discData.discounts);
+
+      if (groupsRes.ok) {
+        const groupsData = await groupsRes.json();
+        setCustomerGroups(groupsData.groups || []);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error fetching discounts');
+      setError(err instanceof Error ? err.message : 'Error fetching data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDiscounts();
+    fetchData();
   }, []);
 
   const resetForm = () => {
@@ -58,6 +75,7 @@ export default function DiscountsAdminPage() {
     setValue(0);
     setMinQuantity(1);
     setIsActive(true);
+    setCustomerGroupId('');
     setExclusions([]);
     setExclId('');
     setError('');
@@ -69,6 +87,7 @@ export default function DiscountsAdminPage() {
     setValue(discount.value);
     setMinQuantity(discount.min_quantity);
     setIsActive(discount.is_active);
+    setCustomerGroupId(discount.customer_group_id || '');
     setExclusions(discount.exclusions || []);
     setExclId('');
     setError('');
@@ -83,6 +102,7 @@ export default function DiscountsAdminPage() {
       value: Number(value), 
       min_quantity: Number(minQuantity), 
       is_active: isActive,
+      customer_group_id: customerGroupId === '' ? null : customerGroupId,
       exclusions 
     };
     const method = editingId ? 'PUT' : 'POST';
@@ -102,7 +122,7 @@ export default function DiscountsAdminPage() {
       }
 
       resetForm();
-      fetchDiscounts();
+      fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error saving discount');
     }
@@ -118,7 +138,7 @@ export default function DiscountsAdminPage() {
       });
 
       if (!response.ok) throw new Error('Failed to delete discount');
-      fetchDiscounts();
+      fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error deleting discount');
     }
@@ -160,6 +180,7 @@ export default function DiscountsAdminPage() {
             <thead style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
               <tr>
                 <th style={{ padding: '12px', textAlign: 'left' }}>Tier Name</th>
+                <th style={{ padding: '12px', textAlign: 'center' }}>Customer Group</th>
                 <th style={{ padding: '12px', textAlign: 'center' }}>Minimum Qty</th>
                 <th style={{ padding: '12px', textAlign: 'center' }}>Discount (%)</th>
                 <th style={{ padding: '12px', textAlign: 'center' }}>Status</th>
@@ -169,7 +190,7 @@ export default function DiscountsAdminPage() {
             <tbody>
               {discounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+                  <td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
                     No discounts defined.
                   </td>
                 </tr>
@@ -183,6 +204,11 @@ export default function DiscountsAdminPage() {
                           {d.exclusions.length} exclusions
                         </div>
                       )}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center', color: '#4b5563', fontSize: '13px' }}>
+                      {d.customer_group_id 
+                        ? customerGroups.find(g => g.id === d.customer_group_id)?.name || 'Unknown Group'
+                        : 'Global (All)'}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>{d.min_quantity} pcs</td>
                     <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#047857' }}>{d.value}%</td>
@@ -248,6 +274,19 @@ export default function DiscountsAdminPage() {
                 required 
                 style={{ width: '100%', padding: '8px', border: '1px solid #d1d5db' }}
               />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Customer Group</label>
+              <select 
+                value={customerGroupId} 
+                onChange={e => setCustomerGroupId(e.target.value)} 
+                style={{ width: '100%', padding: '8px', border: '1px solid #d1d5db', background: 'white' }}
+              >
+                <option value="">Global (All Authenticated Users)</option>
+                {customerGroups.map(group => (
+                  <option key={group.id} value={group.id}>{group.name}</option>
+                ))}
+              </select>
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
               <input 

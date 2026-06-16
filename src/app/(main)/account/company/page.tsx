@@ -11,9 +11,10 @@ export default function AccountCompanyPage() {
 
   const [formData, setFormData] = useState({
     company_name: "",
+    company_address: "",
+    company_phone: "",
+    website: "",
     tax_id: "",
-    industry: "",
-    company_notes: "",
     resale_certificate_url: ""
   });
 
@@ -24,9 +25,10 @@ export default function AccountCompanyPage() {
         if (data && !data.error) {
           setFormData({
             company_name: data.company_name || "",
+            company_address: data.company_address || "",
+            company_phone: data.company_phone || "",
+            website: data.website || "",
             tax_id: data.tax_id || "",
-            industry: data.industry || "",
-            company_notes: data.company_notes || "",
             resale_certificate_url: data.resale_certificate_url || ""
           });
         }
@@ -86,36 +88,39 @@ export default function AccountCompanyPage() {
         </div>
 
         <div className={styles.formGroup}>
+          <label>Company Website</label>
+          <input 
+            type="url" className={styles.input} 
+            placeholder="https://..."
+            value={formData.website} 
+            onChange={e => setFormData({...formData, website: e.target.value})}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Company Address *</label>
+          <input 
+            required type="text" className={styles.input} 
+            value={formData.company_address} 
+            onChange={e => setFormData({...formData, company_address: e.target.value})}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>Company Phone</label>
+          <input 
+            type="tel" className={styles.input} 
+            value={formData.company_phone} 
+            onChange={e => setFormData({...formData, company_phone: e.target.value})}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
           <label>Tax ID / EIN</label>
           <input 
             type="text" className={styles.input} 
             value={formData.tax_id} 
             onChange={e => setFormData({...formData, tax_id: e.target.value})}
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Industry</label>
-          <select 
-            className={styles.input} 
-            value={formData.industry} 
-            onChange={e => setFormData({...formData, industry: e.target.value})}
-          >
-            <option value="">Select Industry...</option>
-            <option value="Retailer">Retailer</option>
-            <option value="Wholesaler">Wholesaler</option>
-            <option value="Manufacturer">Manufacturer</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>Additional Notes</label>
-          <textarea 
-            className={styles.input} 
-            rows={4}
-            value={formData.company_notes} 
-            onChange={e => setFormData({...formData, company_notes: e.target.value})}
           />
         </div>
 

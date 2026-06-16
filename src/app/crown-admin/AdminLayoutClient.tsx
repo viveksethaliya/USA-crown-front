@@ -25,7 +25,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           credentials: "include"
         });
 
-        if (!res.ok) {
+        if (!res.ok && res.status !== 401) {
           throw new Error(`Server returned status ${res.status}`);
         }
 
@@ -241,6 +241,15 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
                 >
                   <span className={styles.navLinkIcon}><FiUsers /></span>
                   <span className={styles.navLinkText}>Users</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/crown-admin/customer-groups"
+                  className={`${styles.navLink} ${pathname.startsWith("/crown-admin/customer-groups") ? styles.navLinkActive : ""}`}
+                >
+                  <span className={styles.navLinkIcon}><FiUsers /></span>
+                  <span className={styles.navLinkText}>Customer Groups</span>
                 </Link>
               </li>
 

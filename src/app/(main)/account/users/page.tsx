@@ -12,7 +12,8 @@ interface User {
   mobile: string;
   username: string;
   is_active: boolean;
-  roles?: { name: string };
+  roles?: { id: string, name: string };
+  user_permissions?: { permission_id: string }[];
 }
 
 export default function AccountUsersPage() {
@@ -22,7 +23,10 @@ export default function AccountUsersPage() {
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const emptyForm = { full_name: "", email: "", mobile: "", password: "", is_active: true };
+  const [roles, setRoles] = useState<{id: string, name: string}[]>([]);
+  const [permissions, setPermissions] = useState<{id: string, code: string, name: string}[]>([]);
+
+  const emptyForm = { full_name: "", email: "", mobile: "", password: "", is_active: true, role_id: "", permission_ids: [] as string[] };
   const [formData, setFormData] = useState(emptyForm);
 
   const fetchUsers = async () => {
@@ -37,8 +41,9 @@ export default function AccountUsersPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
+    fetch('/api/account/roles').then(r => r.json()).then(data => setRoles(data || []));
+    fetch('/api/account/permissions').then(r => r.json()).then(data => setPermissions(data || []));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,15 +53,17 @@ export default function AccountUsersPage() {
       const method = editId ? 'PUT' : 'POST';
       const url = editId ? `/api/account/users/${editId}` : '/api/account/users';
       
-      const payload: Record<string, string | boolean> = {};
-      if (!editId) {
-        payload.full_name = formData.full_name;
-        payload.email = formData.email;
-        payload.mobile = formData.mobile;
-        payload.password = formData.password;
-      } else {
-        payload.is_active = formData.is_active;
-        if (formData.password) payload.new_password = formData.password;
+      const payload: Record<string, any> = {
+        full_name: formData.full_name,
+        email: formData.email,
+        mobile: formData.mobile,
+        role_id: formData.role_id,
+        permission_ids: formData.permission_ids,
+        is_active: formData.is_active
+      };
+      if (formData.password) {
+        if (editId) payload.new_password = formData.password;
+        else payload.password = formData.password;
       }
 
       const res = await fetch(url, {
@@ -84,7 +91,15 @@ export default function AccountUsersPage() {
 
   const openEdit = (u: User) => {
     setEditId(u.id);
-    setFormData({ ...emptyForm, full_name: u.full_name, email: u.email, is_active: u.is_active });
+    setFormData({
+      full_name: u.full_name,
+      email: u.email,
+      mobile: u.mobile,
+      is_active: u.is_active,
+      password: "",
+      role_id: u.roles?.id || "",
+      permission_ids: (u.user_permissions || []).map(p => p.permission_id)
+    });
     setIsModalOpen(true);
   };
 
@@ -136,7 +151,7 @@ export default function AccountUsersPage() {
                   </div>
                   <div className={profileStyles.formGroup}>
                     <label>Email *</label>
-                    <input required type="email" className={profileStyles.input} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    <input required type="email" className={profileStyles.input} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} disabled={!!editId} />
                   </div>
                   <div className={profileStyles.formGroup}>
                     <label>Mobile *</label>
@@ -147,13 +162,14 @@ export default function AccountUsersPage() {
 
               {editId && (
                 <div className={styles.fullWidth}>
-                  <p style={{margin:'0 0 1rem 0'}}><strong>{formData.full_name} ({formData.email})</strong></p>
                   <label className={styles.checkbox}>
                     <input type="checkbox" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
                     Allow this user to log in
                   </label>
                 </div>
               )}
+
+
 
               <div className={styles.fullWidth}>
                 <label className={profileStyles.label}>{editId ? 'Reset Password (Optional)' : 'Initial Password *'}</label>
