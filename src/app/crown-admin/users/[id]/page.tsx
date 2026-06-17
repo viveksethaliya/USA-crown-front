@@ -56,6 +56,15 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       tax_id: string;
       industry: string;
     };
+    parent_user_id?: string | null;
+    parent_company?: {
+      company_name: string;
+      tax_id: string;
+      industry: string;
+    };
+    parent_group?: {
+      name: string;
+    };
   }
 
   const [user, setUser] = useState<UserData | null>(null);
@@ -361,9 +370,9 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
           <h2>Company Profile {user.parent_user_id && "(Inherited)"}</h2>
           {(user.parent_user_id ? user.parent_company : user.company_profiles) ? (
             <div className={styles.listItem}>
-              <h4>{(user.parent_user_id ? user.parent_company : user.company_profiles).company_name}</h4>
-              <p>Tax ID: {(user.parent_user_id ? user.parent_company : user.company_profiles).tax_id || 'N/A'}</p>
-              <p>Industry: {(user.parent_user_id ? user.parent_company : user.company_profiles).industry || 'N/A'}</p>
+              <h4>{(user.parent_user_id ? user.parent_company : user.company_profiles)?.company_name}</h4>
+              <p>Tax ID: {(user.parent_user_id ? user.parent_company : user.company_profiles)?.tax_id || 'N/A'}</p>
+              <p>Industry: {(user.parent_user_id ? user.parent_company : user.company_profiles)?.industry || 'N/A'}</p>
               {user.parent_user_id && user.parent_group && (
                 <p style={{marginTop: '0.5rem', color: '#4f46e5'}}><strong>Customer Group:</strong> {user.parent_group.name}</p>
               )}

@@ -131,10 +131,10 @@ export default function Header() {
 
   const router = useRouter();
 
-  const [metalPrices, setMetalPrices] = useState({
-    gold: '...',
-    silver: '...',
-    platinum: '...'
+  const [metalPrices, setMetalPrices] = useState<{ gold: number | null, silver: number | null, platinum: number | null }>({
+    gold: null,
+    silver: null,
+    platinum: null
   });
 
   // Close mega menu on outside click
@@ -279,27 +279,19 @@ export default function Header() {
         if (res.ok) {
           const data = await res.json();
 
-          const formatPrice = (price: number) => {
-            if (!price || price === 0) return 'Login for pricing';
-            return new Intl.NumberFormat('en-US', {
-              style: 'currency',
-              currency: 'USD'
-            }).format(price);
-          };
-
           // Handle our backend format: { prices: { gold_14k, silver_925, platinum } }
           if (data.prices) {
             setMetalPrices({
-              gold: formatPrice(data.prices.gold_14k || 0),
-              silver: formatPrice(data.prices.silver_925 || 0),
-              platinum: formatPrice(data.prices.platinum || 0)
+              gold: data.prices.gold_14k || 0,
+              silver: data.prices.silver_925 || 0,
+              platinum: data.prices.platinum || 0
             });
             // Handle external metals API format: { XAU: { price }, XAG: { price }, XPT: { price } }
           } else if (data.XAU && data.XAG && data.XPT) {
             setMetalPrices({
-              gold: formatPrice(data.XAU.price),
-              silver: formatPrice(data.XAG.price),
-              platinum: formatPrice(data.XPT.price)
+              gold: data.XAU.price,
+              silver: data.XAG.price,
+              platinum: data.XPT.price
             });
           }
         }
@@ -425,18 +417,27 @@ export default function Header() {
 
             {/* Live Metal Prices */}
             <div className={styles.metalPrices}>
-              <div className={styles.metalItem}>
-                <span className={styles.metalName}>GOLD</span>
-                <span className={styles.metalPrice}>{metalPrices.gold}</span>
-              </div>
-              <div className={styles.metalItem}>
-                <span className={styles.metalName}>SILVER</span>
-                <span className={styles.metalPrice}>{metalPrices.silver}</span>
-              </div>
-              <div className={styles.metalItem}>
-                <span className={styles.metalName}>PLATINUM</span>
-                <span className={styles.metalPrice}>{metalPrices.platinum}</span>
-              </div>
+              {[
+                { label: 'GOLD', value: metalPrices.gold },
+                { label: 'SILVER', value: metalPrices.silver },
+                { label: 'PLATINUM', value: metalPrices.platinum },
+              ].map(metal => {
+                let displayStr = '...';
+                if (metal.value === null) {
+                  displayStr = '...';
+                } else if (metal.value === 0) {
+                  displayStr = user ? 'Call for Pricing' : 'Login for Pricing';
+                } else {
+                  displayStr = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(metal.value);
+                }
+                
+                return (
+                  <div key={metal.label} className={styles.metalItem}>
+                    <span className={styles.metalName}>{metal.label}</span>
+                    <span className={styles.metalPrice}>{displayStr}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

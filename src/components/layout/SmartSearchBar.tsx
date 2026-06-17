@@ -106,7 +106,7 @@ export default function SmartSearchBar() {
     try {
       const stored = sessionStorage.getItem("recentSearches");
       if (stored) setRecentSearches(JSON.parse(stored).slice(0, 5));
-    } catch {}
+    } catch { }
   }, []);
 
   // Click outside closes dropdown
@@ -186,7 +186,7 @@ export default function SmartSearchBar() {
       try {
         const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${process.env.NEXT_PUBLIC_GROQ_API}`
           },
@@ -197,7 +197,7 @@ export default function SmartSearchBar() {
             messages: [
               {
                 role: "system",
-                content: `You are a search assistant for a precious metals and jewellery e-commerce store. 
+                content: `You are a search assistant for a precious metals and B2B jewellery e-commerce store. 
 Given a user's search query, respond ONLY with a valid JSON object (no markdown, no backticks) in this exact shape:
 {
   "correctedQuery": "corrected spelling if needed, or null",
@@ -207,8 +207,9 @@ Given a user's search query, respond ONLY with a valid JSON object (no markdown,
   "context": "one sentence describing what the user is likely looking for, or null"
 }
 Rules:
-- suggestions: 3-5 items max
+- suggestions: 10 items max
 - Detect spelling mistakes and offer the corrected form as type "correction"
+- IMPORTANT: If the query looks like a SKU or product code (e.g., contains numbers and dashes like "FR-123"), DO NOT autocorrect it. Return correctedQuery as null.
 - Expand abbreviations (e.g. "18k" → "18 karat gold")
 - Offer related categories as type "category"
 - Keep labels short (≤ 5 words)
@@ -236,6 +237,29 @@ Rules:
 
           if (parsed.correctedQuery) setCorrectedQuery(parsed.correctedQuery);
           if (parsed.context) setAiContext(parsed.context);
+
+          // If the primary search found nothing, but AI offered a correction or synonym, fetch products for it!
+          const fallbackTerm = parsed.correctedQuery || (parsed.suggestions && parsed.suggestions[0]?.type !== 'category' ? parsed.suggestions[0]?.label : null);
+          if (fallbackTerm) {
+            // We only need to fetch if the current products list is empty
+            setProducts((currentProducts) => {
+              if (currentProducts.length === 0) {
+                const params = new URLSearchParams({
+                  q: fallbackTerm,
+                });
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/search/smart?${params}`, { signal: aiAbortRef.current?.signal })
+                  .then(r => r.json())
+                  .then(data => {
+                    if (data.products && data.products.length > 0) {
+                      setProducts(data.products);
+                    }
+                  })
+                  .catch(() => {});
+              }
+              return currentProducts;
+            });
+          }
+
         }
       } catch (err: unknown) {
         if ((err as Error).name !== "AbortError") {
@@ -260,7 +284,7 @@ Rules:
       const updated = [term, ...recentSearches.filter((s) => s !== term)].slice(0, 5);
       setRecentSearches(updated);
       sessionStorage.setItem("recentSearches", JSON.stringify(updated));
-    } catch {}
+    } catch { }
   }, [recentSearches]);
 
   const navigate = useCallback(
@@ -406,9 +430,9 @@ Rules:
                             >
                               <span className={styles.suggestionIcon} aria-hidden="true">
                                 {s.type === "correction" ? "✎" :
-                                 s.type === "synonym" ? "↔" :
-                                 s.type === "category" ? "◈" :
-                                 s.type === "ai" ? "✦" : "🔍"}
+                                  s.type === "synonym" ? "↔" :
+                                    s.type === "category" ? "◈" :
+                                      s.type === "ai" ? "✦" : "🔍"}
                               </span>
                               {s.label}
                             </button>

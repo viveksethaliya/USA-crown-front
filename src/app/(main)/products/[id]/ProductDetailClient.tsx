@@ -289,11 +289,8 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
           productId: product.id,
           variationId: currentVariation ? currentVariation.id : null,
         };
-        if (product.measurement_type === 'inch') body.length = customLength;
-        if (product.measurement_type === 'plate') {
-          body.length = customLength;
-          body.width = customWidth;
-        }
+        if (customLength) body.length = customLength;
+        if (customWidth) body.width = customWidth;
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/calculate-price`, {
           method: 'POST',
@@ -353,13 +350,16 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   const subCat = product.categories.find(c => c.parent_id);
   const categoryName = parentCat?.name || subCat?.name || 'Products';
   const subcategoryName = subCat?.name || '';
+  
+  const isPlateProduct = product.measurement_type === 'plate' || categoryName.toLowerCase().includes('plate') || subcategoryName.toLowerCase().includes('plate') || product.name.toLowerCase().includes('plate');
+  const isMillProduct = product.measurement_type === 'inch' || (categoryName.toLowerCase() === 'mill products' && !isPlateProduct);
 
   // Get other visible attributes for the info table (exclude variation attributes)
   const visibleAttrs = product.attributes.filter(a =>
-    a.is_visible && !variationAttributes.find(va => va.slug === a.slug)
+    a.is_visible && 
+    !a.is_for_variation && 
+    !variationAttributes.find(va => va.slug === a.slug)
   );
-
-
 
   return (
     <div className={styles.page}>
@@ -371,11 +371,15 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
           <span>/</span>
           <Link href="/products">Shop</Link>
           <span>/</span>
-          <Link href="/products">{categoryName}</Link>
-          {subcategoryName && (
+          {parentCat ? (
+            <Link href={`/products?category=${parentCat.slug}`}>{categoryName}</Link>
+          ) : (
+            <Link href="/products">{categoryName}</Link>
+          )}
+          {subcategoryName && subCat && (
             <>
               <span>/</span>
-              <span>{subcategoryName}</span>
+              <Link href={`/products?category=${subCat.slug}`}>{subcategoryName}</Link>
             </>
           )}
           <span>/</span>
@@ -414,12 +418,16 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
           {/* Right: Details */}
           <div className={styles.detailSide}>
 
-
             <p className={styles.customizeLabel}>Customize your Product</p>
 
             <h1 className={styles.productTitle}>
               {product.name} – Wholesale
             </h1>
+
+            <div className={styles.skuBadge}>
+              <span className={styles.skuLabel}>SKU:</span> 
+              <span className={styles.skuValue}>{currentVariation?.sku || product.sku || 'N/A'}</span>
+            </div>
 
             <p className={styles.productDesc}>
               {product.description || product.short_description || `Elevate your jewelry creations with the ${product.name}, a premium-quality jewelry finding crafted to meet the needs of professional jewelers and wholesale buyers.`}
@@ -435,19 +443,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                 product.variations.flatMap(v => v.attributes.filter(a => a.slug === attr.slug).map(a => a.value))
               ));
 
-              const isNumericSize = attr.name.toLowerCase().includes('size') && allOptions.some(opt => !isNaN(parseFloat(opt)));
-              if (isNumericSize) {
-                allOptions.sort((a, b) => {
-                  const numA = parseFloat(a);
-                  const numB = parseFloat(b);
-                  if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                  if (!isNaN(numA)) return -1;
-                  if (!isNaN(numB)) return 1;
-                  return a.localeCompare(b);
-                });
-              } else {
-                allOptions.sort((a, b) => a.localeCompare(b));
-              }
+              allOptions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
               const isMetal = attr.slug === 'metal' || attr.name.toLowerCase() === 'metal';
 
@@ -511,46 +507,100 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
             })}
 
 
-            {/* Custom Dimensions */}
-            {product.measurement_type === 'inch' && (
-              <div className={styles.sizeSection} style={{ marginTop: '1.5rem' }}>
-                <h4 className={styles.sectionLabel}>Length (Inches)</h4>
-                <input
-                  type="number"
-                  min="1"
-                  step="0.25"
-                  value={customLength}
-                  onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')}
-                  className={styles.sizeSelect}
-                  placeholder="Enter inches..."
-                />
+            {/* Custom Dimensions / Metal Price Calculator */}
+            {isMillProduct && (
+              <div style={{ marginTop: '1.5rem', padding: '1.5rem', backgroundColor: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '8px' }}>
+                <h4 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--color-inkblue)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.4rem' }}>📏</span> Chains & Wires by the Inch
+                </h4>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', color: '#555', fontWeight: 600 }}>Length Required (Inches)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.25"
+                      value={customLength}
+                      onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')}
+                      style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '4px', fontSize: '1rem' }}
+                      placeholder="e.g. 18"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', color: '#555', fontWeight: 600 }}>Est. Weight per Inch</label>
+                    <div style={{ padding: '0.75rem', backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px', color: '#333', fontSize: '1rem' }}>
+                      {displayWeight ? `${displayWeight}g` : 'N/A'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#fff', padding: '1rem', borderRadius: '6px', border: '1px solid #e0e0e0', fontSize: '0.9rem' }}>
+                  <h5 style={{ marginBottom: '0.8rem', fontSize: '0.95rem', borderBottom: '1px solid #eee', paddingBottom: '0.4rem' }}>Metal Price Calculator</h5>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#666' }}>Estimated Total Weight:</span>
+                    <span style={{ fontWeight: 600 }}>{customLength && displayWeight ? (Number(customLength) * displayWeight).toFixed(2) : '0.00'}g</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#666' }}>Estimated Base Price:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--color-gold)' }}>
+                      ${isAuthenticated && calculatedPrice !== null ? calculatedPrice.toFixed(2) : (isAuthenticated ? '0.00' : 'Login Required')}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px dashed #ddd' }}>
+                    * Final wholesale price includes manufacturing markup and current spot market fluctuations. Must be logged in to view accurate pricing.
+                  </div>
+                </div>
               </div>
             )}
-            {product.measurement_type === 'plate' && (
-              <div className={styles.sizeSection} style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <h4 className={styles.sectionLabel}>Length (Inches)</h4>
-                  <input
-                    type="number"
-                    min="1"
-                    step="0.25"
-                    value={customLength}
-                    onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')}
-                    className={styles.sizeSelect}
-                    placeholder="Length"
-                  />
+            {isPlateProduct && (
+              <div style={{ marginTop: '1.5rem', padding: '1.5rem', backgroundColor: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '8px' }}>
+                <h4 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--color-inkblue)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.4rem' }}>📏</span> Custom Plate Dimensions
+                </h4>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', color: '#555', fontWeight: 600 }}>Length (Inches)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.25"
+                      value={customLength}
+                      onChange={(e) => setCustomLength(parseFloat(e.target.value) || '')}
+                      style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '4px', fontSize: '1rem' }}
+                      placeholder="e.g. 10"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', color: '#555', fontWeight: 600 }}>Width (Inches)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="0.25"
+                      value={customWidth}
+                      onChange={(e) => setCustomWidth(parseFloat(e.target.value) || '')}
+                      style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', borderRadius: '4px', fontSize: '1rem' }}
+                      placeholder="e.g. 5"
+                    />
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <h4 className={styles.sectionLabel}>Width (Inches)</h4>
-                  <input
-                    type="number"
-                    min="1"
-                    step="0.25"
-                    value={customWidth}
-                    onChange={(e) => setCustomWidth(parseFloat(e.target.value) || '')}
-                    className={styles.sizeSelect}
-                    placeholder="Width"
-                  />
+
+                <div style={{ backgroundColor: '#fff', padding: '1rem', borderRadius: '6px', border: '1px solid #e0e0e0', fontSize: '0.9rem' }}>
+                  <h5 style={{ marginBottom: '0.8rem', fontSize: '0.95rem', borderBottom: '1px solid #eee', paddingBottom: '0.4rem' }}>Metal Price Calculator</h5>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#666' }}>Estimated Total Area:</span>
+                    <span style={{ fontWeight: 600 }}>{customLength && customWidth ? (Number(customLength) * Number(customWidth)).toFixed(2) : '0.00'} sq. inches</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#666' }}>Estimated Base Price:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--color-gold)' }}>
+                      ${isAuthenticated && calculatedPrice !== null ? calculatedPrice.toFixed(2) : (isAuthenticated ? '0.00' : 'Login Required')}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px dashed #ddd' }}>
+                    * Final wholesale price includes manufacturing markup and current spot market fluctuations. Must be logged in to view accurate pricing.
+                  </div>
                 </div>
               </div>
             )}

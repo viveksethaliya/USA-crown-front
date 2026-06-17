@@ -3,13 +3,13 @@ import ProductCard from "@/components/products/ProductCard";
 import { Metadata } from "next";
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export async function generateMetadata(
   { params }: Props
 ): Promise<Metadata> {
-  const slug = params.slug;
+  const { slug } = await params;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collections/${slug}`, { next: { revalidate: 60 } });
   
   if (!res.ok) {
@@ -32,7 +32,7 @@ export async function generateMetadata(
 }
 
 export default async function CollectionPage({ params }: Props) {
-  const slug = params.slug;
+  const { slug } = await params;
 
   const [colRes, prodRes, filtersRes] = await Promise.all([
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collections/${slug}`, { next: { revalidate: 60 } }),
