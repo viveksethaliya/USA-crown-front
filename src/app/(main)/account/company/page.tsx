@@ -46,10 +46,23 @@ export default function AccountCompanyPage() {
     setMsg({ type: "", text: "" });
 
     try {
+      const payload = new FormData();
+      payload.append('company_name', formData.company_name);
+      payload.append('company_address', formData.company_address);
+      payload.append('company_phone', formData.company_phone);
+      payload.append('website', formData.website);
+      payload.append('tax_id', formData.tax_id);
+      
+      const fileInput = document.getElementById('resale_certificate') as HTMLInputElement;
+      if (fileInput?.files?.[0]) {
+        payload.append('resale_certificate', fileInput.files[0]);
+      } else if (formData.resale_certificate_url) {
+        payload.append('resale_certificate_url', formData.resale_certificate_url);
+      }
+
       const res = await fetch('/api/account/company', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: payload
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update company profile");
@@ -125,13 +138,22 @@ export default function AccountCompanyPage() {
         </div>
 
         <div className={styles.formGroup}>
-          <label>Resale Certificate Link (Optional)</label>
-          <input 
-            type="url" className={styles.input} 
-            placeholder="https://..."
-            value={formData.resale_certificate_url} 
-            onChange={e => setFormData({...formData, resale_certificate_url: e.target.value})}
-          />
+          <label>Resale Certificate (PDF) *</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <input 
+              type="file" 
+              id="resale_certificate"
+              className={styles.input} 
+              accept="application/pdf"
+              required={!formData.resale_certificate_url}
+            />
+            {formData.resale_certificate_url && (
+              <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                Current Certificate: <a href={formData.resale_certificate_url} target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc', textDecoration: 'underline' }}>View PDF</a>
+                <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.8rem' }}>Upload a new file above to replace the current certificate.</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <button type="submit" disabled={saving} className={styles.submitBtn}>

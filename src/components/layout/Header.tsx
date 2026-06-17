@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { apiUrl, getGuestCartId, type CartApiResponse } from '@/lib/cart';
 import styles from './Header.module.css';
 import SmartSearchBar from './SmartSearchBar';
+import { FiUser, FiMapPin, FiLogOut } from 'react-icons/fi';
 
 // Static fallback mega menu data
 const fallbackMegaMenuData: Record<string, { title: string, slug: string, links: { label: string, href: string }[] }> = {
@@ -375,11 +376,18 @@ export default function Header() {
                       <span>{user.companyName}</span>
                     </div>
                     <Link
-                      href="/profile"
+                      href="/account/profile"
                       className={styles.userDropdownItem}
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      ✏️ Edit Profile
+                      <FiUser /> My Profile
+                    </Link>
+                    <Link
+                      href="/account/addresses"
+                      className={styles.userDropdownItem}
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <FiMapPin /> Addresses
                     </Link>
                     <button
                       onClick={handleLogout}
