@@ -196,6 +196,35 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     }
   };
 
+  const [newPassword, setNewPassword] = useState("");
+  const [settingPassword, setSettingPassword] = useState(false);
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      setMsg({ type: "error", text: "Password must be at least 6 characters." });
+      return;
+    }
+    if (!confirm("Are you sure you want to manually overwrite this user's password?")) return;
+    setSettingPassword(true);
+    setMsg({ type: "", text: "" });
+
+    try {
+      const res = await fetch(`/api/admin/users/${params.id}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_password: newPassword })
+      });
+      if (!res.ok) throw new Error("Failed to set new password");
+      setMsg({ type: "success", text: "Password manually updated successfully." });
+      setNewPassword("");
+    } catch (err: unknown) {
+      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setSettingPassword(false);
+    }
+  };
+
   const handleDeactivate = async () => {
     if (!confirm("Are you sure you want to deactivate this user?")) return;
     try {
@@ -351,6 +380,30 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
         </form>
       </div>
 
+
+      <div className={styles.card}>
+        <h2>Set User Password</h2>
+        <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '1rem' }}>
+          Manually overwrite the user's password. They will be able to log in immediately with the new password.
+        </p>
+        <form onSubmit={handleSetPassword} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+          <div className={styles.formGroup} style={{ flex: 1, marginBottom: 0 }}>
+            <label>New Password</label>
+            <input 
+              required 
+              type="text" 
+              className={styles.input} 
+              placeholder="Minimum 6 characters"
+              value={newPassword} 
+              onChange={e => setNewPassword(e.target.value)}
+              minLength={6}
+            />
+          </div>
+          <button type="submit" disabled={settingPassword} className={styles.submitBtn} style={{ margin: 0 }}>
+            {settingPassword ? "Setting..." : "Set Password"}
+          </button>
+        </form>
+      </div>
 
       <div className={styles.formGrid}>
         <div className={styles.card}>

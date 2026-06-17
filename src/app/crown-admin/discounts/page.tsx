@@ -46,8 +46,8 @@ export default function DiscountsAdminPage() {
   const fetchData = async () => {
     try {
       const [discRes, groupsRes] = await Promise.all([
-        fetch(apiUrl('/api/admin/discounts'), { credentials: 'include' }),
-        fetch(apiUrl('/api/admin/customer-groups'), { credentials: 'include' })
+        fetch('/api/admin/discounts', { credentials: 'include' }),
+        fetch('/api/admin/customer-groups', { credentials: 'include' })
       ]);
       
       if (!discRes.ok) throw new Error('Failed to fetch discounts');
@@ -109,7 +109,7 @@ export default function DiscountsAdminPage() {
     const url = editingId ? `/api/admin/discounts/${editingId}` : '/api/admin/discounts';
 
     try {
-      const response = await fetch(apiUrl(url), {
+      const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -132,7 +132,7 @@ export default function DiscountsAdminPage() {
     if (!window.confirm('Are you sure you want to delete this discount tier?')) return;
     
     try {
-      const response = await fetch(apiUrl(`/api/admin/discounts/${id}`), {
+      const response = await fetch(`/api/admin/discounts/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
