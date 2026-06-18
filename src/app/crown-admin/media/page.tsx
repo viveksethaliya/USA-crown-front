@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import styles from "./media.module.css";
 import { FiSearch, FiUploadCloud, FiTrash2, FiSave, FiAlertCircle } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 interface MediaItem {
   id: string;
@@ -114,12 +115,13 @@ export default function AdminMediaPage() {
         setMedia(prev => [data.media, ...prev]);
         setActiveItem(data.media);
         setTotalCount(prev => prev + 1);
+        toast.success("File uploaded successfully");
       } else {
-        alert(data.error || "Upload failed");
+        toast.error(data.error || "Upload failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Error uploading file");
+      toast.error("Error uploading file");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -142,13 +144,13 @@ export default function AdminMediaPage() {
       if (res.ok && data.media) {
         setMedia(prev => prev.map(m => m.id === activeItem.id ? { ...m, title: metaTitle, alt_text: metaAltText } : m));
         setActiveItem(data.media);
-        alert("Metadata saved!");
+        toast.success("Metadata saved!");
       } else {
-        alert(data.error || "Failed to save metadata");
+        toast.error(data.error || "Failed to save metadata");
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving metadata");
+      toast.error("Error saving metadata");
     } finally {
       setSavingMeta(false);
     }
@@ -169,7 +171,7 @@ export default function AdminMediaPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Media item deleted successfully.");
+        toast.success("Media item deleted successfully.");
         setMedia(prev => prev.filter(m => m.id !== activeItem.id));
         setActiveItem(null);
         setTotalCount(prev => prev - 1);
@@ -178,12 +180,12 @@ export default function AdminMediaPage() {
           setDeleteError(data.error || "Cannot delete media because it is in use.");
           setUsages(data.usages || null);
         } else {
-          alert(data.error || "Failed to delete media item");
+          toast.error(data.error || "Failed to delete media item");
         }
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting media item");
+      toast.error("Error deleting media item");
     }
   };
 

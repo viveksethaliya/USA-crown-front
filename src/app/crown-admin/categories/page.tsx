@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "../products/products.module.css";
+import { toast } from "react-hot-toast";
 
 interface Category {
   id: number;
@@ -62,10 +63,10 @@ export default function AdminCategoriesPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      alert("Category deleted");
+      toast.success("Category deleted");
       fetchCategories();
     } catch (err) {
-      alert(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 

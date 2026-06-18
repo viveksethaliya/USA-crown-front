@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../addresses/addresses.module.css"; // Reuse modal and grid styles
 import profileStyles from "../profile/profile.module.css";
 import { FiPlus, FiUser } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 interface User {
   id: string;
@@ -75,9 +76,10 @@ export default function AccountUsersPage() {
       
       setIsModalOpen(false);
       fetchUsers();
+      toast.success(editId ? "Sub-user updated successfully" : "Sub-user created successfully");
     } catch (err) {
       console.error(err);
-      alert("Error saving sub-user");
+      toast.error("Error saving sub-user");
     } finally {
       setSaving(false);
     }

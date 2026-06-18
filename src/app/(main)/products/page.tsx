@@ -98,6 +98,13 @@ function ProductsContent() {
 
   const [sortBy, setSortBy] = useState('name');
   const searchParamVal = searchParams.get('search') || '';
+
+  const [expandedFilters, setExpandedFilters] = useState<string[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+
+  const toggleFilterExpand = (filterKey: string) => {
+    setExpandedFilters(prev => prev.includes(filterKey) ? prev.filter(f => f !== filterKey) : [...prev, filterKey]);
+  };
   const [searchQuery, setSearchQuery] = useState(searchParamVal);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParamVal);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -295,22 +302,38 @@ function ProductsContent() {
   const renderCategoryFilter = (category: CategoryTree) => {
     const childSlugs = getCategoryDescendantSlugs(category);
     const isParentSelected = selectedCategories.includes(category.slug);
+    const hasChildren = category.children.length > 0;
+    const isExpanded = expandedCategories.includes(category.slug);
+
     return (
       <div key={category.id} className={styles.categoryItem}>
-        <label className={styles.checkLabel}>
-          <input
-            type="checkbox"
-            checked={isParentSelected}
-            onChange={() => (
-              childSlugs.length > 0
-                ? toggleCategory(category.slug, childSlugs)
-                : toggleSubcategory(category.slug)
-            )}
-            className={styles.checkInput}
-          />
-          {category.name}
-        </label>
-        {category.children.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <label className={styles.checkLabel} style={{ margin: 0, flex: 1 }}>
+            <input
+              type="checkbox"
+              checked={isParentSelected}
+              onChange={() => (
+                childSlugs.length > 0
+                  ? toggleCategory(category.slug, childSlugs)
+                  : toggleSubcategory(category.slug)
+              )}
+              className={styles.checkInput}
+            />
+            {category.name}
+          </label>
+          {hasChildren && (
+            <button 
+              type="button" 
+              onClick={() => setExpandedCategories(prev => 
+                prev.includes(category.slug) ? prev.filter(c => c !== category.slug) : [...prev, category.slug]
+              )}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '1.2rem', color: '#666' }}
+            >
+              {isExpanded ? '−' : '+'}
+            </button>
+          )}
+        </div>
+        {hasChildren && isExpanded && (
           <div className={styles.subcategories}>
             {category.children.map(renderCategoryFilter)}
           </div>
@@ -387,50 +410,74 @@ function ProductsContent() {
 
           {/* Categories */}
           <div className={styles.filterBlock}>
-            <h3 className={styles.filterTitle}>Categories</h3>
-            <div className={styles.filterList}>
-              {[...categories].sort((a, b) => sortCategories(a.name, b.name)).map(renderCategoryFilter)}
-            </div>
+            <h3 
+              className={styles.filterTitle}
+              onClick={() => toggleFilterExpand('categories')}
+              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', userSelect: 'none' }}
+            >
+              Categories <span>{expandedFilters.includes('categories') ? '−' : '+'}</span>
+            </h3>
+            {expandedFilters.includes('categories') && (
+              <div className={styles.filterList}>
+                {[...categories].sort((a, b) => sortCategories(a.name, b.name)).map(renderCategoryFilter)}
+              </div>
+            )}
           </div>
 
           {/* Metal Type */}
           <div className={styles.filterBlock}>
-            <h3 className={styles.filterTitle}>Metal Type</h3>
-            <div className={styles.filterList}>
-              {allMetalTypes.map(metal => (
-                <label key={metal} className={styles.checkLabel}>
-                  <input
-                    type="checkbox"
-                    checked={selectedMetals.includes(metal)}
-                    onChange={() => toggleMetal(metal)}
-                    className={styles.checkInput}
-                  />
-                  {metal}
-                </label>
-              ))}
-            </div>
+            <h3 
+              className={styles.filterTitle}
+              onClick={() => toggleFilterExpand('metal_type')}
+              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', userSelect: 'none' }}
+            >
+              Metal Type <span>{expandedFilters.includes('metal_type') ? '−' : '+'}</span>
+            </h3>
+            {expandedFilters.includes('metal_type') && (
+              <div className={styles.filterList}>
+                {allMetalTypes.map(metal => (
+                  <label key={metal} className={styles.checkLabel}>
+                    <input
+                      type="checkbox"
+                      checked={selectedMetals.includes(metal)}
+                      onChange={() => toggleMetal(metal)}
+                      className={styles.checkInput}
+                    />
+                    {metal}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Dynamic attribute filters */}
           {filters.map(filter => (
             <div key={filter.id} className={styles.filterBlock}>
-              <h3 className={styles.filterTitle}>{filter.name}</h3>
-              <div className={styles.filterList}>
-                {filter.terms.map(term => (
-                  <label key={term.id} className={styles.checkLabel}>
-                    <input
-                      type="checkbox"
-                      checked={(selectedAttributes[filter.slug] || []).includes(term.name)}
-                      onChange={() => toggleAttribute(filter.slug, term.name)}
-                      className={styles.checkInput}
-                    />
-                    {term.color_hex && (
-                      <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: term.color_hex, marginRight: 4, border: '1px solid #ccc' }} />
-                    )}
-                    {term.name}
-                  </label>
-                ))}
-              </div>
+              <h3 
+                className={styles.filterTitle}
+                onClick={() => toggleFilterExpand(filter.slug)}
+                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', userSelect: 'none' }}
+              >
+                {filter.name} <span>{expandedFilters.includes(filter.slug) ? '−' : '+'}</span>
+              </h3>
+              {expandedFilters.includes(filter.slug) && (
+                <div className={styles.filterList}>
+                  {filter.terms.map(term => (
+                    <label key={term.id} className={styles.checkLabel}>
+                      <input
+                        type="checkbox"
+                        checked={(selectedAttributes[filter.slug] || []).includes(term.name)}
+                        onChange={() => toggleAttribute(filter.slug, term.name)}
+                        className={styles.checkInput}
+                      />
+                      {term.color_hex && (
+                        <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: term.color_hex, marginRight: 4, border: '1px solid #ccc' }} />
+                      )}
+                      {term.name}
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </aside>

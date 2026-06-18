@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import styles from "../orders.module.css";
+import { toast } from "react-hot-toast";
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -101,7 +102,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       setStatus(data.order.status);
     } catch (err) {
       console.error(err);
-      alert("Error fetching order detail");
+      toast.error("Error fetching order detail");
     } finally {
       setLoading(false);
     }
@@ -138,10 +139,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       });
       if (!res.ok) throw new Error("Failed to update order");
       setIsEditing(false);
+      toast.success("Order details updated");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error saving edits");
+      toast.error("Error saving edits");
     } finally {
       setIsSaving(false);
     }
@@ -157,10 +159,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         body: JSON.stringify({ quantity: newQty, unit_price: unitPrice })
       });
       if (!res.ok) throw new Error("Failed to update item");
+      toast.success("Item quantity updated");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error updating item");
+      toast.error("Error updating item");
     }
   };
 
@@ -172,10 +175,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         method: "DELETE"
       });
       if (!res.ok) throw new Error("Failed to remove item");
+      toast.success("Item removed");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error removing item");
+      toast.error("Error removing item");
     }
   };
 
@@ -221,10 +225,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       if (!res.ok) throw new Error("Failed to add product");
       setShowAddProductModal(false);
       setSearchQuery("");
+      toast.success("Product added to order");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error adding product");
+      toast.error("Error adding product");
     } finally {
       setIsAddingProduct(false);
     }
@@ -236,10 +241,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     try {
       const res = await fetch(`/api/admin/orders/${id}/cancel`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to cancel order");
+      toast.success("Order cancelled");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error cancelling order");
+      toast.error("Error cancelling order");
     }
   };
 
@@ -249,11 +255,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       const res = await fetch(`/api/admin/orders/${id}/send-payment-link`, { method: "POST" });
       if (!res.ok) throw new Error("Failed to send payment link");
       const data = await res.json();
-      alert(`Payment link generated and sent!\nLink: ${data.payment_link}`);
+      toast.success(`Payment link generated and sent!\nLink: ${data.payment_link}`, { duration: 8000 });
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error sending payment link");
+      toast.error("Error sending payment link");
     }
   };
 
@@ -267,10 +273,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         body: JSON.stringify({ status })
       });
       if (!res.ok) throw new Error("Failed to update status");
+      toast.success("Status updated");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error updating status");
+      toast.error("Error updating status");
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -288,10 +295,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       if (!res.ok) throw new Error("Failed to add note");
       setNoteContent("");
       setIsCustomerNote(false);
+      toast.success("Note added");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error adding note");
+      toast.error("Error adding note");
     } finally {
       setIsAddingNote(false);
     }
@@ -299,7 +307,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   const handleRefund = async () => {
     if (!refundAmount || isNaN(Number(refundAmount)) || Number(refundAmount) <= 0) {
-      alert("Please enter a valid amount");
+      toast.error("Please enter a valid amount");
       return;
     }
     setIsRefunding(true);
@@ -313,10 +321,11 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       setShowRefundModal(false);
       setRefundAmount("");
       setRefundReason("");
+      toast.success("Refund processed successfully");
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      alert("Error processing refund");
+      toast.error("Error processing refund");
     } finally {
       setIsRefunding(false);
     }

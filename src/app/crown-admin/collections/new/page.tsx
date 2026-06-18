@@ -6,6 +6,7 @@ import Link from "next/link";
 import styles from "../../admin.module.css";
 import { FiArrowLeft } from "react-icons/fi";
 import MediaPicker from "@/components/media/MediaPicker";
+import { toast } from "react-hot-toast";
 
 const API = '/api/admin';
 
@@ -18,14 +19,13 @@ export default function NewCollectionPage() {
   const [formHeroImageMediaId, setFormHeroImageMediaId] = useState("");
   const [formMetaTitle, setFormMetaTitle] = useState("");
   const [formMetaDescription, setFormMetaDescription] = useState("");
-  const [formPosition, setFormPosition] = useState(0);
+  const [formPosition, setFormPosition] = useState<number | "">("");
   const [formVisible, setFormVisible] = useState(true);
   const [formShowInNav, setFormShowInNav] = useState(true);
   
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const generateSlug = (name: string) => {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -39,11 +39,10 @@ export default function NewCollectionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) {
-      setError("Collection name is required");
+      toast.error("Collection name is required");
       return;
     }
     setSaving(true);
-    setError("");
 
     try {
       const payload = {
@@ -54,7 +53,7 @@ export default function NewCollectionPage() {
         hero_image_media_id: formHeroImageMediaId.trim() || null,
         meta_title: formMetaTitle.trim() || null,
         meta_description: formMetaDescription.trim() || null,
-        position: formPosition,
+        position: formPosition === "" ? null : Number(formPosition),
         is_visible: formVisible,
         show_in_nav: formShowInNav
       };
@@ -68,14 +67,15 @@ export default function NewCollectionPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to create collection");
+        toast.error(data.error || "Failed to create collection");
         return;
       }
 
+      toast.success("Collection created successfully");
       router.push(`/crown-admin/collections/${data.collection.id}`);
     } catch (err: unknown) {
       console.error(err);
-      setError("Network error while saving");
+      toast.error("Network error while saving");
     } finally {
       setSaving(false);
     }
@@ -96,8 +96,6 @@ export default function NewCollectionPage() {
           </button>
         </div>
       </div>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div style={{ background: "#fff", padding: "2rem", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
         <h2 style={{ marginTop: 0, marginBottom: "1.5rem", fontSize: "1.25rem", color: "#1a1a2e" }}>Basic Details</h2>

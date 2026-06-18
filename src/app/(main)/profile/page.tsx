@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './profile.module.css';
 import { FiDownload, FiShoppingBag, FiPlus } from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
 
 interface UserProfile {
   id: string;
@@ -42,8 +43,6 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'personal' | 'company' | 'subusers'>('personal');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   // Personal Form
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -102,7 +101,7 @@ export default function ProfilePage() {
         }
 
       } catch (err: any) {
-        setError('Failed to load profile data.');
+        toast.error('Failed to load profile data.');
       } finally {
         setLoading(false);
       }
@@ -112,7 +111,7 @@ export default function ProfilePage() {
 
   const handleSavePersonal = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true); setError(''); setSuccess('');
+    setSaving(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/profile`, {
         method: 'PUT',
@@ -121,9 +120,9 @@ export default function ProfilePage() {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update profile');
-      setSuccess('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -131,7 +130,7 @@ export default function ProfilePage() {
 
   const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true); setError(''); setSuccess('');
+    setSaving(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/company`, {
         method: 'PUT',
@@ -145,9 +144,9 @@ export default function ProfilePage() {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update company. Sub-users cannot update company profile.');
-      setSuccess('Company info updated successfully!');
+      toast.success('Company info updated successfully!');
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -155,7 +154,7 @@ export default function ProfilePage() {
 
   const handleAddSubUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true); setError(''); setSuccess('');
+    setSaving(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/users`, {
         method: 'POST',
@@ -171,10 +170,10 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error('Failed to create sub-user. Sub-users cannot create other users.');
       const data = await res.json();
       setSubUsers([...subUsers, data]);
-      setSuccess('Sub-user created successfully!');
+      toast.success('Sub-user created successfully!');
       setNewSubUserName(''); setNewSubUserEmail(''); setNewSubUserMobile(''); setNewSubUserPassword('');
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -222,9 +221,6 @@ export default function ProfilePage() {
             <FiShoppingBag /> My Orders
           </Link>
         </div>
-
-        {error && <div className={styles.alert} style={{ backgroundColor: '#f8d7da', color: '#721c24', borderLeftColor: '#dc3545' }}>{error}</div>}
-        {success && <div className={styles.alert} style={{ backgroundColor: '#d4edda', color: '#155724', borderLeftColor: '#28a745' }}>{success}</div>}
 
         <div className={styles.tabs}>
           <button className={`${styles.tabBtn} ${activeTab === 'personal' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('personal')}>Personal Profile</button>

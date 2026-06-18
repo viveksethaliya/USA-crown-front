@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "./banners.module.css";
+import { toast } from "react-hot-toast";
 
 interface Banner {
   id: string;
@@ -50,11 +51,12 @@ export default function AdminBannersList() {
       );
       if (res.ok) {
         setBanners(banners.filter((b) => b.id !== id));
+        toast.success("Banner deleted successfully.");
       } else {
-        alert("Failed to delete banner.");
+        toast.error("Failed to delete banner.");
       }
     } catch {
-      alert("Error deleting banner.");
+      toast.error("Error deleting banner.");
     }
   };
 
@@ -66,13 +68,14 @@ export default function AdminBannersList() {
         { method: "PATCH", credentials: "include" }
       );
       if (res.ok) {
+        toast.success("Banner status toggled successfully.");
         // Refresh list to reflect deactivation of other banners
         await fetchBanners(filter);
       } else {
-        alert("Failed to toggle banner.");
+        toast.error("Failed to toggle banner.");
       }
     } catch {
-      alert("Error toggling banner.");
+      toast.error("Error toggling banner.");
     } finally {
       setTogglingId(null);
     }

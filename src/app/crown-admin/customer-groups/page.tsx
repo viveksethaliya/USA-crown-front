@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { apiUrl } from "@/lib/cart";
 import styles from "../discounts/discounts.module.css"; // Reuse if exists, else we use inline styles
+import { toast } from "react-hot-toast";
 
 interface CustomerGroup {
   id: string;
@@ -13,7 +14,6 @@ interface CustomerGroup {
 export default function CustomerGroupsPage() {
   const [groups, setGroups] = useState<CustomerGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -27,7 +27,7 @@ export default function CustomerGroupsPage() {
       const data = await res.json();
       setGroups(data || []);
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -41,14 +41,12 @@ export default function CustomerGroupsPage() {
     setEditingId(null);
     setName("");
     setDescription("");
-    setError("");
   };
 
   const handleEdit = (g: CustomerGroup) => {
     setEditingId(g.id);
     setName(g.name);
     setDescription(g.description || "");
-    setError("");
   };
 
   const handleDelete = async (id: string) => {
@@ -59,16 +57,16 @@ export default function CustomerGroupsPage() {
         credentials: "include"
       });
       if (!res.ok) throw new Error("Failed to delete group");
+      toast.success("Customer group deleted");
       fetchGroups();
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError("");
 
     try {
       const method = editingId ? "PUT" : "POST";
@@ -86,10 +84,11 @@ export default function CustomerGroupsPage() {
         throw new Error(data.error || "Failed to save customer group");
       }
 
+      toast.success(editingId ? "Customer group updated" : "Customer group created");
       resetForm();
       fetchGroups();
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -100,12 +99,6 @@ export default function CustomerGroupsPage() {
   return (
     <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px" }}>
       <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>Customer Groups</h1>
-
-      {error && (
-        <div style={{ background: "#fef2f2", border: "1px solid #ef4444", color: "#b91c1c", padding: "10px", marginBottom: "20px" }}>
-          {error}
-        </div>
-      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 400px", gap: "30px" }}>
         <div>

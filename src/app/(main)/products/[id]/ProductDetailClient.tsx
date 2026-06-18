@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { getGuestCartId } from '../../../../lib/cart';
 import styles from './detail.module.css';
+import { toast } from 'react-hot-toast';
 
 interface ProductVariation {
   id: number;
@@ -220,7 +221,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   const handleAddToCart = async () => {
     if (!product) return;
     if (product.type === 'variable' && !currentVariation) {
-      alert("Please select product options before adding to cart.");
+      toast.error("Please select product options before adding to cart.");
       return;
     }
     setAddingToCart(true);
@@ -243,10 +244,10 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
         const data = await res.json();
         throw new Error(data.error || 'Failed to add to cart');
       }
-      alert("Added to cart successfully!");
+      toast.success("Added to cart successfully!");
       if (typeof window !== 'undefined') window.dispatchEvent(new Event('cart-updated'));
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setAddingToCart(false);
     }

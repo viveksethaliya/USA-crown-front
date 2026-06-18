@@ -9,6 +9,7 @@ import {
   type CartApiResponse,
   type CartSummary
 } from '@/lib/cart';
+import { toast } from 'react-hot-toast';
 import styles from './checkout.module.css';
 
 interface CheckoutAddress {
@@ -88,7 +89,6 @@ export default function CheckoutPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [error, setError] = useState('');
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
   interface ShippingMethod {
     id: string;
@@ -133,7 +133,7 @@ export default function CheckoutPage() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load checkout');
+      toast.error(err instanceof Error ? err.message : 'Failed to load checkout');
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,6 @@ export default function CheckoutPage() {
 
   const submitCheckout = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError('');
     setPlacingOrder(true);
 
     try {
@@ -181,8 +180,9 @@ export default function CheckoutPage() {
 
       setOrder(data.order);
       window.dispatchEvent(new Event('cart-updated'));
+      toast.success('Order placed successfully!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to place order');
+      toast.error(err instanceof Error ? err.message : 'Failed to place order');
     } finally {
       setPlacingOrder(false);
     }
@@ -233,8 +233,6 @@ export default function CheckoutPage() {
           </div>
           <Link href="/cart" className={styles.secondaryLink}>Back to Cart</Link>
         </div>
-
-        {error && <div className={styles.errorBox}>{error}</div>}
 
         {loading ? (
           <div className={styles.emptyState}>Loading checkout...</div>

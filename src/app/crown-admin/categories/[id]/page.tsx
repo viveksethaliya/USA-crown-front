@@ -6,6 +6,7 @@ import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../../products/products.module.css";
 import MediaPicker from "@/components/media/MediaPicker";
+import { toast } from "react-hot-toast";
 
 interface Category {
   id: number;
@@ -68,7 +69,7 @@ export default function CategoryEditPage() {
         }
       } catch (err) {
         console.error(err);
-        alert("Failed to load category data");
+        toast.error("Failed to load category data");
       } finally {
         setLoading(false);
       }
@@ -137,10 +138,10 @@ export default function CategoryEditPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       
-      alert(isNew ? "Category created!" : "Category updated!");
+      toast.success(isNew ? "Category created!" : "Category updated!");
       router.push("/crown-admin/categories");
     } catch (err) {
-      alert(`Error saving category: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error saving category: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }

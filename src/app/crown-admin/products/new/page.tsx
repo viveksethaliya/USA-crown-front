@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../products.module.css";
+import { toast } from "react-hot-toast";
 
 export default function NewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
   const [name, setName] = useState("");
   const [type, setType] = useState("simple");
@@ -17,7 +17,6 @@ export default function NewProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       const res = await fetch(`/api/admin/products`, {
@@ -31,11 +30,12 @@ export default function NewProductPage() {
       if (!res.ok) throw new Error(data.error || "Failed to create product");
 
       if (data.product && data.product.id) {
+        toast.success("Product draft created");
         // Redirect to the full editor page for this new product
         router.push(`/crown-admin/products/${data.product.id}`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create product");
+      toast.error(err instanceof Error ? err.message : "Failed to create product");
       setLoading(false);
     }
   };
@@ -49,8 +49,6 @@ export default function NewProductPage() {
       <div className={styles.editorHeader}>
         <h1 className={styles.editorTitle}>Create New Product</h1>
       </div>
-
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
       <div className={styles.card}>
         <form onSubmit={handleSubmit}>

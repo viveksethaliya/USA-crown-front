@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "../admin.module.css";
+import { toast } from "react-hot-toast";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   
@@ -28,7 +28,6 @@ export default function AdminLogin() {
     if (!email) return;
 
     setLoading(true);
-    setError(null);
 
     try {
       const res = await fetch(`/api/admin/login`, {
@@ -46,11 +45,12 @@ export default function AdminLogin() {
         setOtp(["", "", "", "", "", ""]);
         // Focus first OTP input
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
+        toast.success("OTP sent to your email");
       } else {
-        setError(data.error || "Failed to send OTP.");
+        toast.error(data.error || "Failed to send OTP.");
       }
     } catch (err) {
-      setError("An error occurred. Is the backend running?");
+      toast.error("An error occurred. Is the backend running?");
     } finally {
       setLoading(false);
     }
@@ -61,12 +61,11 @@ export default function AdminLogin() {
     const otpCode = otp.join("");
     
     if (otpCode.length !== 6) {
-      setError("Please enter the 6-digit code.");
+      toast.error("Please enter the 6-digit code.");
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       const res = await fetch(`/api/admin/verify-otp`, {
@@ -79,12 +78,13 @@ export default function AdminLogin() {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        toast.success("Login successful");
         router.push("/crown-admin");
       } else {
-        setError(data.error || "Invalid OTP code.");
+        toast.error(data.error || "Invalid OTP code.");
       }
     } catch (err) {
-      setError("An error occurred during verification.");
+      toast.error("An error occurred during verification.");
     } finally {
       setLoading(false);
     }
@@ -130,8 +130,6 @@ export default function AdminLogin() {
           <h1>Crown<span>Admin</span></h1>
           <p className={styles.loginSubtitle}>Secure Access</p>
         </div>
-
-        {error && <div className={styles.errorMessage}>{error}</div>}
 
         {step === "email" ? (
           <form onSubmit={handleSendOtp}>

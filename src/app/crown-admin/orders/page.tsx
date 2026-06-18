@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "./orders.module.css";
+import { toast } from "react-hot-toast";
 
 type Order = {
   id: string;
@@ -63,7 +64,7 @@ export default function AdminOrdersPage() {
       setSelectedOrders(new Set()); // Reset selections on page change
     } catch (err) {
       console.error(err);
-      alert("Error fetching orders.");
+      toast.error("Error fetching orders.");
     } finally {
       setLoading(false);
     }
@@ -118,10 +119,11 @@ export default function AdminOrdersPage() {
       if (!res.ok) throw new Error("Failed to process bulk action");
       
       setBulkAction("");
+      toast.success("Bulk action applied successfully");
       await fetchOrders();
     } catch (err) {
       console.error(err);
-      alert("Error applying bulk action");
+      toast.error("Error applying bulk action");
     } finally {
       setIsBulkUpdating(false);
     }

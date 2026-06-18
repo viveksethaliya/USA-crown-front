@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import styles from "./user-detail.module.css";
 import { FiArrowLeft } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 type Permission = {
   id: string;
@@ -27,7 +28,6 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPerms, setSavingPerms] = useState(false);
-  const [msg, setMsg] = useState({ type: "", text: "" });
 
   interface UserAddress {
     id: string;
@@ -122,7 +122,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       setLoading(false);
     }).catch(err => {
       console.error(err);
-      setMsg({ type: "error", text: "Failed to load user data." });
+      toast.error("Failed to load user data.");
       setLoading(false);
     });
   }, [params.id]);
@@ -130,7 +130,6 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMsg({ type: "", text: "" });
 
     try {
       const res = await fetch(`/api/admin/users/${params.id}`, {
@@ -148,9 +147,9 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
         })
       });
       if (!res.ok) throw new Error("Failed to update user");
-      setMsg({ type: "success", text: "User updated successfully." });
+      toast.success("User updated successfully.");
     } catch (err: unknown) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -159,7 +158,6 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
   const handlePermissionsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingPerms(true);
-    setMsg({ type: "", text: "" });
 
     try {
       const res = await fetch(`/api/admin/users/${params.id}/permissions`, {
@@ -168,9 +166,9 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
         body: JSON.stringify({ permission_ids: userPermissions })
       });
       if (!res.ok) throw new Error("Failed to update user permissions");
-      setMsg({ type: "success", text: "User permission overrides updated successfully." });
+      toast.success("User permission overrides updated successfully.");
     } catch (err: unknown) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSavingPerms(false);
     }
@@ -187,9 +185,9 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     try {
       const res = await fetch(`/api/admin/users/${params.id}/send-reset-email`, { method: 'POST' });
       if (res.ok) {
-        setMsg({ type: "success", text: "Password reset link sent to user." });
+        toast.success("Password reset link sent to user.");
       } else {
-        setMsg({ type: "error", text: "Failed to send reset link." });
+        toast.error("Failed to send reset link.");
       }
     } catch (e) {
       console.error(e);
@@ -202,12 +200,11 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 6) {
-      setMsg({ type: "error", text: "Password must be at least 6 characters." });
+      toast.error("Password must be at least 6 characters.");
       return;
     }
     if (!confirm("Are you sure you want to manually overwrite this user's password?")) return;
     setSettingPassword(true);
-    setMsg({ type: "", text: "" });
 
     try {
       const res = await fetch(`/api/admin/users/${params.id}/reset-password`, {
@@ -216,10 +213,10 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
         body: JSON.stringify({ new_password: newPassword })
       });
       if (!res.ok) throw new Error("Failed to set new password");
-      setMsg({ type: "success", text: "Password manually updated successfully." });
+      toast.success("Password manually updated successfully.");
       setNewPassword("");
     } catch (err: unknown) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSettingPassword(false);
     }
@@ -230,7 +227,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     try {
       await fetch(`/api/admin/users/${params.id}`, { method: 'DELETE' });
       setFormData(prev => ({ ...prev, is_active: false }));
-      setMsg({ type: "success", text: "User deactivated." });
+      toast.success("User deactivated.");
     } catch (err) {
       console.error(err);
     }
@@ -251,9 +248,9 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       setSubUsers(newSubUsers || []);
       setIsSubUserModalOpen(false);
       setSubUserForm({ full_name: "", email: "", mobile: "", password: "", role_id: "" });
-      setMsg({ type: "success", text: "Sub-user added successfully." });
+      toast.success("Sub-user added successfully.");
     } catch (err: unknown) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSavingSubUser(false);
     }
@@ -277,12 +274,6 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
           Deactivate User
         </button>
       </div>
-
-      {msg.text && (
-        <div className={msg.type === 'error' ? styles.error : styles.success}>
-          {msg.text}
-        </div>
-      )}
 
       <div className={styles.card}>
         <h2>Profile Details</h2>

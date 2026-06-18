@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "../products/products.module.css";
+import { toast } from "react-hot-toast";
 
 interface Tag {
   id: number;
@@ -67,10 +68,10 @@ export default function AdminTagsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      alert("Tag deleted");
+      toast.success("Tag deleted");
       setRefreshKey(r => r + 1);
     } catch (err) {
-      alert(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styles from '../products.module.css';
 import { Variation, ProductImage } from './types';
+import { toast } from 'react-hot-toast';
 
 interface VariationsTabProps {
   productId: number;
@@ -38,9 +39,10 @@ export default function VariationsTab({ variations, productImages, onChange, onG
       
       // Update local variation with new image
       onChange(variations.map(v => v.id === varId ? { ...v, image: data.image } : v));
+      toast.success('Variation image linked');
     } catch (err) {
       console.error(err);
-      alert('Failed to link variation image');
+      toast.error('Failed to link variation image');
     } finally {
       setUploadingVarId(null);
     }
@@ -56,12 +58,13 @@ export default function VariationsTab({ variations, productImages, onChange, onG
       });
       if (res.ok) {
         onChange(variations.filter(v => v.id !== varId));
+        toast.success("Variation deleted");
       } else {
-        alert("Failed to delete variation");
+        toast.error("Failed to delete variation");
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting variation");
+      toast.error("Error deleting variation");
     }
   };
 

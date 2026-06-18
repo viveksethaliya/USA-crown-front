@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import styles from "../../admin.module.css";
 import { FiArrowLeft, FiCheck, FiX, FiDownload, FiUserX, FiRefreshCw } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 type RegistrationDetail = {
   id: string;
@@ -43,7 +44,6 @@ export default function RegistrationDetailPage() {
 
   const [reg, setReg] = useState<RegistrationDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -59,7 +59,7 @@ export default function RegistrationDetailPage() {
         const data = await res.json();
         setReg(data.registration);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        toast.error(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
@@ -82,13 +82,13 @@ export default function RegistrationDetailPage() {
       if (!res.ok) throw new Error("Failed to update status");
 
       setReg((prev) => prev ? { ...prev, status } : null);
+      toast.success(`Application marked as ${status}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update status");
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
     }
   };
 
   if (loading) return <div className={styles.loader}>Loading Details...</div>;
-  if (error) return <div className={styles.errorMessage}>{error}</div>;
   if (!reg) return <div className={styles.emptyState}>Registration not found</div>;
 
   return (

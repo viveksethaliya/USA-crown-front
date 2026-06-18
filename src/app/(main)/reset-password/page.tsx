@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../login/login.module.css";
+import { toast } from "react-hot-toast";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -14,24 +15,23 @@ function ResetPasswordForm() {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [msg, setMsg] = useState({ type: "", text: "" });
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
     if (!token || !email) {
-      setMsg({ type: "error", text: "Invalid or missing reset token." });
+      toast.error("Invalid or missing reset token.");
     }
   }, [token, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setMsg({ type: "error", text: "Passwords do not match." });
+      toast.error("Passwords do not match.");
       return;
     }
     
     setLoading(true);
-    setMsg({ type: "", text: "" });
 
     try {
       const res = await fetch('/api/reset-password', {
@@ -42,10 +42,11 @@ function ResetPasswordForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to reset password.");
       
-      setMsg({ type: "success", text: "Password reset successfully. You can now login." });
+      toast.success("Password reset successfully. You can now login.");
+      setIsSuccess(true);
       setTimeout(() => router.push('/login'), 2000);
     } catch (err: any) {
-      setMsg({ type: "error", text: err.message });
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -67,12 +68,6 @@ function ResetPasswordForm() {
     <div className={styles.authCard}>
       <h2>Reset Password</h2>
       <p>Enter your new password below.</p>
-
-      {msg.text && (
-        <div className={msg.type === 'error' ? styles.error : styles.success}>
-          {msg.text}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formGroup}>
@@ -96,7 +91,7 @@ function ResetPasswordForm() {
           />
         </div>
 
-        <button type="submit" className={styles.submitBtn} disabled={loading || msg.type === 'success'}>
+        <button type="submit" className={styles.submitBtn} disabled={loading || isSuccess}>
           {loading ? "Resetting..." : "Reset Password"}
         </button>
       </form>

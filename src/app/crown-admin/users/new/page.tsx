@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./new-user.module.css";
 import { FiArrowLeft } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 export default function NewUserPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -29,10 +29,9 @@ export default function NewUserPage() {
 
   const handlePreviewUsername = async () => {
     if (!formData.full_name || !formData.mobile) {
-      setError("Full name and mobile are required to preview username");
+      toast.error("Full name and mobile are required to preview username");
       return;
     }
-    setError("");
     try {
       const res = await fetch('/api/admin/users/generate-username', {
         method: 'POST',
@@ -45,21 +44,20 @@ export default function NewUserPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.available) {
-        setError(data.error || data.message || "Failed to generate username");
+        toast.error(data.error || data.message || "Failed to generate username");
         setGeneratedUsername("");
       } else {
         setGeneratedUsername(`Available Username: ${data.username}`);
       }
     } catch (err) {
       console.error(err);
-      setError("Error checking username");
+      toast.error("Error checking username");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     try {
       const res = await fetch('/api/admin/users', {
@@ -73,9 +71,10 @@ export default function NewUserPage() {
         throw new Error(data.error || "Failed to create user");
       }
 
+      toast.success("User created successfully");
       router.push('/crown-admin/users');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
       setLoading(false);
     }
   };
@@ -88,8 +87,6 @@ export default function NewUserPage() {
       </div>
 
       <div className={styles.card}>
-        {error && <div className={styles.error}>{error}</div>}
-
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label>Full Name *</label>

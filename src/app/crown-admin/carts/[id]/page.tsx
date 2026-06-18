@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { FiArrowLeft, FiTrash2, FiPlus, FiMinus, FiSearch, FiX } from "react-icons/fi";
 import styles from "../../admin.module.css";
+import { toast } from "react-hot-toast";
 
 interface CartItem {
   id: string;
@@ -52,7 +53,7 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
       setCart(data.cart);
     } catch (err) {
       console.error(err);
-      alert("Error fetching cart details");
+      toast.error("Error fetching cart details");
     } finally {
       setLoading(false);
     }
@@ -73,10 +74,11 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
         body: JSON.stringify({ quantity: newQty })
       });
       if (!res.ok) throw new Error("Failed to update item");
+      toast.success("Item quantity updated");
       await fetchCart();
     } catch (err) {
       console.error(err);
-      alert("Error updating item quantity");
+      toast.error("Error updating item quantity");
     }
   };
 
@@ -88,10 +90,11 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
         method: "DELETE"
       });
       if (!res.ok) throw new Error("Failed to remove item");
+      toast.success("Item removed");
       await fetchCart();
     } catch (err) {
       console.error(err);
-      alert("Error removing item");
+      toast.error("Error removing item");
     }
   };
 
@@ -129,12 +132,13 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
         })
       });
       if (!res.ok) throw new Error("Failed to add product to cart");
+      toast.success("Product added to cart");
       setShowAddProductModal(false);
       setSearchQuery("");
       await fetchCart();
     } catch (err) {
       console.error(err);
-      alert("Error adding product to cart");
+      toast.error("Error adding product to cart");
     } finally {
       setIsAddingProduct(false);
     }
@@ -258,12 +262,20 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
               <span style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>{cart.status}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span style={{ color: '#666' }}>Total Items:</span>
-              <span>{totalItems}</span>
+              <span style={{ color: '#666' }}>Subtotal:</span>
+              <strong>${cart.subtotal?.toFixed(2) || '0.00'}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee', fontWeight: 'bold', fontSize: '1.2rem' }}>
-              <span>Total Value:</span>
-              <span>${totalValue.toFixed(2)}</span>
+
+            {cart.discountAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#dc3545' }}>
+                <span>Discount {cart.discountTierName ? `(${cart.discountTierName})` : ''}</span>
+                <strong>-${cart.discountAmount.toFixed(2)}</strong>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee', fontSize: '1.2rem', fontWeight: 'bold' }}>
+              <span>Total Value</span>
+              <span>${cart.total?.toFixed(2) || '0.00'}</span>
             </div>
           </div>
         </div>

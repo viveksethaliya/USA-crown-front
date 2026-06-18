@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 interface RelatedProduct {
   product_id: number;
@@ -68,12 +69,14 @@ export default function RelatedProductsTab({ productId }: { productId: number })
       if (res.ok) {
         setSearch('');
         setSearchResults([]);
+        toast.success('Related product added');
         fetchRelated();
       } else {
-        alert('Failed to add related product');
+        toast.error('Failed to add related product');
       }
     } catch (e) {
       console.error(e);
+      toast.error('Failed to add related product');
     }
   };
 
@@ -84,12 +87,14 @@ export default function RelatedProductsTab({ productId }: { productId: number })
         credentials: 'include'
       });
       if (res.ok) {
+        toast.success('Related product removed');
         fetchRelated();
       } else {
-        alert('Failed to remove related product');
+        toast.error('Failed to remove related product');
       }
     } catch (e) {
       console.error(e);
+      toast.error('Failed to remove related product');
     }
   };
 

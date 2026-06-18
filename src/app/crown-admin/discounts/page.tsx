@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apiUrl } from '@/lib/cart';
+import { toast } from "react-hot-toast";
 
 interface Exclusion {
   product_id: number | null;
@@ -28,7 +29,6 @@ export default function DiscountsAdminPage() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [customerGroups, setCustomerGroups] = useState<CustomerGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export default function DiscountsAdminPage() {
         setCustomerGroups(groupsData.groups || []);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error fetching data');
+      toast.error(err instanceof Error ? err.message : 'Error fetching data');
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,6 @@ export default function DiscountsAdminPage() {
     setCustomerGroupId('');
     setExclusions([]);
     setExclId('');
-    setError('');
   };
 
   const handleEdit = (discount: Discount) => {
@@ -90,12 +89,10 @@ export default function DiscountsAdminPage() {
     setCustomerGroupId(discount.customer_group_id || '');
     setExclusions(discount.exclusions || []);
     setExclId('');
-    setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     const payload = { 
       name, 
@@ -121,10 +118,11 @@ export default function DiscountsAdminPage() {
         throw new Error(errData.error || 'Failed to save discount');
       }
 
+      toast.success(editingId ? 'Discount updated' : 'Discount created');
       resetForm();
       fetchData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error saving discount');
+      toast.error(err instanceof Error ? err.message : 'Error saving discount');
     }
   };
 
@@ -138,9 +136,10 @@ export default function DiscountsAdminPage() {
       });
 
       if (!response.ok) throw new Error('Failed to delete discount');
+      toast.success('Discount deleted');
       fetchData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error deleting discount');
+      toast.error(err instanceof Error ? err.message : 'Error deleting discount');
     }
   };
 
@@ -166,12 +165,6 @@ export default function DiscountsAdminPage() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
       <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Manage Discounts</h1>
-      
-      {error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #ef4444', color: '#b91c1c', padding: '10px', marginBottom: '20px' }}>
-          {error}
-        </div>
-      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '30px' }}>
         {/* Discouts List */}

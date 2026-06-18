@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "./profile.module.css";
 import { FiInfo } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 interface UserProfile {
   username?: string;
@@ -15,7 +16,6 @@ interface UserProfile {
 export default function AccountProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState({ type: "", text: "" });
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -49,7 +49,6 @@ export default function AccountProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMsg({ type: "", text: "" });
 
     try {
       const res = await fetch('/api/account/profile', {
@@ -64,9 +63,9 @@ export default function AccountProfilePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update profile");
       
-      setMsg({ type: "success", text: "Profile updated successfully." });
+      toast.success("Profile updated successfully.");
     } catch (err: unknown) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -84,12 +83,6 @@ export default function AccountProfilePage() {
       {profile?.roles?.name && (
         <div className={styles.alert}>
           <FiInfo /> Account Type: {profile.roles.name}
-        </div>
-      )}
-
-      {msg.text && (
-        <div className={msg.type === 'error' ? styles.error : styles.success}>
-          {msg.text}
         </div>
       )}
 

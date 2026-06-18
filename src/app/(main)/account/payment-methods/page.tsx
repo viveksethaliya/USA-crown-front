@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "../../profile/profile.module.css";
+import { toast } from "react-hot-toast";
 
 type PaymentMethod = {
   id: string;
@@ -15,7 +16,6 @@ type PaymentMethod = {
 export default function PaymentMethodsPage() {
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState({ type: "", text: "" });
 
   const fetchMethods = async () => {
     try {
@@ -40,24 +40,20 @@ export default function PaymentMethodsPage() {
     try {
       const res = await fetch(`/api/account/payment-methods/${id}`, { method: "DELETE" });
       if (res.ok) {
-        setMsg({ type: "success", text: "Payment method deleted." });
+        toast.success("Payment method deleted.");
         setMethods(prev => prev.filter(m => m.id !== id));
       } else {
-        setMsg({ type: "error", text: "Failed to delete payment method." });
+        toast.error("Failed to delete payment method.");
       }
     } catch (err) {
       console.error(err);
+      toast.error("Failed to delete payment method.");
     }
   };
 
   return (
     <div>
       <h2>Saved Payment Methods</h2>
-      {msg.text && (
-        <div className={msg.type === "error" ? styles.error : styles.success}>
-          {msg.text}
-        </div>
-      )}
 
       {loading ? (
         <p>Loading...</p>

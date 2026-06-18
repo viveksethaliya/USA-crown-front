@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "../admin.module.css";
 import { FiEye, FiCheck, FiX, FiUserX, FiRefreshCw } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 type Registration = {
   id: number;
@@ -18,7 +19,6 @@ type Registration = {
 export default function RegistrationsPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const fetchRegistrations = async () => {
     try {
@@ -29,7 +29,7 @@ export default function RegistrationsPage() {
       const data = await res.json();
       setRegistrations(data.registrations || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      toast.error(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,7 @@ export default function RegistrationsPage() {
         const data = await res.json();
         if (!cancelled) setRegistrations(data.registrations || []);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "An error occurred");
+        if (!cancelled) toast.error(err instanceof Error ? err.message : "An error occurred");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -69,9 +69,10 @@ export default function RegistrationsPage() {
 
       // Refresh list
       setLoading(true);
+      toast.success(`Application marked as ${status}`);
       fetchRegistrations();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update status");
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
     }
   };
 
@@ -82,8 +83,6 @@ export default function RegistrationsPage() {
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>User Registrations</h1>
       </div>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.tableContainer}>
         {registrations.length === 0 ? (

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../../products/products.module.css";
+import { toast } from "react-hot-toast";
 
 interface Attribute {
   id: number;
@@ -109,7 +110,7 @@ export default function AdminAttributeTermsPage() {
       setNewTermImage("");
       setRefreshKey(r => r + 1);
     } catch (err) {
-      alert(`Error creating term: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error creating term: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }
@@ -124,10 +125,10 @@ export default function AdminAttributeTermsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      alert("Term deleted");
+      toast.success("Term deleted");
       setRefreshKey(r => r + 1);
     } catch (err) {
-      alert(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -146,11 +147,12 @@ export default function AdminAttributeTermsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       
-      setMergingTermId(null);
       setMergeTargetId(null);
+      setMergingTermId(null);
       setRefreshKey(r => r + 1);
+      toast.success("Terms merged successfully");
     } catch (err) {
-      alert(`Error merging: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error merging: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -172,8 +174,9 @@ export default function AdminAttributeTermsPage() {
       
       setEditingTermId(null);
       setRefreshKey(r => r + 1);
+      toast.success("Term updated successfully");
     } catch (err) {
-      alert(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   };
 

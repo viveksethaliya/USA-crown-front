@@ -10,15 +10,14 @@ import {
   type CartSummary
 } from '@/lib/cart';
 import styles from './cart.module.css';
+import { toast } from 'react-hot-toast';
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
-  const [error, setError] = useState('');
 
   const loadCart = async () => {
-    setError('');
 
     try {
       const guestId = getGuestCartId();
@@ -31,7 +30,7 @@ export default function CartPage() {
 
       setCart(data.cart);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load cart');
+      toast.error(err instanceof Error ? err.message : 'Failed to load cart');
     } finally {
       setLoading(false);
     }
@@ -46,7 +45,6 @@ export default function CartPage() {
     if (quantity < 1) return;
 
     setBusyItemId(itemId);
-    setError('');
 
     try {
       const response = await fetch(apiUrl(`/api/cart/items/${itemId}`), {
@@ -64,8 +62,9 @@ export default function CartPage() {
 
       setCart(data.cart);
       window.dispatchEvent(new Event('cart-updated'));
+      toast.success('Cart updated');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update quantity');
+      toast.error(err instanceof Error ? err.message : 'Failed to update quantity');
     } finally {
       setBusyItemId(null);
     }
@@ -73,7 +72,6 @@ export default function CartPage() {
 
   const removeItem = async (itemId: string) => {
     setBusyItemId(itemId);
-    setError('');
 
     try {
       const guestId = getGuestCartId();
@@ -87,8 +85,9 @@ export default function CartPage() {
 
       setCart(data.cart);
       window.dispatchEvent(new Event('cart-updated'));
+      toast.success('Item removed');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove item');
+      toast.error(err instanceof Error ? err.message : 'Failed to remove item');
     } finally {
       setBusyItemId(null);
     }
@@ -108,8 +107,6 @@ export default function CartPage() {
           </div>
           <Link href="/products" className={styles.secondaryLink}>Continue Shopping</Link>
         </div>
-
-        {error && <div className={styles.errorBox}>{error}</div>}
 
         {loading ? (
           <div className={styles.emptyState}>Loading cart...</div>

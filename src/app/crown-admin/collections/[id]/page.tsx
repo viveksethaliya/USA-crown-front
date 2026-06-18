@@ -7,6 +7,7 @@ import adminStyles from "../../admin.module.css";
 import styles from "../../products/products.module.css";
 import { FiTrash2, FiMenu } from "react-icons/fi";
 import MediaPicker from "@/components/media/MediaPicker";
+import { toast } from "react-hot-toast";
 
 interface CollectionProduct {
   id: number;
@@ -38,6 +39,9 @@ export default function CollectionEditPage() {
   });
 
   const [products, setProducts] = useState<CollectionProduct[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [addingCategory, setAddingCategory] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -45,12 +49,14 @@ export default function CollectionEditPage() {
 
   const fetchCollection = async () => {
     try {
-      const [colRes, prodRes] = await Promise.all([
+      const [colRes, prodRes, catRes] = await Promise.all([
         fetch(`/api/admin/collections/${collectionId}`, { credentials: "include" }),
-        fetch(`/api/admin/collections/${collectionId}/products`, { credentials: "include" })
+        fetch(`/api/admin/collections/${collectionId}/products`, { credentials: "include" }),
+        fetch(`/api/admin/categories`, { credentials: "include" })
       ]);
       const colData = await colRes.json();
       const prodData = await prodRes.json();
+      const catData = await catRes.json();
       
       if (colData.collection) {
         setFormData({
@@ -74,9 +80,13 @@ export default function CollectionEditPage() {
           is_featured: cp.is_featured
         })));
       }
+
+      if (catData.categories) {
+        setCategories(catData.categories);
+      }
     } catch (err: unknown) {
       console.error(err);
-      alert("Failed to load collection details");
+      toast.error("Failed to load collection details");
     } finally {
       setLoading(false);
     }
@@ -119,15 +129,39 @@ export default function CollectionEditPage() {
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error("Failed to save collection");
-      alert("Collection metadata updated!");
+      toast.success("Collection metadata updated!");
     } catch (err: unknown) {
-      alert(`Error saving collection: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error saving collection: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }
   };
 
   // --- Product Management ---
+
+  const addCategoryProducts = async () => {
+    if (!selectedCategoryId) return;
+    setAddingCategory(true);
+    try {
+      const res = await fetch(`/api/admin/collections/${collectionId}/add-category`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ categoryId: parseInt(selectedCategoryId) })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add category products");
+      
+      toast.success(data.message || "Category products added successfully");
+      fetchCollection();
+      setSelectedCategoryId("");
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to add category products");
+    } finally {
+      setAddingCategory(false);
+    }
+  };
 
   const searchProducts = async () => {
     if (searchQuery.length < 2) return;
@@ -145,7 +179,7 @@ export default function CollectionEditPage() {
   const addProduct = async (product: { id: number; name: string; sku: string }) => {
     // Avoid dupes
     if (products.find(p => p.id === product.id)) {
-      alert("Product already in collection");
+      toast.error("Product already in collection");
       return;
     }
 
@@ -162,9 +196,10 @@ export default function CollectionEditPage() {
       fetchCollection();
       setSearchQuery("");
       setSearchResults([]);
+      toast.success("Product added successfully");
     } catch (err: unknown) {
       console.error(err);
-      alert("Failed to add product");
+      toast.error("Failed to add product");
     }
   };
 
@@ -176,9 +211,10 @@ export default function CollectionEditPage() {
       });
       if (!res.ok) throw new Error("Failed to remove product");
       setProducts(prev => prev.filter(p => p.id !== productId));
+      toast.success("Product removed");
     } catch (err: unknown) {
       console.error(err);
-      alert("Failed to remove product");
+      toast.error("Failed to remove product");
     }
   };
 
@@ -210,9 +246,10 @@ export default function CollectionEditPage() {
         credentials: "include",
         body: JSON.stringify({ orderedProductIds: orderedIds })
       });
+      toast.success("Order updated");
     } catch (err: unknown) {
       console.error(err);
-      alert("Failed to save new order");
+      toast.error("Failed to save new order");
       fetchCollection();
     }
   };
@@ -230,9 +267,10 @@ export default function CollectionEditPage() {
       setProducts(prev => prev.map(p => 
         p.id === productId ? { ...p, is_featured: isFeatured } : p
       ));
+      toast.success("Featured status updated");
     } catch (err: unknown) {
       console.error(err);
-      alert("Failed to update featured status");
+      toast.error("Failed to update featured status");
     }
   };
 
@@ -338,7 +376,30 @@ export default function CollectionEditPage() {
         {/* Right Col: Products */}
         <div>
           <div className={styles.card} style={{ marginBottom: '2rem' }}>
-            <h3 className={styles.cardTitle}>Add Products</h3>
+            <h3 className={styles.cardTitle}>Add Products by Category</h3>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <select 
+                className={styles.fieldInput} 
+                value={selectedCategoryId} 
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
+              >
+                <option value="">-- Select a Category --</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <button 
+                type="button"
+                onClick={addCategoryProducts} 
+                className={adminStyles.primaryBtn} 
+                style={{ padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
+                disabled={!selectedCategoryId || addingCategory}
+              >
+                {addingCategory ? "Adding..." : "Add All Products"}
+              </button>
+            </div>
+
+            <h3 className={styles.cardTitle}>Add Individual Products</h3>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input 
                 type="text" 

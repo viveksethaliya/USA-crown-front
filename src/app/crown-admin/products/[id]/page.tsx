@@ -6,6 +6,7 @@ import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../products.module.css";
 import { ProductData, ProductImage, ProductAttribute, Variation } from "../components/types";
+import { toast } from "react-hot-toast";
 import ProductTabs from "../components/ProductTabs";
 import GeneralTab from "../components/GeneralTab";
 import InventoryTab from "../components/InventoryTab";
@@ -102,10 +103,10 @@ export default function AdminProductEditPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      alert(data.message);
+      toast.success(data.message);
       window.location.reload();
     } catch (err) {
-      alert(`Error generating variations: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error generating variations: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -167,7 +168,7 @@ export default function AdminProductEditPage() {
       if (!attrRes.ok) throw new Error('Failed to sync attributes');
 
       // 4. Sync variations
-      if (product.type === 'variable' && product.variations.length > 0) {
+      if (getFieldValue('type') === 'variable' && product.variations.length > 0) {
         const varRes = await fetch(
           `/api/admin/products/${product.id}/variations`,
           {
@@ -182,9 +183,9 @@ export default function AdminProductEditPage() {
 
       setEditedFields({});
       setHasChanges(false);
-      alert('Product saved successfully!');
+      toast.success('Product saved successfully!');
     } catch (err) {
-      alert(`Error saving: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error saving: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }
@@ -215,7 +216,7 @@ export default function AdminProductEditPage() {
         <div>
           <h1 className={styles.editorTitle}>{getFieldValue('name')}</h1>
           <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-            ID: {product.id} • {product.type === 'variable' ? 'Variable' : 'Simple'} Product
+            ID: {product.id} • {getFieldValue('type') === 'variable' ? 'Variable' : 'Simple'} Product
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -238,7 +239,7 @@ export default function AdminProductEditPage() {
       <ProductTabs 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        isVariable={product.type === 'variable'} 
+        isVariable={getFieldValue('type') === 'variable'} 
       />
 
       <div className={styles.card} style={{ borderTopLeftRadius: 0 }}>

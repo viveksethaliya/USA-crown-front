@@ -164,7 +164,7 @@
 }
 
 /* Common UI Elements */
-.pageHeader {
+.pageHeader, .adminHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -178,7 +178,7 @@
   margin: 0;
 }
 
-.btnPrimary {
+.btnPrimary, .primaryBtn {
   background-color: #1a1a2e;
   color: #fff;
   border: none;
@@ -192,7 +192,7 @@
   transition: background-color 0.2s ease;
 }
 
-.btnPrimary:hover {
+.btnPrimary:hover, .primaryBtn:hover {
   background-color: #2a2a4e;
 }
 

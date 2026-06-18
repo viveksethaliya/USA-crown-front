@@ -9,6 +9,7 @@ import {
   FiUpload, FiTrash2, FiRefreshCw, FiEye
 } from "react-icons/fi";
 import MediaPicker from "../../../components/media/MediaPicker";
+import { toast } from "react-hot-toast";
 
 interface BannerData {
   id?: string;
@@ -91,8 +92,6 @@ export default function BannerEditor({
   const [isDesktopPickerOpen, setIsDesktopPickerOpen] = useState(false);
   const [isMobilePickerOpen, setIsMobilePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const updateField = useCallback(
     (field: keyof BannerData, value: any) => {
@@ -166,8 +165,6 @@ export default function BannerEditor({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
-    setSuccessMsg(null);
 
     try {
       const data = new FormData();
@@ -219,12 +216,13 @@ export default function BannerEditor({
       const result = await res.json();
 
       if (res.ok) {
+        toast.success("Banner saved successfully!");
         router.push("/crown-admin/banners");
       } else {
-        setError(result.error || "Failed to save banner");
+        toast.error(result.error || "Failed to save banner");
       }
     } catch {
-      setError("An error occurred while saving.");
+      toast.error("An error occurred while saving.");
     } finally {
       setIsSubmitting(false);
     }
@@ -240,13 +238,6 @@ export default function BannerEditor({
           {isEdit ? "Edit Banner" : "Create New Banner"}
         </h1>
       </div>
-
-      {error && <div className={adminStyles.errorMessage}>{error}</div>}
-      {successMsg && (
-        <div style={{ background: "#d4edda", color: "#155724", padding: "1rem", marginBottom: "1.5rem", borderLeft: "4px solid #28a745" }}>
-          {successMsg}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit}>
         <div className={styles.editorLayout}>

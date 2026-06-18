@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import styles from "../admin.module.css";
 import "react-quill-new/dist/quill.snow.css";
 import MediaPicker from "../../../components/media/MediaPicker";
+import { toast } from "react-hot-toast";
 
 const ReactQuill = dynamic(() => import("react-quill-new"), {
   ssr: false,
@@ -49,7 +50,6 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_image || null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Category suggestions
   const [existingCategories, setExistingCategories] = useState<string[]>([]);
@@ -113,7 +113,7 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
         });
 
         if (res.status === 401) {
-          alert("Session expired. Please log in again.");
+          toast.error("Session expired. Please log in again.");
           router.push("/crown-admin/login");
           return;
         }
@@ -127,11 +127,11 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
             quill.insertEmbed(range.index, "image", data.url);
           }
         } else {
-          alert(data.error || "Image upload failed");
+          toast.error(data.error || "Image upload failed");
         }
       } catch (err) {
         console.error("Upload error", err);
-        alert("Image upload failed");
+        toast.error("Image upload failed");
       }
     };
   };
@@ -166,7 +166,6 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
 
     try {
       const data = new FormData();
@@ -204,12 +203,13 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
       const result = await res.json();
 
       if (res.ok) {
+        toast.success("Blog saved successfully!");
         router.push("/crown-admin/blogs");
       } else {
-        setError(result.error || "Failed to save blog");
+        toast.error(result.error || "Failed to save blog");
       }
     } catch (err) {
-      setError("An error occurred while saving.");
+      toast.error("An error occurred while saving.");
     } finally {
       setIsSubmitting(false);
     }
@@ -220,8 +220,6 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>{isEdit ? "Edit Blog" : "Create New Blog"}</h1>
       </div>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className={styles.formRow}>

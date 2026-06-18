@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../../products/products.module.css";
+import { toast } from "react-hot-toast";
 
 export default function TagEditPage() {
   const params = useParams();
@@ -42,7 +43,7 @@ export default function TagEditPage() {
         }
       } catch (err) {
         console.error(err);
-        alert("Failed to load tag data");
+        toast.error("Failed to load tag data");
       } finally {
         setLoading(false);
       }
@@ -95,10 +96,10 @@ export default function TagEditPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       
-      alert(isNew ? "Tag created!" : "Tag updated!");
+      toast.success(isNew ? "Tag created!" : "Tag updated!");
       router.push("/crown-admin/tags");
     } catch (err) {
-      alert(`Error saving tag: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error saving tag: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }

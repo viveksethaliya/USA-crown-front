@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import styles from '../products.module.css';
 import { ProductImage } from './types';
 import MediaPicker from '../../../../components/media/MediaPicker';
+import { toast } from "react-hot-toast";
 
 interface ImageUploaderProps {
   productId: number;
@@ -35,7 +36,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
       window.location.reload(); 
     } catch (err) {
       console.error(err);
-      alert('Error uploading images');
+      toast.error('Error uploading images');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -61,7 +62,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
       window.location.reload();
     } catch (err) {
       console.error(err);
-      alert('Error attaching images from library');
+      toast.error('Error attaching images from library');
     } finally {
       setUploading(false);
     }
@@ -76,13 +77,14 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
         credentials: 'include'
       });
       if (res.ok) {
+        toast.success("Image deleted");
         onImagesChange(images.filter(img => img.id !== imageId));
       } else {
-        alert("Failed to delete image");
+        toast.error("Failed to delete image");
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting image");
+      toast.error("Error deleting image");
     }
   };
 

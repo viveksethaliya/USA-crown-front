@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "./addresses.module.css";
 import profileStyles from "../profile/profile.module.css";
 import { FiPlus } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 interface Address {
   id?: string;
@@ -67,9 +68,10 @@ export default function AccountAddressesPage() {
       if (!res.ok) throw new Error("Failed to save address");
       setIsModalOpen(false);
       fetchAddresses();
+      toast.success("Address saved successfully");
     } catch (err) {
       console.error(err);
-      alert("Error saving address");
+      toast.error("Error saving address");
     } finally {
       setSaving(false);
     }
@@ -79,9 +81,15 @@ export default function AccountAddressesPage() {
     if (!confirm("Delete this address?")) return;
     try {
       const res = await fetch(`/api/account/addresses/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchAddresses();
+      if (res.ok) {
+        fetchAddresses();
+        toast.success("Address deleted successfully");
+      } else {
+        throw new Error("Failed to delete address");
+      }
     } catch (err) {
       console.error(err);
+      toast.error("Error deleting address");
     }
   };
 

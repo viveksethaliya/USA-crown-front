@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import styles from "../profile/profile.module.css";
 import { FiBriefcase } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 export default function AccountCompanyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState({ type: "", text: "" });
 
   const [formData, setFormData] = useState({
     company_name: "",
@@ -43,7 +43,6 @@ export default function AccountCompanyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMsg({ type: "", text: "" });
 
     try {
       const payload = new FormData();
@@ -67,9 +66,9 @@ export default function AccountCompanyPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update company profile");
       
-      setMsg({ type: "success", text: "Company details updated successfully." });
+      toast.success("Company details updated successfully.");
     } catch (err: unknown) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : String(err) });
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -83,12 +82,6 @@ export default function AccountCompanyPage() {
         <h1><FiBriefcase /> Company Details</h1>
         <p>Manage your wholesale business information.</p>
       </div>
-
-      {msg.text && (
-        <div className={msg.type === 'error' ? styles.error : styles.success}>
-          {msg.text}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formGroup}>

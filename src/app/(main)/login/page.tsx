@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,14 +12,12 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, {
@@ -36,10 +35,10 @@ export default function LoginPage() {
 
       // Dispatch a custom event so the Header updates immediately
       window.dispatchEvent(new Event('user-auth-change'));
-
+      toast.success('Logged in successfully!');
       router.push('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred during login');
+      toast.error(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }
@@ -81,12 +80,6 @@ export default function LoginPage() {
             <p className={styles.subtitle}>
               Ready to dive back into the world of premium jewelry findings?
             </p>
-
-            {error && (
-              <div className={styles.errorMessage}>
-                {error}
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.inputGroup}>

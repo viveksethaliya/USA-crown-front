@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "./products.module.css";
+import { toast } from "react-hot-toast";
 
 interface Product {
   id: number;
@@ -186,16 +187,17 @@ export default function AdminProductsPage() {
   //       `/api/admin/products/${id}`,
   //       { method: 'DELETE', credentials: "include" }
   //     );
-  //     if (res.ok) {
-  //       loadProducts();
-  //       loadStats();
-  //     } else {
-  //       alert("Failed to delete product.");
+  //       if (res.ok) {
+  //         toast.success("Product deleted");
+  //         loadProducts();
+  //         loadStats();
+  //       } else {
+  //         toast.error("Failed to delete product.");
+  //       }
+  //     } catch {
+  //       toast.error("Error deleting product.");
   //     }
-  //   } catch {
-  //     alert("Error deleting product.");
-  //   }
-  // };
+  //   };
 
   // Bulk Actions
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,13 +225,15 @@ export default function AdminProductsPage() {
         credentials: 'include'
       });
       if (res.ok) {
+        toast.success(`Successfully ${publish ? 'published' : 'unpublished'} products`);
         loadProducts();
         loadStats();
       } else {
-        alert("Bulk update failed.");
+        toast.error("Bulk update failed.");
       }
     } catch (err) {
       console.error("Bulk update error", err);
+      toast.error("Bulk update error");
     }
   };
 
@@ -244,13 +248,15 @@ export default function AdminProductsPage() {
         credentials: 'include'
       });
       if (res.ok) {
+        toast.success("Products deleted successfully");
         loadProducts();
         loadStats();
       } else {
-        alert("Bulk delete failed.");
+        toast.error("Bulk delete failed.");
       }
     } catch (err) {
       console.error("Bulk delete error", err);
+      toast.error("Bulk delete error");
     }
   };
 
@@ -374,17 +380,6 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {selectedIds.length > 0 && (
-        <div className={styles.bulkActionBar}>
-          <span><strong>{selectedIds.length}</strong> items selected</span>
-          <div className={styles.bulkActions}>
-            <button onClick={() => handleBulkToggle(true)} className={styles.bulkBtn}>Publish</button>
-            <button onClick={() => handleBulkToggle(false)} className={styles.bulkBtn}>Unpublish</button>
-            <button onClick={() => handleBulkDelete()} className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}>Delete</button>
-          </div>
-        </div>
-      )}
-
       <div className={adminStyles.tableContainer}>
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: '#666' }}>Loading products...</div>
@@ -501,6 +496,17 @@ export default function AdminProductsPage() {
         </div>
         {renderPagination()}
       </div>
+
+      {selectedIds.length > 0 && (
+        <div className={styles.bulkActionBar}>
+          <span><strong>{selectedIds.length}</strong> items selected</span>
+          <div className={styles.bulkActions}>
+            <button onClick={() => handleBulkToggle(true)} className={styles.bulkBtn}>Publish</button>
+            <button onClick={() => handleBulkToggle(false)} className={styles.bulkBtn}>Unpublish</button>
+            <button onClick={() => handleBulkDelete()} className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}>Delete</button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

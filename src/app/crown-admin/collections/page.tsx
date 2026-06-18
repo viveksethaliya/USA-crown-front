@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "../admin.module.css";
 import { FiPlus, FiTrash2, FiEdit2, FiEye, FiEyeOff, FiArrowUp, FiArrowDown } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 interface Collection {
   id: string;
@@ -19,7 +20,6 @@ const API = '/api/admin';
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const fetchCollections = async () => {
     try {
@@ -30,7 +30,7 @@ export default function CollectionsPage() {
       }
     } catch (err: unknown) {
       console.error(err);
-      setError("Failed to load collections");
+      toast.error("Failed to load collections");
     } finally {
       setLoading(false);
     }
@@ -50,11 +50,12 @@ export default function CollectionsPage() {
         credentials: "include",
       });
       if (res.ok) {
+        toast.success("Collection deleted successfully");
         await fetchCollections();
       }
     } catch (err: unknown) {
       console.error(err);
-      setError("Failed to delete collection");
+      toast.error("Failed to delete collection");
     }
   };
 
@@ -66,10 +67,11 @@ export default function CollectionsPage() {
         credentials: "include",
         body: JSON.stringify({ is_visible: !col.is_visible }),
       });
+      toast.success("Visibility updated");
       await fetchCollections();
     } catch (err: unknown) {
       console.error(err);
-      setError("Failed to update visibility");
+      toast.error("Failed to update visibility");
     }
   };
 
@@ -95,10 +97,11 @@ export default function CollectionsPage() {
           body: JSON.stringify({ position: col.position }),
         }),
       ]);
+      toast.success("Collection reordered");
       await fetchCollections();
     } catch (err: unknown) {
       console.error(err);
-      setError("Failed to reorder");
+      toast.error("Failed to reorder");
     }
   };
 
@@ -116,8 +119,6 @@ export default function CollectionsPage() {
       <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.95rem" }}>
         Manage product collections and merchandising.
       </p>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
 
       {/* Collections Table */}
       <div className={styles.tableContainer}>

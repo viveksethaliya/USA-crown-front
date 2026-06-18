@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../../../profile/profile.module.css";
+import { toast } from "react-hot-toast";
 
 export default function OrderPaymentPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -15,14 +16,13 @@ export default function OrderPaymentPage(props: { params: Promise<{ id: string }
     total_amount: string | number;
   }
   const [order, setOrder] = useState<Order | null>(null);
-  const [msg, setMsg] = useState({ type: "", text: "" });
 
   useEffect(() => {
     fetch(`/api/account/orders/${params.id}`)
       .then(res => res.json())
       .then(data => {
         if (!data || data.error) {
-          setMsg({ type: "error", text: "Order not found." });
+          toast.error("Order not found.");
         } else {
           setOrder(data);
         }
@@ -33,12 +33,12 @@ export default function OrderPaymentPage(props: { params: Promise<{ id: string }
 
   const handleSimulatePayment = async () => {
     // This is a dummy function. In reality, it would process with Stripe.
-    alert("Payment simulated successfully! (Dummy)");
+    toast.success("Payment simulated successfully! (Dummy)");
     router.push(`/orders/${params.id}`);
   };
 
   if (loading) return <div className={styles.container}>Loading order...</div>;
-  if (!order) return <div className={styles.container}>{msg.text || "Failed to load."}</div>;
+  if (!order) return <div className={styles.container}>Failed to load order.</div>;
 
   return (
     <div className={styles.container}>

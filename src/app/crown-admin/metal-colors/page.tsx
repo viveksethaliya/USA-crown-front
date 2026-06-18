@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "../admin.module.css";
 import { FiSave } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 const API = '/api/admin';
 
@@ -15,7 +16,6 @@ export default function MetalColorsPage() {
   const [colors, setColors] = useState<Record<string, string>>({});
   const [allMetals, setAllMetals] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [savingMetal, setSavingMetal] = useState<string | null>(null);
 
   const fetchMetalColors = async () => {
@@ -35,7 +35,7 @@ export default function MetalColorsPage() {
         setColors(colorMap);
       }
     } catch (err) {
-      setError("Failed to load metal colors");
+      toast.error("Failed to load metal colors");
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,6 @@ export default function MetalColorsPage() {
 
   const handleSave = async (metal: string) => {
     setSavingMetal(metal);
-    setError("");
 
     try {
       const colorToSave = colors[metal] || "#cccccc";
@@ -64,10 +63,12 @@ export default function MetalColorsPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to save color");
+        toast.error(data.error || "Failed to save color");
+      } else {
+        toast.success("Metal color saved");
       }
     } catch (err) {
-      setError("Network error while saving");
+      toast.error("Network error while saving");
     } finally {
       setSavingMetal(null);
     }
@@ -84,8 +85,6 @@ export default function MetalColorsPage() {
       <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.95rem" }}>
         Assign display colors for each metal type. These colors are used as swatches on product cards and filters.
       </p>
-
-      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.tableContainer}>
         <table className={styles.adminTable}>

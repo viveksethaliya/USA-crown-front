@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "../admin.module.css";
+import { toast } from "react-hot-toast";
 
 export default function AdminBlogsList() {
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -40,11 +41,12 @@ export default function AdminBlogsList() {
       });
       if (res.ok) {
         setBlogs(blogs.filter(b => b.id !== id));
+        toast.success("Blog deleted successfully.");
       } else {
-        alert("Failed to delete blog.");
+        toast.error("Failed to delete blog.");
       }
     } catch (err) {
-      alert("Error deleting blog.");
+      toast.error("Error deleting blog.");
     }
   };
 

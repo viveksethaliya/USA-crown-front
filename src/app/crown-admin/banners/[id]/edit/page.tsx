@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import BannerEditor from "../../BannerEditor";
 import adminStyles from "../../../admin.module.css";
+import { toast } from "react-hot-toast";
 
 export default function EditBannerPage() {
   const params = useParams();
@@ -11,7 +12,6 @@ export default function EditBannerPage() {
 
   const [banner, setBanner] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBanner = async () => {
@@ -24,7 +24,7 @@ export default function EditBannerPage() {
         const data = await res.json();
         setBanner(data.banner);
       } catch (err) {
-        setError("Could not load banner data.");
+        toast.error("Could not load banner data.");
       } finally {
         setLoading(false);
       }
@@ -34,7 +34,6 @@ export default function EditBannerPage() {
   }, [bannerId]);
 
   if (loading) return <div>Loading banner...</div>;
-  if (error) return <div className={adminStyles.errorMessage}>{error}</div>;
   if (!banner) return <div className={adminStyles.errorMessage}>Banner not found</div>;
 
   return <BannerEditor initialData={banner} isEdit />;

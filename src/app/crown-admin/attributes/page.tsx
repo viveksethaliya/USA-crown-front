@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "../products/products.module.css";
+import { toast } from "react-hot-toast";
 
 interface Attribute {
   id: number;
@@ -86,7 +87,7 @@ export default function AdminAttributesPage() {
       setNewAttrVariation(false);
       fetchAttributes();
     } catch (err) {
-      alert(`Error creating attribute: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error creating attribute: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }
@@ -101,10 +102,10 @@ export default function AdminAttributesPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      alert("Attribute deleted");
+      toast.success("Attribute deleted");
       fetchAttributes();
     } catch (err) {
-      alert(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error deleting: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 

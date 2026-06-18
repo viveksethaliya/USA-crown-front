@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
+import { toast } from "react-hot-toast";
 
 interface DashboardData {
   stats: {
@@ -16,7 +17,6 @@ interface DashboardData {
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
         const json = await res.json();
         setData(json);
       } catch {
-        setError("Could not load dashboard data.");
+        toast.error("Could not load dashboard data.");
       } finally {
         setLoading(false);
       }
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) return <div>Loading dashboard...</div>;
-  if (error) return <div className={styles.errorMessage}>{error}</div>;
+  if (!data) return <div className={styles.errorMessage}>No dashboard data available.</div>;
 
   return (
     <>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import styles from "./MediaPicker.module.css";
 import { FiSearch, FiUploadCloud, FiX, FiLoader } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 export interface MediaItem {
   id: string;
@@ -121,12 +122,13 @@ export default function MediaPicker({
         await fetchMedia(1, search);
         setSelectedItems(prev => multiSelect ? [...prev, data.media] : [data.media]);
         setSidebarItem(data.media);
+        toast.success("Image uploaded successfully");
       } else {
-        alert(data.error || "Upload failed");
+        toast.error(data.error || "Upload failed");
       }
     } catch (err) {
       console.error(err);
-      alert("Error uploading file");
+      toast.error("Error uploading file");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -165,13 +167,13 @@ export default function MediaPicker({
         // Update item in local list
         setMedia(prev => prev.map(m => m.id === sidebarItem.id ? { ...m, title: metaTitle, alt_text: metaAltText } : m));
         setSidebarItem(data.media);
-        alert("Metadata saved!");
+        toast.success("Metadata saved!");
       } else {
-        alert(data.error || "Failed to save metadata");
+        toast.error(data.error || "Failed to save metadata");
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving metadata");
+      toast.error("Error saving metadata");
     } finally {
       setSavingMeta(false);
     }

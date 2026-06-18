@@ -9,6 +9,7 @@ import {
   FiSend, FiUsers, FiClock, FiMail, FiCheckCircle, FiAlertCircle,
   FiChevronDown, FiChevronUp, FiEye, FiRefreshCw, FiX
 } from "react-icons/fi";
+import { toast } from "react-hot-toast";
 
 const API = '/api/admin';
 
@@ -55,7 +56,6 @@ export default function NewsletterPage() {
   const [testEmail, setTestEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [testSending, setTestSending] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [errorField, setErrorField] = useState("");
 
   // Subscribers state
@@ -70,11 +70,6 @@ export default function NewsletterPage() {
   // Preview modal
   const [showPreview, setShowPreview] = useState(false);
 
-  const showToast = (type: "success" | "error", msg: string) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 5000);
-  };
-
   // ─── Fetch subscribers ─────────────────────────────
   const fetchSubscribers = useCallback(async () => {
     setSubsLoading(true);
@@ -84,7 +79,7 @@ export default function NewsletterPage() {
       if (!res.ok) throw new Error(data.error);
       setSubscribers(data.subscribers || []);
     } catch (err: unknown) {
-      showToast("error", err instanceof Error ? err.message : "Failed to load subscribers");
+      toast.error(err instanceof Error ? err.message : "Failed to load subscribers");
     } finally {
       setSubsLoading(false);
     }
@@ -99,7 +94,7 @@ export default function NewsletterPage() {
       if (!res.ok) throw new Error(data.error);
       setCampaigns(data.campaigns || []);
     } catch (err: unknown) {
-      showToast("error", err instanceof Error ? err.message : "Failed to load campaigns");
+      toast.error(err instanceof Error ? err.message : "Failed to load campaigns");
     } finally {
       setCampaignsLoading(false);
     }
@@ -133,7 +128,7 @@ export default function NewsletterPage() {
         });
 
         if (res.status === 401) {
-          alert("Session expired. Please log in again.");
+          toast.error("Session expired. Please log in again.");
           router.push("/crown-admin/login");
           return;
         }
@@ -147,11 +142,11 @@ export default function NewsletterPage() {
             quill.insertEmbed(range.index, "image", data.url);
           }
         } else {
-          alert(data.error || "Image upload failed");
+          toast.error(data.error || "Image upload failed");
         }
       } catch (err) {
         console.error("Upload error", err);
-        alert("Image upload failed");
+        toast.error("Image upload failed");
       }
     };
   }, [router]);
@@ -174,7 +169,7 @@ export default function NewsletterPage() {
   // ─── Send test email ──────────────────────────────
   const handleTestSend = async () => {
     if (!subject.trim()) {
-      showToast("error", "Subject line is required.");
+      toast.error("Subject line is required.");
       setErrorField("subject");
       if (subjectRef.current) {
         subjectRef.current.focus();
@@ -182,12 +177,12 @@ export default function NewsletterPage() {
       return;
     }
     if (!content || content === "<p><br></p>") {
-      showToast("error", "Email content is required.");
+      toast.error("Email content is required.");
       quillRef.current?.focus();
       return;
     }
     if (!testEmail.trim()) {
-      showToast("error", "Test email address is required.");
+      toast.error("Test email address is required.");
       setErrorField("testEmail");
       testEmailRef.current?.focus();
       return;
@@ -202,9 +197,9 @@ export default function NewsletterPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      showToast("success", data.message || "Test sent!");
+      toast.success(data.message || "Test sent!");
     } catch (err: unknown) {
-      showToast("error", err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setTestSending(false);
     }
@@ -213,7 +208,7 @@ export default function NewsletterPage() {
   // ─── Broadcast to all ─────────────────────────────
   const handleBroadcast = async () => {
     if (!subject.trim()) {
-      showToast("error", "Subject line is required.");
+      toast.error("Subject line is required.");
       setErrorField("subject");
       if (subjectRef.current) {
         subjectRef.current.focus();
@@ -221,11 +216,11 @@ export default function NewsletterPage() {
       return;
     }
     if (!content || content === "<p><br></p>") {
-      showToast("error", "Email content is required.");
+      toast.error("Email content is required.");
       quillRef.current?.focus();
       return;
     }
-    if (!window.confirm("This will send the newsletter to ALL active subscribers. Continue?")) return;
+    if (!confirm("This will send the newsletter to ALL active subscribers. Continue?")) return;
     setSending(true);
     try {
       const res = await fetch(`${API}/newsletter/send`, {
@@ -236,11 +231,11 @@ export default function NewsletterPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      showToast("success", data.message || "Newsletter sent!");
+      toast.success(data.message || "Newsletter sent!");
       setSubject("");
       setContent("");
     } catch (err: unknown) {
-      showToast("error", err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSending(false);
     }
@@ -266,14 +261,6 @@ export default function NewsletterPage() {
 
   return (
     <>
-      {/* Toast notification */}
-      {toast && (
-        <div className={`${nl.toast} ${toast.type === "success" ? nl.toastSuccess : nl.toastError}`}>
-          {toast.type === "success" ? <FiCheckCircle /> : <FiAlertCircle />}
-          <span>{toast.msg}</span>
-        </div>
-      )}
-
       {/* Page header */}
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Newsletter & Broadcasts</h1>
