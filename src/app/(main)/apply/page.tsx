@@ -146,7 +146,7 @@ export default function ApplyPage() {
         formData.append('certificates', file);
       });
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/register`, {
+      const response = await fetch('/api/register', {
         method: 'POST',
         body: formData,
       });

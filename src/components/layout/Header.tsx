@@ -178,7 +178,7 @@ export default function Header() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/session`, {
+        const res = await fetch('/api/user/session', {
           credentials: 'include',
         });
         if (res.ok) {
@@ -230,7 +230,7 @@ export default function Header() {
     // Fetch dynamic collections for navbar
     async function fetchCollections() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collections`);
+        const res = await fetch('/api/collections');
         if (res.ok) {
           const data = await res.json();
           if (data.collections && data.collections.length > 0) {
@@ -246,7 +246,7 @@ export default function Header() {
     // Fetch product categories for mega menu
     async function fetchCategories() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+        const res = await fetch('/api/categories');
         if (res.ok) {
           const data = await res.json();
           if (data.categories && data.categories.length > 0) {
@@ -275,7 +275,7 @@ export default function Header() {
 
     async function fetchPrices() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/metal-prices`);
+        const res = await fetch('/api/metal-prices');
 
         if (res.ok) {
           const data = await res.json();
@@ -311,7 +311,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/logout`, {
+      await fetch('/api/user/logout', {
         method: 'POST',
         credentials: 'include',
       });

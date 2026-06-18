@@ -466,30 +466,36 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       )}
 
       {isSubUserModalOpen && (
-        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
-          <div style={{background: 'var(--card-bg)', padding: '2rem', borderRadius: '8px', width: '400px', maxWidth: '90%'}}>
-            <h2 style={{marginBottom: '1rem'}}>Add Sub User</h2>
-            <form onSubmit={handleAddSubUser}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "white", padding: "24px", borderRadius: "8px", width: "100%", maxWidth: "500px", maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #e5e7eb", paddingBottom: "10px" }}>
+              <h2 style={{ fontSize: "20px", margin: 0, fontWeight: "bold", color: "#111827" }}>Add Sub User</h2>
+              <button onClick={() => setIsSubUserModalOpen(false)} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", lineHeight: 1, color: "#6b7280" }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handleAddSubUser} style={{ overflowY: "auto", paddingRight: "5px" }}>
               <div className={styles.formGroup}>
-                <label>Full Name *</label>
-                <input required type="text" className={styles.input} value={subUserForm.full_name} onChange={e => setSubUserForm({...subUserForm, full_name: e.target.value})} />
+                <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Full Name *</label>
+                <input required type="text" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.full_name} onChange={e => setSubUserForm({...subUserForm, full_name: e.target.value})} />
               </div>
-              <div className={styles.formGroup}>
-                <label>Email *</label>
-                <input required type="email" className={styles.input} value={subUserForm.email} onChange={e => setSubUserForm({...subUserForm, email: e.target.value})} />
+              <div className={styles.formGroup} style={{ marginTop: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Email *</label>
+                <input required type="email" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.email} onChange={e => setSubUserForm({...subUserForm, email: e.target.value})} />
               </div>
-              <div className={styles.formGroup}>
-                <label>Mobile *</label>
-                <input required type="tel" className={styles.input} value={subUserForm.mobile} onChange={e => setSubUserForm({...subUserForm, mobile: e.target.value})} />
+              <div className={styles.formGroup} style={{ marginTop: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Mobile *</label>
+                <input required type="tel" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.mobile} onChange={e => setSubUserForm({...subUserForm, mobile: e.target.value})} />
               </div>
-              <div className={styles.formGroup}>
-                <label>Password *</label>
-                <input required type="password" minLength={6} className={styles.input} value={subUserForm.password} onChange={e => setSubUserForm({...subUserForm, password: e.target.value})} />
+              <div className={styles.formGroup} style={{ marginTop: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Password *</label>
+                <input required type="password" minLength={6} style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.password} onChange={e => setSubUserForm({...subUserForm, password: e.target.value})} />
               </div>
 
-              <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem'}}>
-                <button type="submit" disabled={savingSubUser} className={styles.submitBtn} style={{margin: 0}}>{savingSubUser ? 'Saving...' : 'Save'}</button>
-                <button type="button" onClick={() => setIsSubUserModalOpen(false)} className={styles.deleteBtn} style={{margin: 0}}>Cancel</button>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "25px", paddingTop: "15px", borderTop: "1px solid #e5e7eb" }}>
+                <button type="button" onClick={() => setIsSubUserModalOpen(false)} style={{ padding: "10px 16px", border: "1px solid #d1d5db", background: "white", color: "#374151", borderRadius: "4px", cursor: "pointer", fontWeight: "500" }}>Cancel</button>
+                <button type="submit" disabled={savingSubUser} style={{ padding: "10px 16px", border: "none", background: "#111827", color: "white", borderRadius: "4px", cursor: savingSubUser ? "not-allowed" : "pointer", opacity: savingSubUser ? 0.7 : 1, fontWeight: "500" }}>
+                  {savingSubUser ? 'Saving...' : 'Save Sub User'}
+                </button>
               </div>
             </form>
           </div>

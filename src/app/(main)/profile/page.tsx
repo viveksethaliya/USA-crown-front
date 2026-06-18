@@ -68,9 +68,9 @@ export default function ProfilePage() {
     async function fetchData() {
       try {
         const [profileRes, companyRes, usersRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/profile`, { credentials: 'include' }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/company`, { credentials: 'include' }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/users`, { credentials: 'include' }).catch(() => null)
+          fetch('/api/account/profile', { credentials: 'include' }),
+          fetch('/api/account/company', { credentials: 'include' }),
+          fetch('/api/account/users', { credentials: 'include' }).catch(() => null)
         ]);
 
         if (profileRes.status === 401) {
@@ -113,7 +113,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/profile`, {
+      const res = await fetch('/api/account/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name: fullName, mobile }),
@@ -132,7 +132,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/company`, {
+      const res = await fetch('/api/account/company', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,7 +156,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/users`, {
+      const res = await fetch('/api/account/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -181,7 +181,7 @@ export default function ProfilePage() {
 
   const handleToggleSubUser = async (id: string, currentStatus: boolean) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/account/users/${id}`, {
+      const res = await fetch(`/api/account/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !currentStatus }),

@@ -56,7 +56,7 @@ export default function DiscountsAdminPage() {
 
       if (groupsRes.ok) {
         const groupsData = await groupsRes.json();
-        setCustomerGroups(groupsData.groups || []);
+        setCustomerGroups(Array.isArray(groupsData) ? groupsData : (groupsData.groups || []));
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error fetching data');

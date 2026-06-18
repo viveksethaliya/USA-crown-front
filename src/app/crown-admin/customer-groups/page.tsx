@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { apiUrl } from "@/lib/cart";
 import styles from "../discounts/discounts.module.css"; // Reuse if exists, else we use inline styles
 import { toast } from "react-hot-toast";
@@ -123,8 +124,11 @@ export default function CustomerGroupsPage() {
                     <td style={{ padding: "12px", fontWeight: "500" }}>{g.name}</td>
                     <td style={{ padding: "12px", color: "#4b5563" }}>{g.description || "-"}</td>
                     <td style={{ padding: "12px", textAlign: "right" }}>
-                      <button onClick={() => handleEdit(g)} style={{ color: "#2563eb", marginRight: "10px", background: "none", border: "none", cursor: "pointer" }}>Edit</button>
-                      <button onClick={() => handleDelete(g.id)} style={{ color: "#dc2626", background: "none", border: "none", cursor: "pointer" }}>Delete</button>
+                      <Link href={`/crown-admin/customer-groups/${g.id}`} style={{ color: "#10b981", marginRight: "10px", textDecoration: "none", fontSize: "0.9rem" }}>
+                        Manage Members
+                      </Link>
+                      <button onClick={() => handleEdit(g)} style={{ color: "#2563eb", marginRight: "10px", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>Edit</button>
+                      <button onClick={() => handleDelete(g.id)} style={{ color: "#dc2626", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>Delete</button>
                     </td>
                   </tr>
                 ))

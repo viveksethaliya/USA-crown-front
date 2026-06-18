@@ -217,8 +217,29 @@ export default function BlogEditor({ initialData, isEdit = false }: { initialDat
 
   return (
     <>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>{isEdit ? "Edit Blog" : "Create New Blog"}</h1>
+      <div className={styles.pageHeader} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button 
+          onClick={() => router.push('/crown-admin/blogs')}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            cursor: 'pointer', 
+            fontSize: '1rem', 
+            color: '#64748b', 
+            display: 'flex', 
+            alignItems: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem',
+            borderRadius: '4px',
+            transition: 'background 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          title="Back to Blogs"
+        >
+          ← Back
+        </button>
+        <h1 className={styles.pageTitle} style={{ margin: 0 }}>{isEdit ? "Edit Blog" : "Create New Blog"}</h1>
       </div>
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
