@@ -95,6 +95,7 @@ export default function CheckoutPage() {
     name: string;
     cost: number;
   }
+  const [error, setError] = useState<string | null>(null);
   const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([]);
 
   const loadCheckout = async () => {
