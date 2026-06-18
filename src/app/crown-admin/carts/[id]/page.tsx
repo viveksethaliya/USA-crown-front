@@ -29,6 +29,10 @@ interface Cart {
     company_name?: string;
   } | null;
   cart_items: CartItem[];
+  subtotal?: number;
+  total?: number;
+  discountAmount?: number;
+  discountTierName?: string;
 }
 
 export default function AdminCartDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -266,10 +270,10 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
               <strong>${cart.subtotal?.toFixed(2) || '0.00'}</strong>
             </div>
 
-            {cart.discountAmount > 0 && (
+            {(cart.discountAmount ?? 0) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#dc3545' }}>
                 <span>Discount {cart.discountTierName ? `(${cart.discountTierName})` : ''}</span>
-                <strong>-${cart.discountAmount.toFixed(2)}</strong>
+                <strong>-${cart.discountAmount?.toFixed(2)}</strong>
               </div>
             )}
 
