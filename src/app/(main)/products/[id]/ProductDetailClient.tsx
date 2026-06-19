@@ -86,7 +86,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     async function fetchMetalPrice() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/metal-prices`);
+        const res = await fetch(`/api/metal-prices`);
         if (res.ok) {
           // simple placeholder for multiplier
           setMetalPriceMultiplier(1.05);
@@ -102,7 +102,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/session`, { credentials: 'include' });
+        const res = await fetch(`/api/user/session`, { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) setIsAuthenticated(true);
@@ -115,7 +115,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`);
+        const res = await fetch(`/api/products/${productId}`);
         if (!res.ok) throw new Error('Not found');
         const data = await res.json() as ProductApiResponse;
         if (!data.product) throw new Error('Not found');
@@ -227,7 +227,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     setAddingToCart(true);
     try {
       const guestId = isAuthenticated ? null : getGuestCartId();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/items`, {
+      const res = await fetch(`/api/cart/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -270,7 +270,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     async function fetchDiscounts() {
       if (!productId) return;
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}/discounts`);
+        const res = await fetch(`/api/products/${productId}/discounts`);
         if (res.ok) {
           const data = await res.json();
           setDiscounts(data);
@@ -293,7 +293,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
         if (customLength) body.length = customLength;
         if (customWidth) body.width = customWidth;
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/calculate-price`, {
+        const res = await fetch(`/api/products/calculate-price`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)

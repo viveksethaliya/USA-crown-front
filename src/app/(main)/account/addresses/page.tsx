@@ -40,7 +40,7 @@ export default function AccountAddressesPage() {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch('/api/account/addresses');
+      const res = await fetch('/api/account/addresses', { credentials: 'include' });
       if (res.ok) setAddresses(await res.json());
       setLoading(false);
     } catch (err) {
@@ -63,15 +63,19 @@ export default function AccountAddressesPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
+        credentials: 'include'
       });
-      if (!res.ok) throw new Error("Failed to save address");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || "Failed to save address");
+      }
       setIsModalOpen(false);
       fetchAddresses();
       toast.success("Address saved successfully");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Error saving address");
+      toast.error(err.message || "Error saving address");
     } finally {
       setSaving(false);
     }
@@ -80,7 +84,7 @@ export default function AccountAddressesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this address?")) return;
     try {
-      const res = await fetch(`/api/account/addresses/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/account/addresses/${id}`, { method: 'DELETE', credentials: 'include' });
       if (res.ok) {
         fetchAddresses();
         toast.success("Address deleted successfully");
@@ -159,7 +163,10 @@ export default function AccountAddressesPage() {
       {isModalOpen && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h2>{editId ? 'Edit Address' : 'New Address'}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0 }}>{editId ? 'Edit Address' : 'New Address'}</h2>
+              <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}>✕</button>
+            </div>
             <form onSubmit={handleSubmit} className={styles.formGrid}>
               <div className={profileStyles.formGroup}>
                 <label>First Name *</label>
