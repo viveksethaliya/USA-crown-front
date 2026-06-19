@@ -174,7 +174,8 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: formData.full_name,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
           mobile: formData.mobile,
           username: formData.username,
           role_id: formData.role_id,
