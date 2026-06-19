@@ -309,7 +309,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       const newSubUsers = await fetch(`/api/admin/users/${params.id}/sub-users`).then(r => r.json());
       setSubUsers(newSubUsers || []);
       setIsSubUserModalOpen(false);
-      setSubUserForm({ full_name: "", email: "", mobile: "", password: "", role_id: "" });
+      setSubUserForm({ first_name: "", last_name: "", email: "", mobile: "", password: "", role_id: "" });
       toast.success("Sub-user added successfully.");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : String(err));
