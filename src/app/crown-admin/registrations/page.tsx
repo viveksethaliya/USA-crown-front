@@ -92,7 +92,8 @@ export default function RegistrationsPage() {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Name</th>
+                <th>First Name</th>
+                <th>Last Name</th>
                 <th>Company</th>
                 <th>Email</th>
                 <th>Date</th>
@@ -104,7 +105,8 @@ export default function RegistrationsPage() {
               {registrations.map((reg) => (
                 <tr key={reg.id}>
                   <td>{reg.id}</td>
-                  <td>{reg.first_name} {reg.last_name}</td>
+                  <td>{reg.first_name}</td>
+                  <td>{reg.last_name}</td>
                   <td>{reg.company_name}</td>
                   <td>{reg.email}</td>
                   <td>{new Date(reg.created_at).toLocaleDateString()}</td>

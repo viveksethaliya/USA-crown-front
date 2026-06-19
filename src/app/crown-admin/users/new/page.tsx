@@ -12,7 +12,8 @@ export default function NewUserPage() {
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     mobile: "",
     password: "",
@@ -28,16 +29,17 @@ export default function NewUserPage() {
   }, []);
 
   const handlePreviewUsername = async () => {
-    if (!formData.full_name || !formData.mobile) {
-      toast.error("Full name and mobile are required to preview username");
+    if (!formData.first_name || !formData.mobile) {
+      toast.error("First name and mobile are required to preview username");
       return;
     }
     try {
+      const full_name = `${formData.first_name} ${formData.last_name || ''}`.trim();
       const res = await fetch('/api/admin/users/generate-username', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: formData.full_name,
+          full_name,
           mobile: formData.mobile,
           candidate: formData.username_override || undefined
         })
@@ -88,19 +90,31 @@ export default function NewUserPage() {
 
       <div className={styles.card}>
         <form onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label>Full Name *</label>
-            <input 
-              required
-              type="text" 
-              className={styles.input} 
-              value={formData.full_name}
-              onChange={e => setFormData({...formData, full_name: e.target.value})}
-            />
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label>First Name *</label>
+              <input 
+                required
+                type="text" 
+                className={styles.input} 
+                value={formData.first_name}
+                onChange={e => setFormData({...formData, first_name: e.target.value})}
+              />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label>Last Name *</label>
+              <input 
+                required
+                type="text" 
+                className={styles.input} 
+                value={formData.last_name}
+                onChange={e => setFormData({...formData, last_name: e.target.value})}
+              />
+            </div>
           </div>
 
           <div className={styles.formGroup}>
-            <label>Email Address *</label>
+            <label>Email *</label>
             <input 
               required
               type="email" 
@@ -111,7 +125,7 @@ export default function NewUserPage() {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Mobile Number *</label>
+            <label>Phone *</label>
             <input 
               required
               type="tel" 

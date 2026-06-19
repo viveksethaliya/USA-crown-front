@@ -46,7 +46,8 @@ export default function ProfilePage() {
 
   // Personal Form
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
 
@@ -54,12 +55,18 @@ export default function ProfilePage() {
   const [company, setCompany] = useState<CompanyProfile | null>(null);
   const [companyName, setCompanyName] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
-  const [companyAddress, setCompanyAddress] = useState('');
   const [companyPhone, setCompanyPhone] = useState('');
+  const [taxId, setTaxId] = useState('');
+  const [addressLine1, setAddressLine1] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [country, setCountry] = useState('');
 
   // Sub-users
   const [subUsers, setSubUsers] = useState<SubUser[]>([]);
-  const [newSubUserName, setNewSubUserName] = useState('');
+  const [newSubUserFirstName, setNewSubUserFirstName] = useState('');
+  const [newSubUserLastName, setNewSubUserLastName] = useState('');
   const [newSubUserEmail, setNewSubUserEmail] = useState('');
   const [newSubUserMobile, setNewSubUserMobile] = useState('');
   const [newSubUserPassword, setNewSubUserPassword] = useState('');
@@ -81,7 +88,8 @@ export default function ProfilePage() {
         if (profileRes.ok) {
           const data = await profileRes.json();
           setProfile(data);
-          setFullName(data.full_name || '');
+          setFirstName(data.first_name || '');
+          setLastName(data.last_name || '');
           setMobile(data.mobile || '');
           setEmail(data.email || '');
         }
@@ -91,8 +99,13 @@ export default function ProfilePage() {
           setCompany(cData);
           setCompanyName(cData.company_name || '');
           setCompanyWebsite(cData.website || '');
-          setCompanyAddress(cData.company_address || '');
           setCompanyPhone(cData.company_phone || '');
+          setTaxId(cData.tax_id || '');
+          setAddressLine1(cData.address_line_1 || '');
+          setCity(cData.city || '');
+          setState(cData.state || '');
+          setPostalCode(cData.postal_code || '');
+          setCountry(cData.country || '');
         }
 
         if (usersRes && usersRes.ok) {
@@ -116,7 +129,7 @@ export default function ProfilePage() {
       const res = await fetch('/api/account/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: fullName, mobile }),
+        body: JSON.stringify({ first_name: firstName, last_name: lastName, mobile }),
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update profile');
@@ -138,8 +151,13 @@ export default function ProfilePage() {
         body: JSON.stringify({
           company_name: companyName,
           website: companyWebsite,
-          company_address: companyAddress,
-          company_phone: companyPhone
+          company_phone: companyPhone,
+          tax_id: taxId,
+          address_line_1: addressLine1,
+          city: city,
+          state: state,
+          postal_code: postalCode,
+          country: country
         }),
         credentials: 'include',
       });
@@ -160,7 +178,8 @@ export default function ProfilePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: newSubUserName,
+          first_name: newSubUserFirstName,
+          last_name: newSubUserLastName,
           email: newSubUserEmail,
           mobile: newSubUserMobile,
           password: newSubUserPassword
@@ -171,7 +190,8 @@ export default function ProfilePage() {
       const data = await res.json();
       setSubUsers([...subUsers, data]);
       toast.success('Sub-user created successfully!');
-      setNewSubUserName(''); setNewSubUserEmail(''); setNewSubUserMobile(''); setNewSubUserPassword('');
+      setNewSubUserFirstName('');
+      setNewSubUserLastName(''); setNewSubUserEmail(''); setNewSubUserMobile(''); setNewSubUserPassword('');
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -232,9 +252,15 @@ export default function ProfilePage() {
           <form onSubmit={handleSavePersonal} className={styles.form}>
             <div className={styles.section}>
               <h2 className={styles.sectionTitle}>Personal Details</h2>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Full Name <span className={styles.req}>*</span></label>
-                <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={styles.input} required />
+              <div className={styles.row}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
+                  <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={styles.input} required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Last Name <span className={styles.req}>*</span></label>
+                  <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={styles.input} required />
+                </div>
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Email</label>
@@ -267,8 +293,28 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className={styles.inputGroup}>
-                <label className={styles.label}>Company Address <span className={styles.req}>*</span></label>
-                <input type="text" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className={styles.input} required />
+                <label className={styles.label}>Address Line 1 <span className={styles.req}>*</span></label>
+                <input type="text" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} className={styles.input} required />
+              </div>
+              <div className={styles.row}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>City <span className={styles.req}>*</span></label>
+                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={styles.input} required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>State/Province <span className={styles.req}>*</span></label>
+                  <input type="text" value={state} onChange={(e) => setState(e.target.value)} className={styles.input} required />
+                </div>
+              </div>
+              <div className={styles.row}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Zip/Postal Code <span className={styles.req}>*</span></label>
+                  <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={styles.input} required />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Country <span className={styles.req}>*</span></label>
+                  <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} className={styles.input} required />
+                </div>
               </div>
               <div className={styles.row}>
                 <div className={styles.inputGroup}>
@@ -277,8 +323,7 @@ export default function ProfilePage() {
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Tax ID</label>
-                  <input type="text" value={company?.tax_id || ''} className={styles.inputReadonly} disabled />
-                  <span className={styles.hint}>Tax ID cannot be changed. Contact support to update.</span>
+                  <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} className={styles.input} />
                 </div>
               </div>
 
@@ -333,9 +378,15 @@ export default function ProfilePage() {
             <div className={styles.section}>
               <h2 className={styles.sectionTitle}>Add New Team Member</h2>
               <form onSubmit={handleAddSubUser} className={styles.row}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Full Name <span className={styles.req}>*</span></label>
-                  <input type="text" value={newSubUserName} onChange={(e) => setNewSubUserName(e.target.value)} className={styles.input} required />
+                <div className={styles.row}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
+                    <input type="text" value={newSubUserFirstName} onChange={(e) => setNewSubUserFirstName(e.target.value)} className={styles.input} required />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Last Name <span className={styles.req}>*</span></label>
+                    <input type="text" value={newSubUserLastName} onChange={(e) => setNewSubUserLastName(e.target.value)} className={styles.input} required />
+                  </div>
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Email <span className={styles.req}>*</span></label>

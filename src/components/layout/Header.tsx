@@ -75,6 +75,15 @@ interface UserSession {
   companyName: string;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  price?: number;
+  regular_price?: number;
+  image: string | null;
+  slug: string;
+}
+
 const CATEGORY_ORDER = [
   "DISC",
   "SETTINGS",
@@ -112,6 +121,38 @@ export default function Header() {
   const [navCollections, setNavCollections] = useState<NavCollection[]>(fallbackCollections);
   const [megaMenuData, setMegaMenuData] = useState(fallbackMegaMenuData);
   const [mobileViewCategory, setMobileViewCategory] = useState<string | null>(null);
+
+  const [recommendedCache, setRecommendedCache] = useState<Record<string, Product[]>>({});
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Fetch recommended products when a category is hovered
+  useEffect(() => {
+    if (!isMegaMenuOpen || !activeCategory) return;
+    if (recommendedCache[activeCategory]) return; // already fetched
+
+    const catData = megaMenuData[activeCategory];
+    if (!catData) return;
+
+    async function fetchProducts() {
+      setLoadingProducts(true);
+      try {
+        const res = await fetch(`/api/products?category=${catData.slug}&limit=3`);
+        if (res.ok) {
+          const data = await res.json();
+          setRecommendedCache(prev => ({
+            ...prev,
+            [activeCategory]: data.products || []
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch recommended products", err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    }
+
+    fetchProducts();
+  }, [activeCategory, isMegaMenuOpen, megaMenuData, recommendedCache]);
 
   const getGroupedLinks = (links: { label: string, href: string }[]) => {
     const groups: Record<string, { label: string, href: string }[]> = {};
@@ -475,63 +516,106 @@ export default function Header() {
           <nav className={styles.nav}>
             {/* Desktop Nav */}
             <ul className={styles.navList}>
-              <li className={styles.navItem}>
-                <button
+              <li 
+                className={styles.navItem}
+                onMouseEnter={() => setIsMegaMenuOpen(true)}
+                onMouseLeave={() => setIsMegaMenuOpen(false)}
+              >
+                <Link
+                  href="/products"
                   className={`${styles.navLink} ${styles.navLinkBtn}`}
-                  onClick={() => setIsMegaMenuOpen(prev => !prev)}
                   aria-expanded={isMegaMenuOpen}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
-                  ALL PRODUCTS ▾
-                </button>
+                  <span>☰</span> ALL PRODUCTS ▾
+                </Link>
 
                 {/* Mega Menu Dropdown */}
                 {isMegaMenuOpen && (
-                  <div className={styles.megaMenu}>
-                    <div className={styles.megaMenuContainer}>
+                  <div className={styles.megaMenuDropdown}>
+                    <div className={styles.megaMenuInner}>
+                      
                       {/* Left Side: Categories */}
-                      <div className={styles.megaMenuSidebar}>
+                      <div className={styles.categorySidebar}>
                         {Object.keys(megaMenuData)
                           .sort((a, b) => sortCategories(megaMenuData[a].title, megaMenuData[b].title))
                           .map((catKey) => (
-                            <div
+                            <Link
+                              href={`/products?category=${megaMenuData[catKey].slug}`}
                               key={catKey}
-                              className={`${styles.sidebarItem} ${activeCategory === catKey ? styles.sidebarItemActive : ''}`}
+                              className={`${styles.categoryItem} ${activeCategory === catKey ? styles.active : ''}`}
                               onMouseEnter={() => setActiveCategory(catKey)}
-                              onClick={() => {
-                                if (megaMenuData[catKey].links.length === 0) {
-                                  setIsMegaMenuOpen(false);
-                                  router.push(`/products?category=${megaMenuData[catKey].slug}`);
-                                }
-                              }}
+                              onClick={() => setIsMegaMenuOpen(false)}
                             >
-                              {megaMenuData[catKey].title}
-                              <span className={styles.sidebarArrow}>›</span>
-                            </div>
+                              <span className={styles.catName}>{megaMenuData[catKey].title}</span>
+                              <span className={styles.chevron}>›</span>
+                            </Link>
                           ))}
                       </div>
 
-                      {/* Right Side: Category Links */}
-                      <div className={styles.megaMenuContent}>
-                        <h3 className={styles.megaMenuTitle}>{currentCategoryData.title}</h3>
-                        <div className={styles.megaMenuLinksGrid}>
-                          {[...currentCategoryData.links]
-                            .sort((a, b) => a.label.localeCompare(b.label))
-                            .map((link, idx) => (
-                              <Link key={idx} href={link.href} className={styles.megaMenuLink}>
-                                {link.label}
-                              </Link>
-                            ))}
-                        </div>
+                      {/* Right Side: Mega Panel */}
+                      <div className={styles.megaPanel}>
+                        {activeCategory && megaMenuData[activeCategory] && (
+                          <>
+                            {/* Tier 1: Recommended Products */}
+                            <div className={styles.recommendedSection}>
+                              <h4 className={styles.sectionTitle}>
+                                Recommended in {megaMenuData[activeCategory].title}
+                              </h4>
+                              
+                              {loadingProducts && (!recommendedCache[activeCategory] || recommendedCache[activeCategory].length === 0) ? (
+                                <div style={{ color: '#888' }}>Finding recommendations...</div>
+                              ) : (!recommendedCache[activeCategory] || recommendedCache[activeCategory].length === 0) ? (
+                                <div style={{ color: '#888' }}>No products found.</div>
+                              ) : (
+                                <div className={styles.recommendedGrid}>
+                                  {recommendedCache[activeCategory].map(prod => (
+                                    <Link href={`/products/${prod.id}`} key={prod.id} style={{ textDecoration: 'none' }} onClick={() => setIsMegaMenuOpen(false)}>
+                                      <div className={styles.recommendedCard}>
+                                        {prod.image ? (
+                                          // eslint-disable-next-line @next/next/no-img-element
+                                          <img src={prod.image} alt={prod.name} className={styles.prodImage} />
+                                        ) : (
+                                          <div className={styles.prodImage} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#aaa', textAlign: 'center' }}>No Img</div>
+                                        )}
+                                        <div className={styles.prodInfo}>
+                                          <div className={styles.prodName}>{prod.name}</div>
+                                          {!!prod.regular_price && (
+                                            <div className={styles.prodPrice}>
+                                              ${prod.regular_price.toFixed(2)}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            <hr className={styles.divider} />
+
+                            {/* Tier 2: Sub Categories */}
+                            <div className={styles.subCategorySection}>
+                              <h4 className={styles.sectionTitle}>Sub-Categories</h4>
+                              {megaMenuData[activeCategory].links.length === 0 ? (
+                                <p style={{ color: '#888', fontSize: '0.9rem' }}>No sub-categories available.</p>
+                              ) : (
+                                <div className={styles.subCategoryGrid}>
+                                  {[...megaMenuData[activeCategory].links]
+                                    .sort((a, b) => a.label.localeCompare(b.label))
+                                    .map((link, idx) => (
+                                      <Link href={link.href} key={idx} className={styles.subCategoryLink} onClick={() => setIsMegaMenuOpen(false)}>
+                                        {link.label}
+                                      </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
 
-                      {/* Mega Menu Featured Image/Promo */}
-                      <div className={styles.megaMenuPromo}>
-                        <div className={styles.promoImagePlaceholder}>
-                          Featured
-                        </div>
-                        <p className={styles.promoText}>Discover our new Spring mountings.</p>
-                        <Link href="/collections/spring" className={styles.promoBtn}>SHOP NOW</Link>
-                      </div>
                     </div>
                   </div>
                 )}

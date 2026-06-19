@@ -73,7 +73,8 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const [formData, setFormData] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     mobile: "",
     username: "",
     role_id: "",
@@ -83,11 +84,24 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     allow_group_discounts: true
   });
 
+  const [companyFormData, setCompanyFormData] = useState({
+    company_name: "",
+    website: "",
+    company_phone: "",
+    tax_id: "",
+    address_line_1: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    country: "",
+  });
+  const [savingCompany, setSavingCompany] = useState(false);
+
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [subUsers, setSubUsers] = useState<SubUser[]>([]);
   const [isSubUserModalOpen, setIsSubUserModalOpen] = useState(false);
   const [subUserForm, setSubUserForm] = useState({
-    full_name: "", email: "", mobile: "", password: "", role_id: ""
+    first_name: "", last_name: "", email: "", mobile: "", password: "", role_id: ""
   });
   const [savingSubUser, setSavingSubUser] = useState(false);
 
@@ -108,8 +122,20 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       setSubUsers(subUsersData || []);
       
       if (userData) {
+        const profile = userData.parent_user_id ? userData.parent_company : userData.company_profiles;
+        const defaultAddress = userData.user_addresses?.find((a: any) => a.is_default_billing) || userData.user_addresses?.[0] || {};
+        
+        let fname = defaultAddress.first_name || '';
+        let lname = defaultAddress.last_name || '';
+        if (!fname && !lname && userData.full_name) {
+          const parts = userData.full_name.split(' ');
+          fname = parts[0] || '';
+          lname = parts.slice(1).join(' ') || '';
+        }
+
         setFormData({
-          full_name: userData.full_name || "",
+          first_name: fname,
+          last_name: lname,
           mobile: userData.mobile || "",
           username: userData.username || "",
           role_id: userData.role_id || "",
@@ -117,6 +143,18 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
           is_active: userData.is_active,
           allow_variant_discounts: userData.allow_variant_discounts !== undefined ? userData.allow_variant_discounts : true,
           allow_group_discounts: userData.allow_group_discounts !== undefined ? userData.allow_group_discounts : true
+        });
+
+        setCompanyFormData({
+          company_name: profile?.company_name || "",
+          website: profile?.website || "",
+          company_phone: profile?.company_phone || "",
+          tax_id: profile?.tax_id || "",
+          address_line_1: defaultAddress.address_line_1 || "",
+          city: defaultAddress.city || "",
+          state: defaultAddress.state || "",
+          postal_code: defaultAddress.postal_code || "",
+          country: defaultAddress.country || "",
         });
       }
       setLoading(false);
@@ -152,6 +190,29 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCompanySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingCompany(true);
+    try {
+      const res = await fetch(`/api/admin/users/${params.id}/company`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(companyFormData)
+      });
+      if (!res.ok) throw new Error("Failed to update company profile");
+      toast.success("Company profile updated successfully.");
+      
+      const updatedUserRes = await fetch(`/api/admin/users/${params.id}`);
+      if (updatedUserRes.ok) {
+        setUser(await updatedUserRes.json());
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSavingCompany(false);
     }
   };
 
@@ -284,13 +345,24 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
         )}
         <form onSubmit={handleSubmit}>
           <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label>Full Name</label>
-              <input 
-                required type="text" className={styles.input} 
-                value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})}
-              />
-            </div>
+              <div className={styles.formGroup}>
+                <label>First Name</label>
+                <input 
+                  type="text" 
+                  className={styles.input} 
+                  value={formData.first_name} 
+                  onChange={e => setFormData({...formData, first_name: e.target.value})}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Last Name</label>
+                <input 
+                  type="text" 
+                  className={styles.input} 
+                  value={formData.last_name} 
+                  onChange={e => setFormData({...formData, last_name: e.target.value})}
+                />
+              </div>
             <div className={styles.formGroup}>
               <label>Username</label>
               <input 
@@ -299,7 +371,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
               />
             </div>
             <div className={styles.formGroup}>
-              <label>Mobile</label>
+              <label>Phone *</label>
               <input 
                 required type="tel" className={styles.input} 
                 value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})}
@@ -411,18 +483,64 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
           </ul>
         </div>
         <div className={styles.card}>
-          <h2>Company Profile {user.parent_user_id && "(Inherited)"}</h2>
-          {(user.parent_user_id ? user.parent_company : user.company_profiles) ? (
+          <h2>Company Profile {user.parent_user_id && "(Inherited - Read Only)"}</h2>
+          {user.parent_user_id ? (
             <div className={styles.listItem}>
-              <h4>{(user.parent_user_id ? user.parent_company : user.company_profiles)?.company_name}</h4>
-              <p>Tax ID: {(user.parent_user_id ? user.parent_company : user.company_profiles)?.tax_id || 'N/A'}</p>
-              <p>Industry: {(user.parent_user_id ? user.parent_company : user.company_profiles)?.industry || 'N/A'}</p>
-              {user.parent_user_id && user.parent_group && (
+              <h4>{user.parent_company?.company_name}</h4>
+              <p>Tax ID: {user.parent_company?.tax_id || 'N/A'}</p>
+              <p>Industry: {user.parent_company?.industry || 'N/A'}</p>
+              {user.parent_group && (
                 <p style={{marginTop: '0.5rem', color: '#4f46e5'}}><strong>Customer Group:</strong> {user.parent_group.name}</p>
               )}
             </div>
           ) : (
-            <p>No company profile.</p>
+            <form onSubmit={handleCompanySubmit}>
+              <div className={styles.formGroup}>
+                <label>Company Name <span className={styles.req}>*</span></label>
+                <input required type="text" className={styles.input} value={companyFormData.company_name} onChange={e => setCompanyFormData({...companyFormData, company_name: e.target.value})} />
+              </div>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Company Website</label>
+                  <input type="text" className={styles.input} value={companyFormData.website} onChange={e => setCompanyFormData({...companyFormData, website: e.target.value})} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Phone *</label>
+                  <input required type="tel" className={styles.input} value={companyFormData.company_phone} onChange={e => setCompanyFormData({...companyFormData, company_phone: e.target.value})} />
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label>Resale Tax ID *</label>
+                <input required type="text" className={styles.input} value={companyFormData.tax_id} onChange={e => setCompanyFormData({...companyFormData, tax_id: e.target.value})} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Address Line <span className={styles.req}>*</span></label>
+                <input required type="text" className={styles.input} value={companyFormData.address_line_1} onChange={e => setCompanyFormData({...companyFormData, address_line_1: e.target.value})} />
+              </div>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>City <span className={styles.req}>*</span></label>
+                  <input required type="text" className={styles.input} value={companyFormData.city} onChange={e => setCompanyFormData({...companyFormData, city: e.target.value})} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>State/Province <span className={styles.req}>*</span></label>
+                  <input required type="text" className={styles.input} value={companyFormData.state} onChange={e => setCompanyFormData({...companyFormData, state: e.target.value})} />
+                </div>
+              </div>
+              <div className={styles.formGrid}>
+                <div className={styles.formGroup}>
+                  <label>Zip Code <span className={styles.req}>*</span></label>
+                  <input required type="text" className={styles.input} value={companyFormData.postal_code} onChange={e => setCompanyFormData({...companyFormData, postal_code: e.target.value})} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Country <span className={styles.req}>*</span></label>
+                  <input required type="text" className={styles.input} value={companyFormData.country} onChange={e => setCompanyFormData({...companyFormData, country: e.target.value})} />
+                </div>
+              </div>
+              <button type="submit" disabled={savingCompany} className={styles.submitBtn}>
+                {savingCompany ? "Saving..." : "Save Company Profile"}
+              </button>
+            </form>
           )}
         </div>
       </div>
@@ -440,7 +558,8 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
           <table className={styles.table} style={{width: '100%', borderCollapse: 'collapse', marginTop: '1rem'}}>
             <thead>
               <tr style={{textAlign: 'left', borderBottom: '1px solid #ddd'}}>
-                <th style={{padding: '0.5rem'}}>Name</th>
+                <th style={{padding: '0.5rem'}}>First Name</th>
+                <th style={{padding: '0.5rem'}}>Last Name</th>
                 <th style={{padding: '0.5rem'}}>Email</th>
                 <th style={{padding: '0.5rem'}}>Role</th>
                 <th style={{padding: '0.5rem'}}>Status</th>
@@ -450,7 +569,8 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
             <tbody>
               {subUsers.map(su => (
                 <tr key={su.id} style={{borderBottom: '1px solid #eee'}}>
-                  <td style={{padding: '0.5rem'}}>{su.full_name}</td>
+                  <td style={{padding: '0.5rem'}}>{su.full_name?.split(' ')[0] || ''}</td>
+                  <td style={{padding: '0.5rem'}}>{su.full_name?.split(' ').slice(1).join(' ') || ''}</td>
                   <td style={{padding: '0.5rem'}}>{su.email}</td>
                   <td style={{padding: '0.5rem'}}>{su.roles?.name || 'Sub User'}</td>
                   <td style={{padding: '0.5rem'}}>{su.is_active ? 'Active' : 'Inactive'}</td>
@@ -474,16 +594,22 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
             </div>
             
             <form onSubmit={handleAddSubUser} style={{ overflowY: "auto", paddingRight: "5px" }}>
-              <div className={styles.formGroup}>
-                <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Full Name *</label>
-                <input required type="text" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.full_name} onChange={e => setSubUserForm({...subUserForm, full_name: e.target.value})} />
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>First Name *</label>
+                  <input required type="text" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.first_name} onChange={e => setSubUserForm({...subUserForm, first_name: e.target.value})} />
+                </div>
+                <div className={styles.formGroup} style={{ flex: 1 }}>
+                  <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Last Name *</label>
+                  <input required type="text" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.last_name} onChange={e => setSubUserForm({...subUserForm, last_name: e.target.value})} />
+                </div>
               </div>
               <div className={styles.formGroup} style={{ marginTop: "15px" }}>
                 <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Email *</label>
                 <input required type="email" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.email} onChange={e => setSubUserForm({...subUserForm, email: e.target.value})} />
               </div>
               <div className={styles.formGroup} style={{ marginTop: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Mobile *</label>
+                <label style={{ display: "block", marginBottom: "5px", fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Phone *</label>
                 <input required type="tel" style={{ width: "100%", padding: "10px", border: "1px solid #d1d5db", borderRadius: "4px" }} value={subUserForm.mobile} onChange={e => setSubUserForm({...subUserForm, mobile: e.target.value})} />
               </div>
               <div className={styles.formGroup} style={{ marginTop: "15px" }}>

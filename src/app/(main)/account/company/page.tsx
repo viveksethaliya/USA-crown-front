@@ -11,7 +11,11 @@ export default function AccountCompanyPage() {
 
   const [formData, setFormData] = useState({
     company_name: "",
-    company_address: "",
+    address_line_1: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    country: "",
     company_phone: "",
     website: "",
     tax_id: "",
@@ -25,7 +29,11 @@ export default function AccountCompanyPage() {
         if (data && !data.error) {
           setFormData({
             company_name: data.company_name || "",
-            company_address: data.company_address || "",
+            address_line_1: data.address_line_1 || "",
+            city: data.city || "",
+            state: data.state || "",
+            postal_code: data.postal_code || "",
+            country: data.country || "",
             company_phone: data.company_phone || "",
             website: data.website || "",
             tax_id: data.tax_id || "",
@@ -47,7 +55,11 @@ export default function AccountCompanyPage() {
     try {
       const payload = new FormData();
       payload.append('company_name', formData.company_name);
-      payload.append('company_address', formData.company_address);
+      payload.append('address_line_1', formData.address_line_1);
+      payload.append('city', formData.city);
+      payload.append('state', formData.state);
+      payload.append('postal_code', formData.postal_code);
+      payload.append('country', formData.country);
       payload.append('company_phone', formData.company_phone);
       payload.append('website', formData.website);
       payload.append('tax_id', formData.tax_id);
@@ -104,27 +116,65 @@ export default function AccountCompanyPage() {
         </div>
 
         <div className={styles.formGroup}>
-          <label>Company Address *</label>
+          <label>Address Line 1 *</label>
           <input 
             required type="text" className={styles.input} 
-            value={formData.company_address} 
-            onChange={e => setFormData({...formData, company_address: e.target.value})}
+            value={formData.address_line_1} 
+            onChange={e => setFormData({...formData, address_line_1: e.target.value})}
           />
         </div>
 
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className={styles.formGroup} style={{ flex: 1, marginBottom: 0 }}>
+            <label>City *</label>
+            <input 
+              required type="text" className={styles.input} 
+              value={formData.city} 
+              onChange={e => setFormData({...formData, city: e.target.value})}
+            />
+          </div>
+          <div className={styles.formGroup} style={{ flex: 1, marginBottom: 0 }}>
+            <label>Zip Code *</label>
+            <input 
+              required type="text" className={styles.input} 
+              value={formData.postal_code} 
+              onChange={e => setFormData({...formData, postal_code: e.target.value})}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className={styles.formGroup} style={{ flex: 1, marginBottom: 0 }}>
+            <label>State / Province *</label>
+            <input 
+              required type="text" className={styles.input} 
+              value={formData.state} 
+              onChange={e => setFormData({...formData, state: e.target.value})}
+            />
+          </div>
+          <div className={styles.formGroup} style={{ flex: 1, marginBottom: 0 }}>
+            <label>Country *</label>
+            <input 
+              required type="text" className={styles.input} 
+              value={formData.country} 
+              onChange={e => setFormData({...formData, country: e.target.value})}
+            />
+          </div>
+        </div>
+
         <div className={styles.formGroup}>
-          <label>Company Phone</label>
+          <label>Phone *</label>
           <input 
-            type="tel" className={styles.input} 
+            required type="tel" className={styles.input} 
             value={formData.company_phone} 
             onChange={e => setFormData({...formData, company_phone: e.target.value})}
           />
         </div>
 
         <div className={styles.formGroup}>
-          <label>Tax ID / EIN</label>
+          <label>Resale Tax ID *</label>
           <input 
-            type="text" className={styles.input} 
+            required type="text" className={styles.input} 
             value={formData.tax_id} 
             onChange={e => setFormData({...formData, tax_id: e.target.value})}
           />

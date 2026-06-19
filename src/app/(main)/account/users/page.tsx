@@ -27,7 +27,7 @@ export default function AccountUsersPage() {
   const [roles, setRoles] = useState<{id: string, name: string}[]>([]);
   const [permissions, setPermissions] = useState<{id: string, code: string, name: string}[]>([]);
 
-  const emptyForm = { full_name: "", email: "", mobile: "", password: "", is_active: true, role_id: "", permission_ids: [] as string[] };
+  const emptyForm = { first_name: "", last_name: "", email: "", mobile: "", password: "", is_active: true, role_id: "", permission_ids: [] as string[] };
   const [formData, setFormData] = useState(emptyForm);
 
   const fetchUsers = async () => {
@@ -55,7 +55,8 @@ export default function AccountUsersPage() {
       const url = editId ? `/api/account/users/${editId}` : '/api/account/users';
       
       const payload: Record<string, any> = {
-        full_name: formData.full_name,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         email: formData.email,
         mobile: formData.mobile,
         role_id: formData.role_id,
@@ -93,8 +94,10 @@ export default function AccountUsersPage() {
 
   const openEdit = (u: User) => {
     setEditId(u.id);
+    const parts = u.full_name ? u.full_name.split(' ') : [''];
     setFormData({
-      full_name: u.full_name,
+      first_name: parts[0] || "",
+      last_name: parts.slice(1).join(' ') || "",
       email: u.email,
       mobile: u.mobile,
       is_active: u.is_active,
@@ -147,16 +150,22 @@ export default function AccountUsersPage() {
               
               {!editId && (
                 <>
-                  <div className={styles.fullWidth}>
-                    <label className={profileStyles.label}>Full Name *</label>
-                    <input required type="text" className={profileStyles.input} value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} />
+                  <div className={styles.fullWidth} style={{ display: 'flex', gap: '1rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <label className={profileStyles.label}>First Name *</label>
+                      <input required type="text" className={profileStyles.input} value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label className={profileStyles.label}>Last Name *</label>
+                      <input required type="text" className={profileStyles.input} value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
+                    </div>
                   </div>
                   <div className={profileStyles.formGroup}>
                     <label>Email *</label>
                     <input required type="email" className={profileStyles.input} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} disabled={!!editId} />
                   </div>
                   <div className={profileStyles.formGroup}>
-                    <label>Mobile *</label>
+                    <label>Phone *</label>
                     <input required type="tel" className={profileStyles.input} value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} />
                   </div>
                 </>

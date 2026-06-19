@@ -54,57 +54,110 @@ function ResetPasswordForm() {
 
   if (!token || !email) {
     return (
-      <div className={styles.authCard}>
-        <h2>Reset Password</h2>
-        <div className={styles.error}>Invalid or missing reset token.</div>
-        <div className={styles.footerLinks}>
-          <Link href="/forgot-password">Request a new link</Link>
+      <div className={styles.page}>
+        <div className={styles.splitLayout}>
+          <div className={styles.brandSide}>
+            <div className={styles.brandContent}>
+              <img src="/logo.png" alt="Crown Findings" className={styles.brandLogo} />
+              <h2 className={styles.brandTagline}>Your Trusted Partner in Wholesale Jewelry Findings</h2>
+            </div>
+          </div>
+          <div className={styles.formSide}>
+            <div className={styles.formContainer}>
+              <h1 className={styles.title}>Reset Password</h1>
+              <div className={styles.errorMessage}>Invalid or missing reset token.</div>
+              <Link href="/forgot-password" className={styles.forgotLink} style={{ marginTop: '2rem', display: 'block', textAlign: 'left' }}>
+                Request a new link
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.authCard}>
-      <h2>Reset Password</h2>
-      <p>Enter your new password below.</p>
-
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGroup}>
-          <label>New Password</label>
-          <input 
-            type="password" 
-            required 
-            minLength={8}
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-          />
+    <div className={styles.page}>
+      <div className={styles.splitLayout}>
+        {/* Left Side: Branding */}
+        <div className={styles.brandSide}>
+          <div className={styles.brandContent}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Crown Findings" className={styles.brandLogo} />
+            <h2 className={styles.brandTagline}>Your Trusted Partner in Wholesale Jewelry Findings</h2>
+            <p className={styles.brandText}>
+              Access over 18,000+ premium findings in 14K, 18K Gold, Silver, and Platinum at exclusive trade prices.
+            </p>
+            <div className={styles.brandFeatures}>
+              <div className={styles.brandFeature}>
+                <span className={styles.featureIcon}>✦</span>
+                <span>Competitive Wholesale Pricing</span>
+              </div>
+              <div className={styles.brandFeature}>
+                <span className={styles.featureIcon}>✦</span>
+                <span>Live Metal Market Rates</span>
+              </div>
+              <div className={styles.brandFeature}>
+                <span className={styles.featureIcon}>✦</span>
+                <span>40+ Years of Industry Trust</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className={styles.formGroup}>
-          <label>Confirm Password</label>
-          <input 
-            type="password" 
-            required 
-            minLength={8}
-            value={confirmPassword} 
-            onChange={e => setConfirmPassword(e.target.value)} 
-          />
-        </div>
 
-        <button type="submit" className={styles.submitBtn} disabled={loading || isSuccess}>
-          {loading ? "Resetting..." : "Reset Password"}
-        </button>
-      </form>
+        {/* Right Side: Reset Password Form */}
+        <div className={styles.formSide}>
+          <div className={styles.formContainer}>
+            <h1 className={styles.title}>Reset Password</h1>
+            <p className={styles.subtitle}>
+              Enter your new password below.
+            </p>
+
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>
+                  Password <span className={styles.required}>*</span>
+                </label>
+                <input 
+                  type="password" 
+                  required 
+                  minLength={8}
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)} 
+                  className={styles.input}
+                  placeholder="Enter your new password"
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>
+                  Confirm Password <span className={styles.required}>*</span>
+                </label>
+                <input 
+                  type="password" 
+                  required 
+                  minLength={8}
+                  value={confirmPassword} 
+                  onChange={e => setConfirmPassword(e.target.value)} 
+                  className={styles.input}
+                  placeholder="Confirm your new password"
+                />
+              </div>
+
+              <button type="submit" className={styles.loginBtn} disabled={loading || isSuccess} style={{ marginTop: '1rem' }}>
+                {loading ? "Resetting..." : "Reset Password"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <div className={styles.authContainer}>
-      <Suspense fallback={<div className={styles.authCard}>Loading...</div>}>
-        <ResetPasswordForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className={styles.page} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

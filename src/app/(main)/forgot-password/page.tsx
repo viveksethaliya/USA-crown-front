@@ -32,30 +32,73 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authCard}>
-        <h2>Forgot Password</h2>
-        <p>Enter your email address and we will send you a link to reset your password.</p>
-
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formGroup}>
-            <label>Email Address</label>
-            <input 
-              type="email" 
-              required 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              placeholder="you@example.com"
-            />
+    <div className={styles.page}>
+      <div className={styles.splitLayout}>
+        {/* Left Side: Branding */}
+        <div className={styles.brandSide}>
+          <div className={styles.brandContent}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Crown Findings" className={styles.brandLogo} />
+            <h2 className={styles.brandTagline}>Your Trusted Partner in Wholesale Jewelry Findings</h2>
+            <p className={styles.brandText}>
+              Access over 18,000+ premium findings in 14K, 18K Gold, Silver, and Platinum at exclusive trade prices.
+            </p>
+            <div className={styles.brandFeatures}>
+              <div className={styles.brandFeature}>
+                <span className={styles.featureIcon}>✦</span>
+                <span>Competitive Wholesale Pricing</span>
+              </div>
+              <div className={styles.brandFeature}>
+                <span className={styles.featureIcon}>✦</span>
+                <span>Live Metal Market Rates</span>
+              </div>
+              <div className={styles.brandFeature}>
+                <span className={styles.featureIcon}>✦</span>
+                <span>40+ Years of Industry Trust</span>
+              </div>
+            </div>
           </div>
+        </div>
 
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? "Sending..." : "Send Reset Link"}
-          </button>
-        </form>
+        {/* Right Side: Forgot Password Form */}
+        <div className={styles.formSide}>
+          <div className={styles.formContainer}>
+            <h1 className={styles.title}>Forgot Password</h1>
+            <p className={styles.subtitle}>
+              Enter your email address and we will send you a link to reset your password.
+            </p>
 
-        <div className={styles.footerLinks}>
-          <Link href="/login">Back to Login</Link>
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>
+                  Email <span className={styles.required}>*</span>
+                </label>
+                <input 
+                  type="email" 
+                  required 
+                  value={email} 
+                  onChange={e => setEmail(e.target.value)} 
+                  placeholder="you@example.com"
+                  className={styles.input}
+                />
+              </div>
+
+              <button type="submit" className={styles.loginBtn} disabled={loading}>
+                {loading ? "Sending..." : "Send Reset Link"}
+              </button>
+              
+              <Link href="/login" className={styles.forgotLink} style={{ marginTop: '1rem', display: 'block' }}>
+                Back to Login
+              </Link>
+            </form>
+
+            <div className={styles.registerPrompt}>
+              <p>
+                Remembered your password?{' '}
+                <Link href="/login" className={styles.registerLink}>Log in</Link>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -83,7 +83,7 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.inputGroup}>
                 <label htmlFor="email" className={styles.label}>
-                  Email address <span className={styles.required}>*</span>
+                  Email <span className={styles.required}>*</span>
                 </label>
                 <input
                   id="email"

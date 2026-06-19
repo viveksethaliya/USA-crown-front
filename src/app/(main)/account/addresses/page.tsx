@@ -170,11 +170,11 @@ export default function AccountAddressesPage() {
                 <input required type="text" className={profileStyles.input} value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
               </div>
               <div className={profileStyles.formGroup}>
-                <label>Company (Optional)</label>
+                <label>Company Name</label>
                 <input type="text" className={profileStyles.input} value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} />
               </div>
               <div className={profileStyles.formGroup}>
-                <label>Address Line 1 *</label>
+                <label>Address Line *</label>
                 <input required type="text" className={profileStyles.input} value={formData.address_line_1} onChange={e => setFormData({...formData, address_line_1: e.target.value})} />
               </div>
               <div className={profileStyles.formGroup}>
@@ -190,12 +190,12 @@ export default function AccountAddressesPage() {
                 <input required type="text" className={profileStyles.input} value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} />
               </div>
               <div className={profileStyles.formGroup}>
-                <label>Postal Code *</label>
+                <label>Zip Code *</label>
                 <input required type="text" className={profileStyles.input} value={formData.postal_code} onChange={e => setFormData({...formData, postal_code: e.target.value})} />
               </div>
               <div className={profileStyles.formGroup}>
-                <label>Phone</label>
-                <input type="text" className={profileStyles.input} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                <label>Phone *</label>
+                <input required type="text" className={profileStyles.input} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
               </div>
               
               <div className={styles.fullWidth}>

@@ -203,7 +203,8 @@ export default function RegistrationDetailPage() {
             </h3>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <tbody>
-                <InfoRow label="Full Name" value={`${reg.first_name} ${reg.last_name}`} />
+                <InfoRow label="First Name" value={reg.first_name} />
+                <InfoRow label="Last Name" value={reg.last_name} />
                 <InfoRow label="Email" value={<a href={`mailto:${reg.email}`} style={{ color: '#1a1a2e', textDecoration: 'underline' }}>{reg.email}</a>} />
                 <InfoRow label="Phone" value={reg.phone || "N/A"} />
                 <InfoRow label="Fax" value={reg.fax || "N/A"} />
@@ -228,7 +229,7 @@ export default function RegistrationDetailPage() {
                     </a>
                   ) : "N/A"
                 } />
-                <InfoRow label="Tax / Resale ID" value={reg.resale_tax_id} />
+                <InfoRow label="Resale Tax ID" value={reg.resale_tax_id} />
               </tbody>
             </table>
           </div>
@@ -248,7 +249,7 @@ export default function RegistrationDetailPage() {
                 <InfoRow label="Address Line" value={reg.address_line || "N/A"} />
                 <InfoRow label="City" value={reg.city || "N/A"} />
                 <InfoRow label="State / Province" value={reg.state_province || "N/A"} />
-                <InfoRow label="Zip / Postal Code" value={reg.zip_code || "N/A"} />
+                <InfoRow label="Zip Code" value={reg.zip_code || "N/A"} />
                 <InfoRow label="Country" value={reg.country || "N/A"} />
               </tbody>
             </table>

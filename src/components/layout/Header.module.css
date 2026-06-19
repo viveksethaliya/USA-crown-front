@@ -304,149 +304,217 @@
   letter-spacing: inherit;
 }
 
-/* --- Mega Menu (Full Width) --- */
-.megaMenu {
+/* --- Mega Menu (Full Width Dropdown) --- */
+.megaMenuDropdown {
   position: absolute;
   top: 100%;
   left: 0;
   width: 100%;
   background-color: var(--color-white);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   border-top: 4px solid var(--color-inkblue);
   z-index: 200;
-}
-
-.megaMenuContainer {
+  animation: slideDown 0.2s ease forwards;
+  
+  /* Slightly short height but big enough */
+  min-height: 400px;
+  max-height: 60vh; 
   display: flex;
-  height: calc(100dvh - 55px);
-  min-height: 0;
+  justify-content: center;
 }
 
-/* Mega Menu Sidebar — scrollable */
-.megaMenuSidebar {
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.megaMenuInner {
+  display: flex;
+  width: 100%;
+  max-width: 1400px; /* limits inner content width while background is full width */
+  margin: 0 auto;
+}
+
+/* --- LEFT SIDE: CATEGORIES --- */
+.categorySidebar {
   width: 280px;
   flex-shrink: 0;
   background-color: #f8f9fa;
-  border-right: 1px solid #eee;
-  padding: 0.5rem 0;
-  display: flex;
-  flex-direction: column;
+  border-right: 1px solid #e9ecef;
+  padding: 1rem 0;
   overflow-y: auto;
+  max-height: 60vh;
 }
 
-.sidebarItem {
-  padding: 0.55rem 1.25rem;
-  color: var(--color-inkblue);
-  font-weight: 600;
-  font-size: 0.82rem;
+.categoryList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.categoryItem {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background-color 0.2s;
-  white-space: nowrap;
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none;
+  color: #333;
 }
 
-.sidebarItem:hover,
-.sidebarItemActive {
-  background-color: var(--color-white);
+.categoryItem:hover, .categoryItem.active {
+  background-color: #ffffff;
   color: var(--color-gold);
-  border-left: 4px solid var(--color-gold);
+  box-shadow: -2px 0 0 inset var(--color-gold);
 }
 
-.sidebarArrow {
-  font-size: 0.9rem;
-  color: #ccc;
-}
-
-.sidebarItem:hover .sidebarArrow,
-.sidebarItemActive .sidebarArrow {
-  color: var(--color-gold);
-}
-
-/* Mega Menu Content — scrollable */
-.megaMenuContent {
+.catName {
   flex: 1;
-  padding: 1rem 1.5rem;
-  overflow-y: auto;
-}
-
-.megaMenuTitle {
-  color: var(--color-inkblue);
-  font-size: 0.95rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid #eee;
-  text-transform: uppercase;
-  font-weight: 800;
-}
-
-.megaMenuLinksGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.3rem 1.5rem;
-}
-
-.megaMenuLink {
-  color: #555;
-  text-decoration: none;
-  padding: 0.25rem 0;
-  font-size: 0.83rem;
-  transition: color 0.2s;
-  font-weight: 400;
-}
-
-.megaMenuLink:hover {
-  color: var(--color-gold);
-}
-
-/* Mega Menu Promo */
-.megaMenuPromo {
-  width: 220px;
-  flex-shrink: 0;
-  background-color: var(--color-inkblue);
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  overflow-y: auto;
-}
-
-.promoImagePlaceholder {
-  width: 100%;
-  height: 120px;
-  background-color: #0d2847;
-  color: var(--color-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  border: 1px solid var(--color-gold);
-}
-
-.promoText {
-  color: var(--color-white);
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
-  line-height: 1.4;
-}
-
-.promoBtn {
-  display: inline-block;
-  background-color: var(--color-gold);
-  color: var(--color-inkblue);
-  padding: 0.6rem 1.5rem;
-  text-decoration: none;
-  font-weight: 700;
   font-size: 0.85rem;
-  transition: background-color 0.2s;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
-.promoBtn:hover {
-  background-color: var(--color-white);
+.chevron {
+  color: #adb5bd;
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+
+.categoryItem:hover .chevron, .categoryItem.active .chevron {
+  transform: translateX(4px);
+  color: var(--color-gold);
+}
+
+/* --- RIGHT SIDE: MEGA PANEL --- */
+.megaPanel {
+  flex: 1;
+  background-color: #ffffff;
+  padding: 2rem 3rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-inkblue);
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+}
+
+.sectionTitle::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: #f1f3f5;
+  margin-left: 1rem;
+}
+
+/* Tier 1: Recommended Products */
+.recommendedSection {
+  margin-bottom: 2rem;
+}
+
+.recommendedGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.recommendedCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  border: 1px solid #f1f3f5;
+  overflow: hidden;
+  gap: 0.75rem;
+}
+
+.recommendedCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: #e5e7eb;
+}
+
+.prodImage {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.prodInfo {
+  flex: 1;
+  padding: 0;
+}
+
+.prodName {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #343a40;
+  margin-bottom: 0.15rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.prodPrice {
+  font-size: 0.85rem;
+  color: var(--color-gold);
+  font-weight: 700;
+}
+
+.divider {
+  border: none;
+  border-top: 1px dashed #e9ecef;
+  margin: 0 0 2rem 0;
+}
+
+/* Tier 2: Sub-categories */
+.subCategorySection {
+  width: 100%;
+}
+
+.subCategoryGrid {
+  /* Dynamic columns layout for subcategories so it doesn't overflow */
+  column-count: 4;
+  column-gap: 2rem;
+}
+
+.subCategoryLink {
+  color: #495057;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 0.4rem 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+}
+
+.subCategoryLink:hover {
+  color: var(--color-gold);
+  transform: translateX(4px);
 }
 
 /* --- Mobile Hamburger --- */

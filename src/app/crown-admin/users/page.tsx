@@ -122,7 +122,8 @@ export default function AdminUsersPage() {
           <thead>
             <tr>
               <th>Username</th>
-              <th>Full Name</th>
+              <th>First Name</th>
+              <th>Last Name</th>
               <th>Email</th>
               <th>Role</th>
               <th>Status</th>
@@ -139,7 +140,8 @@ export default function AdminUsersPage() {
               users.map(u => (
                 <tr key={u.id}>
                   <td>{u.username}</td>
-                  <td>{u.full_name}</td>
+                  <td>{u.full_name?.split(' ')[0] || ''}</td>
+                  <td>{u.full_name?.split(' ').slice(1).join(' ') || ''}</td>
                   <td>{u.email}</td>
                   <td>
                     <span className={styles.roleBadge}>{u.roles?.name || 'None'}</span>

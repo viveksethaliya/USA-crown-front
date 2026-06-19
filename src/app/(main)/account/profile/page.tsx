@@ -20,7 +20,8 @@ export default function AccountProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const [formData, setFormData] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     mobile: "",
     email: "" // Email is generally read-only for security, but we show it
   });
@@ -34,7 +35,8 @@ export default function AccountProfilePage() {
       .then(data => {
         setProfile(data);
         setFormData({
-          full_name: data.full_name || "",
+          first_name: data.first_name || "",
+          last_name: data.last_name || "",
           mobile: data.mobile || "",
           email: data.email || ""
         });
@@ -55,7 +57,8 @@ export default function AccountProfilePage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: formData.full_name,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
           mobile: formData.mobile,
           email: formData.email
         })
@@ -92,13 +95,23 @@ export default function AccountProfilePage() {
           <input type="text" className={styles.input} value={profile?.username || ''} disabled />
         </div>
 
-        <div className={styles.formGroup}>
-          <label>Full Name *</label>
-          <input 
-            required type="text" className={styles.input} 
-            value={formData.full_name} 
-            onChange={e => setFormData({...formData, full_name: e.target.value})}
-          />
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '15px' }}>
+          <div className={styles.formGroup} style={{ flex: 1, marginBottom: 0 }}>
+            <label>First Name *</label>
+            <input 
+              required type="text" className={styles.input} 
+              value={formData.first_name} 
+              onChange={e => setFormData({...formData, first_name: e.target.value})}
+            />
+          </div>
+          <div className={styles.formGroup} style={{ flex: 1, marginBottom: 0 }}>
+            <label>Last Name *</label>
+            <input 
+              required type="text" className={styles.input} 
+              value={formData.last_name} 
+              onChange={e => setFormData({...formData, last_name: e.target.value})}
+            />
+          </div>
         </div>
 
         <div className={styles.formGroup}>
@@ -111,7 +124,7 @@ export default function AccountProfilePage() {
         </div>
 
         <div className={styles.formGroup}>
-          <label>Mobile Number *</label>
+          <label>Phone *</label>
           <input 
             required type="tel" className={styles.input} 
             value={formData.mobile} 
