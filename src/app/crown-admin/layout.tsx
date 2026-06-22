@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import AdminLayoutClient from "./AdminLayoutClient";
@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   title: "Crown Admin Panel",
   description: "Admin panel for Crown Findings",
   robots: "noindex, nofollow", // Prevent indexing of admin panel
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function AdminRootLayout({
