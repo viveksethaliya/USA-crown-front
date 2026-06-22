@@ -1,0 +1,170 @@
+/* 
+  Crown Admin - Carts Page CSS Module
+  Strict branding: Ink Blue & Gold, no rounded corners, sharp UI
+*/
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e; /* Ink Blue */
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card {
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0; /* No rounded corners */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.tableControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.searchBox {
+  position: relative;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  color: #64748b;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0; /* No rounded corners */
+  font-family: inherit;
+  font-size: 0.95rem;
+  background-color: #fff;
+  color: #1a1a2e;
+  transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #d4af37; /* Gold focus border */
+  box-shadow: 0 0 0 1px #d4af37;
+}
+
+.loadingState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.emptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border: 1px dashed #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.tableResponsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.table th {
+  background-color: #f8fafc;
+  color: #1a1a2e;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+.table td {
+  padding: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+  color: #334155;
+}
+
+.table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0; /* No rounded corners */
+}
+
+.statusSuccess {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.statusWarning {
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: #1a1a2e;
+  border: 1px solid #1a1a2e;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  border-radius: 0; /* No rounded corners */
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background-color: #1a1a2e;
+  color: #fff;
+}

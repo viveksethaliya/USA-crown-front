@@ -23,11 +23,34 @@ export default function AdminAttributesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
+  const [sortField, setSortField] = useState<keyof Attribute>("sort_order");
+  const [sortAsc, setSortAsc] = useState(true);
+
+  const [editingAttrId, setEditingAttrId] = useState<number | null>(null);
+
   const [newAttrName, setNewAttrName] = useState("");
   const [newAttrSlug, setNewAttrSlug] = useState("");
   const [newAttrType, setNewAttrType] = useState("select");
   const [newAttrVisible, setNewAttrVisible] = useState(true);
   const [newAttrVariation, setNewAttrVariation] = useState(false);
+
+  const openEdit = (attr: Attribute) => {
+    setEditingAttrId(attr.id);
+    setNewAttrName(attr.name);
+    setNewAttrSlug(attr.slug);
+    setNewAttrType(attr.type);
+    setNewAttrVisible(attr.is_visible);
+    setNewAttrVariation(attr.is_variation);
+  };
+
+  const cancelEdit = () => {
+    setEditingAttrId(null);
+    setNewAttrName("");
+    setNewAttrSlug("");
+    setNewAttrType("select");
+    setNewAttrVisible(true);
+    setNewAttrVariation(false);
+  };
 
   const fetchAttributes = async () => {
     try {
@@ -56,14 +79,17 @@ export default function AdminAttributesPage() {
     setNewAttrSlug(generateSlug(val));
   };
 
-  const handleAddAttribute = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAttrName || !newAttrSlug) return;
     
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/attributes", {
-        method: "POST",
+      const url = editingAttrId ? `/api/admin/attributes/${editingAttrId}` : "/api/admin/attributes";
+      const method = editingAttrId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ 
@@ -80,14 +106,11 @@ export default function AdminAttributesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       
-      setNewAttrName("");
-      setNewAttrSlug("");
-      setNewAttrType("select");
-      setNewAttrVisible(true);
-      setNewAttrVariation(false);
+      cancelEdit();
       fetchAttributes();
+      toast.success(editingAttrId ? "Attribute updated" : "Attribute created");
     } catch (err) {
-      toast.error(`Error creating attribute: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`Error saving attribute: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setSaving(false);
     }
@@ -109,6 +132,26 @@ export default function AdminAttributesPage() {
     }
   };
 
+  const sortedAttributes = [...attributes].sort((a, b) => {
+    const aVal = a[sortField] ?? "";
+    const bVal = b[sortField] ?? "";
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    if (aVal < bVal) return sortAsc ? -1 : 1;
+    if (aVal > bVal) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  const handleSort = (field: keyof Attribute) => {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
+
   return (
     <div className={adminStyles.adminPage}>
       <div className={adminStyles.adminHeader}>
@@ -119,11 +162,11 @@ export default function AdminAttributesPage() {
         
         {/* Add New Attribute Sidebar */}
         <div className={styles.card}>
-          <h3 className={styles.cardTitle}>Add New Attribute</h3>
+          <h3 className={styles.cardTitle}>{editingAttrId ? "Edit Attribute" : "Add New Attribute"}</h3>
           <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
             Attributes let you define extra product data, such as size or color. You can use these attributes in the shop sidebar using the &quot;filter by&quot; widgets.
           </p>
-          <form onSubmit={handleAddAttribute}>
+          <form onSubmit={handleSubmit}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Name</label>
               <input 
@@ -178,9 +221,16 @@ export default function AdminAttributesPage() {
                 Use for Variations
               </label>
             </div>
-            <button type="submit" className={adminStyles.primaryBtn} disabled={saving} style={{ width: '100%', marginTop: '0.5rem' }}>
-              {saving ? "Adding..." : "Add Attribute"}
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+              <button type="submit" className={adminStyles.primaryBtn} disabled={saving} style={{ flex: 1 }}>
+                {saving ? "Saving..." : (editingAttrId ? "Update Attribute" : "Add Attribute")}
+              </button>
+              {editingAttrId && (
+                <button type="button" onClick={cancelEdit} className={styles.btnSecondary} style={{ flex: 1 }}>
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
         </div>
 
@@ -191,24 +241,34 @@ export default function AdminAttributesPage() {
           ) : (
             <table className={styles.table} style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                  <th style={{ padding: '1rem' }}>Name</th>
-                  <th style={{ padding: '1rem' }}>Slug</th>
-                  <th style={{ padding: '1rem' }}>Type</th>
-                  <th style={{ padding: '1rem' }}>Products</th>
-                  <th style={{ padding: '1rem' }}>Order</th>
+                <tr style={{ borderBottom: '2px solid #e2e8f0', textAlign: 'left', userSelect: 'none' }}>
+                  <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('name')}>
+                    Name {sortField === 'name' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('slug')}>
+                    Slug {sortField === 'slug' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('type')}>
+                    Type {sortField === 'type' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('productCount')}>
+                    Products {sortField === 'productCount' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
+                  <th style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => handleSort('sort_order')}>
+                    Order {sortField === 'sort_order' ? (sortAsc ? '↑' : '↓') : ''}
+                  </th>
                   <th style={{ padding: '1rem', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {attributes.length === 0 ? (
+                {sortedAttributes.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
                       No attributes found. Create your first one!
                     </td>
                   </tr>
                 ) : (
-                  attributes.map(attr => (
+                  sortedAttributes.map(attr => (
                     <tr key={attr.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '1rem' }}>
                         <strong>{attr.name}</strong>
@@ -219,6 +279,13 @@ export default function AdminAttributesPage() {
                       <td style={{ padding: '1rem' }}>{attr.sort_order}</td>
                       <td style={{ padding: '1rem', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <button 
+                            onClick={() => openEdit(attr)}
+                            className={styles.btnSecondary}
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                          >
+                            Edit
+                          </button>
                           <Link href={`/crown-admin/attributes/${attr.id}`} className={styles.btnSecondary} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
                             Configure terms
                           </Link>

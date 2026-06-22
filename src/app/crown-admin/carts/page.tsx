@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FiEye, FiSearch, FiShoppingCart } from "react-icons/fi";
-import styles from "../admin.module.css";
+import styles from "./carts.module.css";
 
 interface CartSummary {
   id: string;
