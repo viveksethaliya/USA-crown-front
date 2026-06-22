@@ -349,8 +349,16 @@ export default function CheckoutPage() {
             <aside className={styles.summary}>
               <h2>Order Summary</h2>
               {cart.items.map((item) => (
-                <div key={item.id} className={styles.summaryItem}>
-                  <span>{item.quantity} x {item.productName}</span>
+                <div key={item.id} className={styles.summaryItem} style={{ alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span>{item.quantity} x {item.productName}</span>
+                    {item.regularPrice !== null && item.unitPrice !== null && item.regularPrice > item.unitPrice && (
+                      <span style={{ fontSize: '0.85em', color: '#888', marginTop: '2px' }}>
+                        <span style={{ textDecoration: 'line-through' }}>{formatMoney(item.regularPrice)}</span>
+                        {' '}<span style={{ color: 'var(--color-gold)' }}>{formatMoney(item.unitPrice)}</span> each
+                      </span>
+                    )}
+                  </div>
                   <strong>{formatMoney(item.lineTotal)}</strong>
                 </div>
               ))}

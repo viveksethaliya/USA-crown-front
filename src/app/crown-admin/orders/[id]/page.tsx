@@ -18,6 +18,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     sku: string;
     variation_label: string | null;
     unit_price: string | number;
+    regular_price?: string | number | null;
     quantity: number;
     line_total: string | number;
   }
@@ -501,7 +502,14 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                     </div>
                   ) : (
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ margin: 0 }}>${Number(item.unit_price).toFixed(2)} x {item.quantity}</p>
+                      <p style={{ margin: 0 }}>
+                        {item.regular_price && Number(item.regular_price) > Number(item.unit_price) && (
+                          <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '6px' }}>
+                            ${Number(item.regular_price).toFixed(2)}
+                          </span>
+                        )}
+                        ${Number(item.unit_price).toFixed(2)} x {item.quantity}
+                      </p>
                       <strong style={{ display: 'block', marginTop: '0.25rem' }}>${Number(item.line_total).toFixed(2)}</strong>
                     </div>
                   )}

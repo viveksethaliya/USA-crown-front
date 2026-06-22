@@ -122,7 +122,18 @@ export default function VariationsTab({ variations, productImages, onChange, onG
                   </div>
                   <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem', color: '#64748b' }}>
                     <span>{v.sku ? `SKU: ${v.sku}` : 'No SKU'}</span>
-                    <span>{v.regular_price ? `$${v.regular_price}` : 'No Price'}</span>
+                    <span>
+                      {v.sale_price && v.regular_price && Number(v.regular_price) > Number(v.sale_price) ? (
+                        <>
+                          <span style={{ textDecoration: 'line-through', marginRight: '6px', opacity: 0.7 }}>
+                            ${v.regular_price}
+                          </span>
+                          <span style={{ color: '#10b981', fontWeight: 600 }}>${v.sale_price}</span>
+                        </>
+                      ) : (
+                        v.regular_price ? `$${v.regular_price}` : 'No Price'
+                      )}
+                    </span>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDelete(v.id); }}
                       style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}

@@ -10,6 +10,7 @@ export interface CartItem {
   imageUrl: string | null;
   quantity: number;
   unitPrice: number | null;
+  regularPrice?: number | null;
   lineTotal: number | null;
   available: boolean;
   availabilityMessage: string | null;

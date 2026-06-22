@@ -155,7 +155,20 @@ export default function CartPage() {
                           </div>
                         </div>
                       </td>
-                      <td>{formatMoney(item.unitPrice)}</td>
+                      <td>
+                        {item.regularPrice !== null && item.unitPrice !== null && item.regularPrice > item.unitPrice ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ textDecoration: 'line-through', color: '#888', fontSize: '0.85em' }}>
+                              {formatMoney(item.regularPrice)}
+                            </span>
+                            <span style={{ color: 'var(--color-gold)', fontWeight: 600 }}>
+                              {formatMoney(item.unitPrice)}
+                            </span>
+                          </div>
+                        ) : (
+                          formatMoney(item.unitPrice)
+                        )}
+                      </td>
                       <td>
                         <div className={styles.quantityControls}>
                           <button

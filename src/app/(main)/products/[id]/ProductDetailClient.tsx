@@ -79,6 +79,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   const [_metalPriceMultiplier, setMetalPriceMultiplier] = useState(1);
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [basePrice, setBasePrice] = useState<number | null>(null);
+  const [regularPrice, setRegularPrice] = useState<number | null>(null);
 
   interface Discount { id: number; min_quantity: number; type: string; amount: number; }
   const [discounts, setDiscounts] = useState<Discount[]>([]);
@@ -102,7 +103,10 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch(`/api/user/session`, { credentials: 'include' });
+        const res = await fetch(`/api/user/session`, { 
+          credentials: 'include',
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) setIsAuthenticated(true);
@@ -270,7 +274,10 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     async function fetchDiscounts() {
       if (!productId) return;
       try {
-        const res = await fetch(`/api/products/${productId}/discounts`);
+        const res = await fetch(`/api/products/${productId}/discounts`, {
+          credentials: 'include',
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           setDiscounts(data);
@@ -296,12 +303,14 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
         const res = await fetch(`/api/products/calculate-price`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
+          credentials: 'include'
         });
         if (res.ok) {
           const data = await res.json();
           setCalculatedPrice(data.price);
           setBasePrice(data.originalBasePrice);
+          setRegularPrice(data.regularPrice);
         }
       } catch (e) {
         console.error(e);
@@ -351,14 +360,14 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   const subCat = product.categories.find(c => c.parent_id);
   const categoryName = parentCat?.name || subCat?.name || 'Products';
   const subcategoryName = subCat?.name || '';
-  
+
   const isPlateProduct = product.measurement_type === 'plate' || categoryName.toLowerCase().includes('plate') || subcategoryName.toLowerCase().includes('plate') || product.name.toLowerCase().includes('plate');
   const isMillProduct = product.measurement_type === 'inch' || (categoryName.toLowerCase() === 'mill products' && !isPlateProduct);
 
   // Get other visible attributes for the info table (exclude variation attributes)
   const visibleAttrs = product.attributes.filter(a =>
-    a.is_visible && 
-    !a.is_for_variation && 
+    a.is_visible &&
+    !a.is_for_variation &&
     !variationAttributes.find(va => va.slug === a.slug)
   );
 
@@ -426,7 +435,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
             </h1>
 
             <div className={styles.skuBadge}>
-              <span className={styles.skuLabel}>SKU:</span> 
+              <span className={styles.skuLabel}>SKU:</span>
               <span className={styles.skuValue}>{currentVariation?.sku || product.sku || 'N/A'}</span>
             </div>
 
@@ -514,7 +523,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                 <h4 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--color-inkblue)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '1.4rem' }}>📏</span> Chains & Wires by the Inch
                 </h4>
-                
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', color: '#555', fontWeight: 600 }}>Length Required (Inches)</label>
@@ -545,6 +554,11 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: '#666' }}>Estimated Base Price:</span>
                     <span style={{ fontWeight: 600, color: 'var(--color-gold)' }}>
+                      {isAuthenticated && regularPrice !== null && calculatedPrice !== null && regularPrice > calculatedPrice && (
+                        <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '6px', fontWeight: 'normal' }}>
+                          ${regularPrice.toFixed(2)}
+                        </span>
+                      )}
                       ${isAuthenticated && calculatedPrice !== null ? calculatedPrice.toFixed(2) : (isAuthenticated ? '0.00' : 'Login Required')}
                     </span>
                   </div>
@@ -559,7 +573,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                 <h4 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--color-inkblue)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '1.4rem' }}>📏</span> Custom Plate Dimensions
                 </h4>
-                
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem', color: '#555', fontWeight: 600 }}>Length (Inches)</label>
@@ -596,6 +610,11 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: '#666' }}>Estimated Base Price:</span>
                     <span style={{ fontWeight: 600, color: 'var(--color-gold)' }}>
+                      {isAuthenticated && regularPrice !== null && calculatedPrice !== null && regularPrice > calculatedPrice && (
+                        <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '6px', fontWeight: 'normal' }}>
+                          ${regularPrice.toFixed(2)}
+                        </span>
+                      )}
                       ${isAuthenticated && calculatedPrice !== null ? calculatedPrice.toFixed(2) : (isAuthenticated ? '0.00' : 'Login Required')}
                     </span>
                   </div>
@@ -611,6 +630,11 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
               {isAuthenticated ? (
                 <>
                   <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-gold)' }}>
+                    {regularPrice !== null && calculatedPrice !== null && regularPrice > calculatedPrice && (
+                      <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '8px', fontSize: '1.4rem' }}>
+                        ${regularPrice.toFixed(2)}
+                      </span>
+                    )}
                     ${calculatedPrice !== null ? calculatedPrice.toFixed(2) : (basePrice ? basePrice.toFixed(2) : '0.00')}
                     <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}> / each</span>
                   </div>
