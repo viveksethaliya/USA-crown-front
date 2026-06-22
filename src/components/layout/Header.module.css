@@ -52,8 +52,13 @@
   color: var(--color-gold);
 }
 
-.divider {
-  opacity: 0.5;
+.topDivider {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background-color: var(--color-white);
+  opacity: 0.35;
+  align-self: center;
 }
 
 /* --- User Auth Area --- */
@@ -623,7 +628,8 @@
     gap: 0.5rem;
   }
 
-  .divider {
+  .divider,
+  .topDivider {
     display: none;
   }
 

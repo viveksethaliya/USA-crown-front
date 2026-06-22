@@ -159,7 +159,12 @@ function ProductsContent() {
   useEffect(() => {
     const fetchFilters = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/filters`);
+        const queryParams = new URLSearchParams();
+        if (categoryParam) queryParams.set('category', categoryParam);
+        const s = searchParams.get('search');
+        if (s) queryParams.set('search', s);
+        
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/filters?${queryParams.toString()}`);
         const data = await res.json();
         setAllMetalTypes(data.metalTypes || []);
         setMetalColorMap(data.metalColors || {});
@@ -169,7 +174,7 @@ function ProductsContent() {
       }
     };
     fetchFilters();
-  }, []);
+  }, [categoryParam, searchParams.get('search')]);
 
   // Sync URL params to state
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -258,27 +263,19 @@ function ProductsContent() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const toggleCategory = (slug: string, childSlugs: string[] = []) => {
+  const toggleCategorySelection = (slug: string, descendantSlugs: string[], ancestorSlugs: string[]) => {
     setLoading(true);
     let newCats: string[];
+    
     if (selectedCategories.includes(slug)) {
-      newCats = selectedCategories.filter(c => c !== slug && !childSlugs.includes(c));
+      // Unchecking: remove this slug and ensure descendants are also removed
+      newCats = selectedCategories.filter(c => c !== slug && !descendantSlugs.includes(c));
     } else {
-      newCats = [...selectedCategories, slug];
+      // Checking: remove all ancestors (to narrow down) and descendants (to broaden up), then add this slug
+      newCats = selectedCategories.filter(c => !ancestorSlugs.includes(c) && !descendantSlugs.includes(c));
+      newCats.push(slug);
     }
-    setSelectedCategories(newCats);
-    updateUrlParams(newCats, selectedAttributes);
-    setPage(1);
-  };
-
-  const toggleSubcategory = (slug: string) => {
-    setLoading(true);
-    let newCats: string[];
-    if (selectedCategories.includes(slug)) {
-      newCats = selectedCategories.filter(c => c !== slug);
-    } else {
-      newCats = [...selectedCategories, slug];
-    }
+    
     setSelectedCategories(newCats);
     updateUrlParams(newCats, selectedAttributes);
     setPage(1);
@@ -299,7 +296,7 @@ function ProductsContent() {
     return foundName;
   };
 
-  const renderCategoryFilter = (category: CategoryTree) => {
+  const renderCategoryFilter = (category: CategoryTree, ancestorSlugs: string[] = []) => {
     const childSlugs = getCategoryDescendantSlugs(category);
     const isParentSelected = selectedCategories.includes(category.slug);
     const hasChildren = category.children.length > 0;
@@ -312,11 +309,7 @@ function ProductsContent() {
             <input
               type="checkbox"
               checked={isParentSelected}
-              onChange={() => (
-                childSlugs.length > 0
-                  ? toggleCategory(category.slug, childSlugs)
-                  : toggleSubcategory(category.slug)
-              )}
+              onChange={() => toggleCategorySelection(category.slug, childSlugs, ancestorSlugs)}
               className={styles.checkInput}
             />
             {category.name}
@@ -335,7 +328,7 @@ function ProductsContent() {
         </div>
         {hasChildren && isExpanded && (
           <div className={styles.subcategories}>
-            {category.children.map(renderCategoryFilter)}
+            {category.children.map(child => renderCategoryFilter(child, [...ancestorSlugs, category.slug]))}
           </div>
         )}
       </div>
@@ -419,7 +412,7 @@ function ProductsContent() {
             </h3>
             {expandedFilters.includes('categories') && (
               <div className={styles.filterList}>
-                {[...categories].sort((a, b) => sortCategories(a.name, b.name)).map(renderCategoryFilter)}
+                {[...categories].sort((a, b) => sortCategories(a.name, b.name)).map(cat => renderCategoryFilter(cat, []))}
               </div>
             )}
           </div>
@@ -504,7 +497,7 @@ function ProductsContent() {
               {selectedCategories.map(cat => (
                 <span key={cat} className={styles.activeFilterTag}>
                   {getCategoryName(cat)}
-                  <button className={styles.activeFilterRemoveBtn} onClick={() => toggleSubcategory(cat)}><FiX /></button>
+                  <button className={styles.activeFilterRemoveBtn} onClick={() => toggleCategorySelection(cat, [], [])}><FiX /></button>
                 </span>
               ))}
 

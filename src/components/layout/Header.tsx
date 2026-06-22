@@ -375,24 +375,24 @@ export default function Header() {
         <div className={`${styles.container} ${styles.topTierContainer}`}>
           <div className={styles.topContact}>
             <span>📞 (212)-764-6470</span>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
             <span>Monday – Friday 9:00 AM – 5:00 PM</span>
           </div>
           <div className={styles.topLinks}>
             <Link href="/NYS-ResaleCertificate-ST120.pdf" target="_blank" className={styles.topLink}>Download Resale Certificate</Link>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
             <Link href="/calculator" className={styles.topLink}>MM to Carat Calculator</Link>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
             <Link href="/" className={styles.topLink}>Home</Link>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
             <Link href="/contact" className={styles.topLink}>Contact Us</Link>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
             <Link href="/about" className={styles.topLink}>About Us</Link>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
             <Link href="/catalog" className={styles.topLink}>Catalog</Link>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
             <Link href="/cart" className={styles.topLink}>Cart{cartCount > 0 ? ` (${cartCount})` : ''}</Link>
-            <span className={styles.divider}>|</span>
+            <span className={styles.topDivider} />
 
             {user ? (
               /* ── Logged-in state ── */
