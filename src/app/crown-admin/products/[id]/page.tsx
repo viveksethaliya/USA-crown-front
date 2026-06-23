@@ -7,6 +7,7 @@ import adminStyles from "../../admin.module.css";
 import styles from "../products.module.css";
 import { ProductData, ProductImage, ProductAttribute, Variation } from "../components/types";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 import ProductTabs from "../components/ProductTabs";
 import GeneralTab from "../components/GeneralTab";
 import InventoryTab from "../components/InventoryTab";
@@ -40,7 +41,7 @@ export default function AdminProductEditPage() {
     const fetchProduct = async () => {
       try {
         const res = await fetch(
-          `/api/admin/products/${productId}`,
+          apiUrl(`/api/admin/products/${productId}`),
           { credentials: "include" }
         );
         if (!res.ok) throw new Error('Not found');
@@ -97,7 +98,7 @@ export default function AdminProductEditPage() {
 
   const handleGenerateVariations = async () => {
     try {
-      const res = await fetch(`/api/admin/products/${product?.id}/variations/generate`, {
+      const res = await fetch(apiUrl(`/api/admin/products/${product?.id}/variations/generate`), {
         method: 'POST',
         credentials: 'include'
       });
@@ -118,7 +119,7 @@ export default function AdminProductEditPage() {
       // 1. Save general product fields if they changed
       if (Object.keys(editedFields).length > 0) {
         const res = await fetch(
-          `/api/admin/products/${product.id}`,
+          apiUrl(`/api/admin/products/${product.id}`),
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -134,7 +135,7 @@ export default function AdminProductEditPage() {
       // 2. Sync categories if they changed
       // We'll just do it every time there are changes to be safe, or we could check if selectedCategories actually changed
       const catRes = await fetch(
-        `/api/admin/products/${product.id}/categories`,
+        apiUrl(`/api/admin/products/${product.id}/categories`),
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -145,7 +146,7 @@ export default function AdminProductEditPage() {
       if (!catRes.ok) throw new Error('Failed to sync categories');
 
       const tagRes = await fetch(
-        `/api/admin/products/${product.id}/tags`,
+        apiUrl(`/api/admin/products/${product.id}/tags`),
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -157,7 +158,7 @@ export default function AdminProductEditPage() {
 
       // 3. Sync attributes
       const attrRes = await fetch(
-        `/api/admin/products/${product.id}/attributes`,
+        apiUrl(`/api/admin/products/${product.id}/attributes`),
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -170,7 +171,7 @@ export default function AdminProductEditPage() {
       // 4. Sync variations
       if (getFieldValue('type') === 'variable' && product.variations.length > 0) {
         const varRes = await fetch(
-          `/api/admin/products/${product.id}/variations`,
+          apiUrl(`/api/admin/products/${product.id}/variations`),
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

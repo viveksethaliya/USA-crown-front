@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 import styles from "./users.module.css";
 import { format } from "date-fns";
 
@@ -42,7 +44,7 @@ export default function AdminUsersPage() {
         ...(roleId && { role_id: roleId }),
         ...(isActive && { is_active: isActive }),
       });
-      const res = await fetch(`/api/admin/users?${q.toString()}`);
+      const res = await fetch(apiUrl(`/api/admin/users?${q.toString()}`), { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || []);
@@ -57,7 +59,7 @@ export default function AdminUsersPage() {
 
   const fetchRoles = async () => {
     try {
-      const res = await fetch('/api/admin/roles');
+      const res = await fetch(apiUrl('/api/admin/roles'), { credentials: 'include' });
       if (res.ok) {
         setRolesList(await res.json());
       }

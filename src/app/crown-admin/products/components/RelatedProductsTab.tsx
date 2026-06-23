@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { apiUrl } from '@/lib/cart';
 
 interface RelatedProduct {
   product_id: number;
@@ -22,7 +23,7 @@ export default function RelatedProductsTab({ productId }: { productId: number })
 
   const fetchRelated = async () => {
     try {
-      const res = await fetch(`/api/admin/products/${productId}/related`, { credentials: 'include' });
+      const res = await fetch(apiUrl(`/api/admin/products/${productId}/related`), { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setRelated(data.related || []);
@@ -48,7 +49,7 @@ export default function RelatedProductsTab({ productId }: { productId: number })
       return;
     }
     try {
-      const res = await fetch(`/api/admin/products?search=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+      const res = await fetch(apiUrl(`/api/admin/products?search=${encodeURIComponent(q)}&limit=10`), { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data.products || []);
@@ -60,7 +61,7 @@ export default function RelatedProductsTab({ productId }: { productId: number })
 
   const handleAdd = async (relatedProductId: number) => {
     try {
-      const res = await fetch(`/api/admin/products/${productId}/related`, {
+      const res = await fetch(apiUrl(`/api/admin/products/${productId}/related`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -82,7 +83,7 @@ export default function RelatedProductsTab({ productId }: { productId: number })
 
   const handleRemove = async (relatedProductId: number, type: string) => {
     try {
-      const res = await fetch(`/api/admin/products/${productId}/related/${relatedProductId}?type=${encodeURIComponent(type)}`, {
+      const res = await fetch(apiUrl(`/api/admin/products/${productId}/related/${relatedProductId}?type=${encodeURIComponent(type)}`), {
         method: 'DELETE',
         credentials: 'include'
       });

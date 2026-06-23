@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "../../profile/profile.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 type PaymentMethod = {
   id: string;
@@ -19,7 +20,7 @@ export default function PaymentMethodsPage() {
 
   const fetchMethods = async () => {
     try {
-      const res = await fetch("/api/account/payment-methods");
+      const res = await fetch(apiUrl("/api/account/payment-methods"));
       if (res.ok) {
         setMethods(await res.json());
       }
@@ -38,7 +39,7 @@ export default function PaymentMethodsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this payment method?")) return;
     try {
-      const res = await fetch(`/api/account/payment-methods/${id}`, { method: "DELETE" });
+      const res = await fetch(apiUrl(`/api/account/payment-methods/${id}`), { method: "DELETE" });
       if (res.ok) {
         toast.success("Payment method deleted.");
         setMethods(prev => prev.filter(m => m.id !== id));

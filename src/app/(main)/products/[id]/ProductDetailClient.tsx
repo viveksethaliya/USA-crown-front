@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { getGuestCartId } from '../../../../lib/cart';
+import { getGuestCartId, apiUrl } from '../../../../lib/cart';
 import styles from './detail.module.css';
 import { toast } from 'react-hot-toast';
 
@@ -87,7 +87,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     async function fetchMetalPrice() {
       try {
-        const res = await fetch(`/api/metal-prices`);
+        const res = await fetch(apiUrl('/api/metal-prices'));
         if (res.ok) {
           // simple placeholder for multiplier
           setMetalPriceMultiplier(1.05);
@@ -103,7 +103,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch(`/api/user/session`, { 
+        const res = await fetch(apiUrl(`/api/user/session`), { 
           credentials: 'include',
           cache: 'no-store'
         });
@@ -119,7 +119,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`/api/products/${productId}`);
+        const res = await fetch(apiUrl(`/api/products/${productId}`));
         if (!res.ok) throw new Error('Not found');
         const data = await res.json() as ProductApiResponse;
         if (!data.product) throw new Error('Not found');
@@ -231,7 +231,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     setAddingToCart(true);
     try {
       const guestId = isAuthenticated ? null : getGuestCartId();
-      const res = await fetch(`/api/cart/items`, {
+      const res = await fetch(apiUrl('/api/cart/items'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -274,7 +274,8 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     async function fetchDiscounts() {
       if (!productId) return;
       try {
-        const res = await fetch(`/api/products/${productId}/discounts`, {
+        const res = await fetch(apiUrl(`/api/products/${productId}/discounts`), {
+          method: 'POST',
           credentials: 'include',
           cache: 'no-store'
         });
@@ -300,7 +301,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
         if (customLength) body.length = customLength;
         if (customWidth) body.width = customWidth;
 
-        const res = await fetch(`/api/products/calculate-price`, {
+        const res = await fetch(apiUrl(`/api/products/calculate-price`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './mega-menu-demo.module.css';
+import { apiUrl } from "@/lib/cart";
 
 interface SubCategory {
   id: number;
@@ -39,7 +40,7 @@ export default function MegaMenuDemo() {
   useEffect(() => {
     async function fetchCats() {
       try {
-        const res = await fetch('/api/categories');
+        const res = await fetch(apiUrl('/api/categories'));
         if (res.ok) {
           const data = await res.json();
           const topLevelCats = data.categories || [];
@@ -67,7 +68,7 @@ export default function MegaMenuDemo() {
       setLoadingProducts(true);
       try {
         // Fetch up to 4 items for the category
-        const res = await fetch(`/api/products?category=${cat?.slug}&limit=4`);
+        const res = await fetch(apiUrl(`/api/products?category=${cat?.slug}&limit=4`));
         if (res.ok) {
           const data = await res.json();
           setRecommendedCache(prev => ({

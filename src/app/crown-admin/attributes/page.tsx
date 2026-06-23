@@ -5,6 +5,7 @@ import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "../products/products.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface Attribute {
   id: number;
@@ -54,7 +55,7 @@ export default function AdminAttributesPage() {
 
   const fetchAttributes = async () => {
     try {
-      const res = await fetch("/api/admin/attributes", { credentials: "include" });
+      const res = await fetch(apiUrl("/api/admin/attributes"), { credentials: "include" });
       const data = await res.json();
       setAttributes(data.attributes || []);
     } catch (err) {
@@ -85,7 +86,7 @@ export default function AdminAttributesPage() {
     
     setSaving(true);
     try {
-      const url = editingAttrId ? `/api/admin/attributes/${editingAttrId}` : "/api/admin/attributes";
+      const url = editingAttrId ? apiUrl(`/api/admin/attributes/${editingAttrId}`) : apiUrl("/api/admin/attributes");
       const method = editingAttrId ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -119,7 +120,7 @@ export default function AdminAttributesPage() {
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this attribute and all its terms?")) return;
     try {
-      const res = await fetch(`/api/admin/attributes/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/attributes/${id}`), {
         method: 'DELETE',
         credentials: "include"
       });

@@ -5,6 +5,7 @@ import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "../products/products.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface Tag {
   id: number;
@@ -43,7 +44,7 @@ export default function AdminTagsPage() {
         const params = new URLSearchParams({ page: String(page), limit: "50" });
         if (debouncedSearch) params.set("search", debouncedSearch);
 
-        const res = await fetch(`/api/admin/tags?${params}`, { credentials: "include" });
+        const res = await fetch(apiUrl(`/api/admin/tags?${params}`), { credentials: "include" });
         const data = await res.json();
         if (!cancelled) {
           setTags(data.tags || []);
@@ -62,7 +63,7 @@ export default function AdminTagsPage() {
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this tag?")) return;
     try {
-      const res = await fetch(`/api/admin/tags/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/tags/${id}`), {
         method: 'DELETE',
         credentials: "include"
       });

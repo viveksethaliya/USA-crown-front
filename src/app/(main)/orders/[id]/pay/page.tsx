@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../../../profile/profile.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function OrderPaymentPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
@@ -18,7 +19,7 @@ export default function OrderPaymentPage(props: { params: Promise<{ id: string }
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    fetch(`/api/account/orders/${params.id}`)
+    fetch(apiUrl(`/api/account/orders/${params.id}`))
       .then(res => res.json())
       .then(data => {
         if (!data || data.error) {

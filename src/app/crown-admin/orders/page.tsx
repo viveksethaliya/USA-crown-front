@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import styles from "./orders.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 type Order = {
   id: string;
@@ -53,7 +54,7 @@ export default function AdminOrdersPage() {
       }
       if (search) params.append("search", search);
 
-      const res = await fetch(`/api/admin/orders?${params.toString()}`);
+      const res = await fetch(apiUrl(`/api/admin/orders?${params.toString()}`), { credentials: 'include' });
       if (!res.ok) throw new Error("Failed to fetch orders");
       const data = await res.json();
       
@@ -108,8 +109,9 @@ export default function AdminOrdersPage() {
 
     setIsBulkUpdating(true);
     try {
-      const res = await fetch(`/api/admin/orders/bulk-status`, {
+      const res = await fetch(apiUrl(`/api/admin/orders/bulk-status`), {
         method: "PUT",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           orderIds: Array.from(selectedOrders),

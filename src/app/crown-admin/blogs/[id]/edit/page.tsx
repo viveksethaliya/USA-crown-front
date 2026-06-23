@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import BlogEditor from "../../BlogEditor";
 import styles from "../../../admin.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function EditBlogPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -13,7 +14,7 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await fetch(`/api/admin/blogs/${unwrappedParams.id}`, {
+        const res = await fetch(apiUrl(`/api/admin/blogs/${unwrappedParams.id}`), {
           credentials: "include"
         });
         if (!res.ok) throw new Error("Blog not found");

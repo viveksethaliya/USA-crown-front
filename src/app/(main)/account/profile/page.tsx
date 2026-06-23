@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "./profile.module.css";
 import { FiInfo } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface UserProfile {
   username?: string;
@@ -27,7 +28,7 @@ export default function AccountProfilePage() {
   });
 
   useEffect(() => {
-    fetch('/api/account/profile')
+    fetch(apiUrl('/api/account/profile'), { credentials: 'include' })
       .then(r => {
         if (!r.ok) throw new Error("Not logged in");
         return r.json();
@@ -53,9 +54,10 @@ export default function AccountProfilePage() {
     setSaving(true);
 
     try {
-      const res = await fetch('/api/account/profile', {
+      const res = await fetch(apiUrl('/api/account/profile'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           first_name: formData.first_name,
           last_name: formData.last_name,

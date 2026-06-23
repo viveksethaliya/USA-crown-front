@@ -6,6 +6,7 @@ import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../../products/products.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function TagEditPage() {
   const params = useParams();
@@ -29,7 +30,7 @@ export default function TagEditPage() {
     const fetchInitialData = async () => {
       try {
         if (!isNew && tagId) {
-          const res = await fetch(`/api/admin/tags/${tagId}`, { credentials: "include" });
+          const res = await fetch(apiUrl(`/api/admin/tags/${tagId}`), { credentials: "include" });
           if (!res.ok) throw new Error("Tag not found");
           const data = await res.json();
           setFormData({
@@ -82,7 +83,7 @@ export default function TagEditPage() {
 
     try {
       const method = isNew ? "POST" : "PUT";
-      const url = isNew ? "/api/admin/tags" : `/api/admin/tags/${tagId}`;
+      const url = isNew ? apiUrl("/api/admin/tags") : apiUrl(`/api/admin/tags/${tagId}`);
       
       const payload = { ...formData };
 

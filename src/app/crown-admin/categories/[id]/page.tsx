@@ -7,6 +7,7 @@ import adminStyles from "../../admin.module.css";
 import styles from "../../products/products.module.css";
 import MediaPicker from "@/components/media/MediaPicker";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface Category {
   id: number;
@@ -46,12 +47,12 @@ export default function CategoryEditPage() {
     const fetchInitialData = async () => {
       try {
         // Fetch all categories for parent dropdown
-        const allRes = await fetch("/api/admin/categories", { credentials: "include" });
+        const allRes = await fetch(apiUrl("/api/admin/categories"), { credentials: "include" });
         const allData = await allRes.json();
         setAllCategories(allData.categories || []);
 
         if (!isNew && categoryId) {
-          const res = await fetch(`/api/admin/categories/${categoryId}`, { credentials: "include" });
+          const res = await fetch(apiUrl(`/api/admin/categories/${categoryId}`), { credentials: "include" });
           if (!res.ok) throw new Error("Category not found");
           const data = await res.json();
           setFormData({
@@ -120,7 +121,7 @@ export default function CategoryEditPage() {
 
     try {
       const method = isNew ? "POST" : "PUT";
-      const url = isNew ? "/api/admin/categories" : `/api/admin/categories/${categoryId}`;
+      const url = isNew ? apiUrl("/api/admin/categories") : apiUrl(`/api/admin/categories/${categoryId}`);
       
       const payload = { 
         ...formData, 

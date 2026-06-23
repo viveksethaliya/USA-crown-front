@@ -23,7 +23,7 @@ export default function CustomerGroupsPage() {
 
   const fetchGroups = async () => {
     try {
-      const res = await fetch("/api/admin/customer-groups", { credentials: "include" });
+      const res = await fetch(apiUrl("/api/admin/customer-groups"), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch customer groups");
       const data = await res.json();
       setGroups(data || []);
@@ -53,7 +53,7 @@ export default function CustomerGroupsPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this group?")) return;
     try {
-      const res = await fetch(`/api/admin/customer-groups/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/customer-groups/${id}`), {
         method: "DELETE",
         credentials: "include"
       });
@@ -71,7 +71,7 @@ export default function CustomerGroupsPage() {
 
     try {
       const method = editingId ? "PUT" : "POST";
-      const url = editingId ? `/api/admin/customer-groups/${editingId}` : "/api/admin/customer-groups";
+      const url = editingId ? apiUrl(`/api/admin/customer-groups/${editingId}`) : apiUrl("/api/admin/customer-groups");
       
       const res = await fetch(url, {
         method,

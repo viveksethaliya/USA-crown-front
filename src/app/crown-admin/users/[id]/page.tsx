@@ -5,6 +5,7 @@ import Link from "next/link";
 import styles from "./user-detail.module.css";
 import { FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 type Permission = {
   id: string;
@@ -107,12 +108,12 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/admin/users/${params.id}`).then(r => r.json()),
-      fetch('/api/admin/roles').then(r => r.json()),
-      fetch('/api/admin/customer-groups').then(r => r.json()),
-      fetch('/api/admin/permissions').then(r => r.json()),
-      fetch(`/api/admin/users/${params.id}/permissions`).then(r => r.json()),
-      fetch(`/api/admin/users/${params.id}/sub-users`).then(r => r.json())
+      fetch(apiUrl(`/api/admin/users/${params.id}`), { credentials: 'include' }).then(r => r.json()),
+      fetch(apiUrl('/api/admin/roles'), { credentials: 'include' }).then(r => r.json()),
+      fetch(apiUrl('/api/admin/customer-groups'), { credentials: 'include' }).then(r => r.json()),
+      fetch(apiUrl('/api/admin/permissions'), { credentials: 'include' }).then(r => r.json()),
+      fetch(apiUrl(`/api/admin/users/${params.id}/permissions`), { credentials: 'include' }).then(r => r.json()),
+      fetch(apiUrl(`/api/admin/users/${params.id}/sub-users`), { credentials: 'include' }).then(r => r.json())
     ]).then(([userData, rolesData, groupsData, permsData, userPermsData, subUsersData]) => {
       setUser(userData);
       setRoles(rolesData || []);
@@ -170,7 +171,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     setSaving(true);
 
     try {
-      const res = await fetch(`/api/admin/users/${params.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/users/${params.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -198,7 +199,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     e.preventDefault();
     setSavingCompany(true);
     try {
-      const res = await fetch(`/api/admin/users/${params.id}/company`, {
+      const res = await fetch(apiUrl(`/api/admin/users/${params.id}/company`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(companyFormData)
@@ -206,7 +207,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
       if (!res.ok) throw new Error("Failed to update company profile");
       toast.success("Company profile updated successfully.");
       
-      const updatedUserRes = await fetch(`/api/admin/users/${params.id}`);
+      const updatedUserRes = await fetch(apiUrl(`/api/admin/users/${params.id}`), { credentials: 'include' });
       if (updatedUserRes.ok) {
         setUser(await updatedUserRes.json());
       }
@@ -222,7 +223,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     setSavingPerms(true);
 
     try {
-      const res = await fetch(`/api/admin/users/${params.id}/permissions`, {
+      const res = await fetch(apiUrl(`/api/admin/users/${params.id}/permissions`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ permission_ids: userPermissions })
@@ -245,7 +246,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
 
   const handleSendReset = async () => {
     try {
-      const res = await fetch(`/api/admin/users/${params.id}/send-reset-email`, { method: 'POST' });
+      const res = await fetch(apiUrl(`/api/admin/users/${params.id}/send-reset-email`), { method: 'POST', credentials: 'include' });
       if (res.ok) {
         toast.success("Password reset link sent to user.");
       } else {
@@ -269,7 +270,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     setSettingPassword(true);
 
     try {
-      const res = await fetch(`/api/admin/users/${params.id}/reset-password`, {
+      const res = await fetch(apiUrl(`/api/admin/users/${params.id}/reset-password`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ new_password: newPassword })
@@ -287,7 +288,7 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
   const handleDeactivate = async () => {
     if (!confirm("Are you sure you want to deactivate this user?")) return;
     try {
-      await fetch(`/api/admin/users/${params.id}`, { method: 'DELETE' });
+      await fetch(apiUrl(`/api/admin/users/${params.id}`), { method: 'DELETE', credentials: 'include' });
       setFormData(prev => ({ ...prev, is_active: false }));
       toast.success("User deactivated.");
     } catch (err) {
@@ -299,14 +300,14 @@ export default function UserDetailPage(props: { params: Promise<{ id: string }> 
     e.preventDefault();
     setSavingSubUser(true);
     try {
-      const res = await fetch(`/api/admin/users/${params.id}/sub-users`, {
+      const res = await fetch(apiUrl(`/api/admin/users/${params.id}/sub-users`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(subUserForm)
       });
       if (!res.ok) throw new Error("Failed to add sub-user");
       
-      const newSubUsers = await fetch(`/api/admin/users/${params.id}/sub-users`).then(r => r.json());
+      const newSubUsers = await fetch(apiUrl(`/api/admin/users/${params.id}/sub-users`), { credentials: 'include' }).then(r => r.json());
       setSubUsers(newSubUsers || []);
       setIsSubUserModalOpen(false);
       setSubUserForm({ first_name: "", last_name: "", email: "", mobile: "", password: "", role_id: "" });

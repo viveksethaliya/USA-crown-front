@@ -1,8 +1,15 @@
-.container {
+/*
+  Crown Admin — Create New User
+  Ink Blue & Gold branding, sharp corners
+*/
+
+.page {
   padding: 2rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
+
+/* ─── Header ─────────────────────────────────────────────── */
 
 .header {
   display: flex;
@@ -12,84 +19,229 @@
 }
 
 .backBtn {
-  color: #666;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #1a1a2e;
   text-decoration: none;
-  font-size: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.backBtn:hover { color: #d4af37; }
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
 }
 
-.header h1 {
-  font-size: 1.8rem;
-  color: #1a1a2e;
+/* ─── Section Tabs ───────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 2rem;
 }
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -2px;
+}
+
+.tab:hover { color: #1a1a2e; }
+
+.tabActive {
+  color: #1a1a2e;
+  border-bottom-color: #1a1a2e;
+}
+
+/* ─── Card ───────────────────────────────────────────────── */
 
 .card {
-  background: white;
-  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* ─── Section header inside card ────────────────────────── */
+
+.sectionTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+/* ─── Form layout ────────────────────────────────────────── */
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 1.5rem;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.25rem 1.5rem;
+}
+
+.full {
+  grid-column: 1 / -1;
 }
 
 .formGroup {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 .formGroup label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.input {
+.required {
+  color: #e53e3e;
+  margin-left: 2px;
+}
+
+.input,
+.select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0;
+  font-size: 0.95rem;
+  color: #1a1a2e;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
 }
 
-.error {
-  color: #d32f2f;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: #ffebee;
-  border-radius: 4px;
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: #1a1a2e;
+  box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.1);
 }
 
-.btnGroup {
+.input::placeholder {
+  color: #9ca3af;
+}
+
+/* radio group */
+.radioRow {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.radioLabel input[type="radio"] {
+  accent-color: #1a1a2e;
+}
+
+/* username preview */
+.usernamePreview {
+  margin-top: 0.4rem;
+  font-size: 0.83rem;
+  color: #15803d;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+/* ─── Divider between sections ───────────────────────────── */
+
+.divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 2rem 0;
+}
+
+/* ─── Action buttons ─────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  gap: 1rem;
+}
+
+.actionsRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: #1a1a2e;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
+  color: #fff;
+  padding: 0.75rem 1.75rem;
+  border: 2px solid #1a1a2e;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  letter-spacing: 0.02em;
 }
 
-.submitBtn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
+.submitBtn:hover { background: #2d2d52; border-color: #2d2d52; }
+.submitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .previewBtn {
-  background: #f5f5f5;
-  color: #333;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: #1a1a2e;
+  padding: 0.73rem 1.25rem;
+  border: 1px solid #1a1a2e;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
-.usernamePreview {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #2e7d32;
-  font-weight: 500;
+.previewBtn:hover { background: #f1f5f9; }
+
+@media (max-width: 680px) {
+  .grid2, .grid3 { grid-template-columns: 1fr; }
+  .tabs { overflow-x: auto; }
 }

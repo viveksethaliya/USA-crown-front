@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from '../products.module.css';
 import { Tag } from './types';
+import { apiUrl } from '@/lib/cart';
 
 interface TagSelectorProps {
   selectedIds: number[];
@@ -12,7 +13,7 @@ export default function TagSelector({ selectedIds, onChange }: TagSelectorProps)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/admin/tags`, { credentials: "include" })
+    fetch(apiUrl(`/api/admin/tags`), { credentials: "include" })
       .then(res => res.json())
       .then(data => setTags(data.tags || []))
       .catch(err => console.error("Failed to load tags", err))

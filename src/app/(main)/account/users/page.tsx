@@ -5,6 +5,7 @@ import styles from "../addresses/addresses.module.css"; // Reuse modal and grid 
 import profileStyles from "../profile/profile.module.css";
 import { FiPlus, FiUser } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface User {
   id: string;
@@ -32,7 +33,7 @@ export default function AccountUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/account/users');
+      const res = await fetch(apiUrl('/api/account/users'), { credentials: 'include' });
       if (res.ok) setUsers(await res.json());
       setLoading(false);
     } catch (err) {
@@ -43,8 +44,8 @@ export default function AccountUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-    fetch('/api/account/roles').then(r => r.json()).then(data => setRoles(data || []));
-    fetch('/api/account/permissions').then(r => r.json()).then(data => setPermissions(data || []));
+    fetch(apiUrl('/api/account/roles'), { credentials: 'include' }).then(r => r.json()).then(data => setRoles(data || []));
+    fetch(apiUrl('/api/account/permissions'), { credentials: 'include' }).then(r => r.json()).then(data => setPermissions(data || []));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,9 +69,10 @@ export default function AccountUsersPage() {
         else payload.password = formData.password;
       }
 
-      const res = await fetch(url, {
+      const res = await fetch(apiUrl(url), {
         method,
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error("Failed to save user");

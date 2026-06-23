@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "../login/login.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -34,9 +35,10 @@ function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/reset-password', {
+      const res = await fetch(apiUrl('/api/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, token, new_password: password })
       });
       const data = await res.json();

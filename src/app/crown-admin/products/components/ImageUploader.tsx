@@ -3,6 +3,7 @@ import styles from '../products.module.css';
 import { ProductImage } from './types';
 import MediaPicker from '../../../../components/media/MediaPicker';
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface ImageUploaderProps {
   productId: number;
@@ -25,7 +26,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
     }
 
     try {
-      const res = await fetch(`/api/admin/products/${productId}/images`, {
+      const res = await fetch(apiUrl(`/api/admin/products/${productId}/images`), {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -50,7 +51,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
     const mediaIds = selected.map(s => s.mediaId);
 
     try {
-      const res = await fetch(`/api/admin/products/${productId}/media`, {
+      const res = await fetch(apiUrl(`/api/admin/products/${productId}/media`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mediaIds }),
@@ -72,7 +73,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Ima
     if (!window.confirm("Delete this image?")) return;
     
     try {
-      const res = await fetch(`/api/admin/products/images/${imageId}`, {
+      const res = await fetch(apiUrl(`/api/admin/products/images/${imageId}`), {
         method: 'DELETE',
         credentials: 'include'
       });

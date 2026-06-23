@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../profile/profile.module.css";
 import { FiBriefcase } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function AccountCompanyPage() {
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,7 @@ export default function AccountCompanyPage() {
   });
 
   useEffect(() => {
-    fetch('/api/account/company')
+    fetch(apiUrl('/api/account/company'), { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         if (data && !data.error) {
@@ -71,8 +72,9 @@ export default function AccountCompanyPage() {
         payload.append('resale_certificate_url', formData.resale_certificate_url);
       }
 
-      const res = await fetch('/api/account/company', {
+      const res = await fetch(apiUrl('/api/account/company'), {
         method: 'PUT',
+        credentials: 'include',
         body: payload
       });
       const data = await res.json();

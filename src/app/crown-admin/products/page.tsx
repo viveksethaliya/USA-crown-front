@@ -5,6 +5,7 @@ import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "./products.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface Product {
   id: number;
@@ -56,7 +57,7 @@ export default function AdminProductsPage() {
 
   // Fetch Categories
   useEffect(() => {
-    fetch(`/api/admin/categories`, { credentials: "include" })
+    fetch(apiUrl(`/api/admin/categories`), { credentials: "include" })
       .then(res => res.json())
       .then(data => setCategories(data.categories || []))
       .catch(err => console.error("Failed to load categories", err));
@@ -65,7 +66,7 @@ export default function AdminProductsPage() {
   // Fetch Stats
   const loadStats = async () => {
     try {
-      const res = await fetch(`/api/admin/products/stats`, { credentials: "include" });
+      const res = await fetch(apiUrl(`/api/admin/products/stats`), { credentials: "include" });
       const data = await res.json();
       if (data.stats) setStats(data.stats);
     } catch (err) {
@@ -140,7 +141,7 @@ export default function AdminProductsPage() {
 
       // Load stats
       try {
-        const statsRes = await fetch(`/api/admin/products/stats`, { credentials: "include" });
+        const statsRes = await fetch(apiUrl(`/api/admin/products/stats`), { credentials: "include" });
         const statsData = await statsRes.json();
         if (!cancelled && statsData.stats) setStats(statsData.stats);
       } catch (err) {
@@ -218,7 +219,7 @@ export default function AdminProductsPage() {
     if (!window.confirm(`Are you sure you want to ${publish ? 'publish' : 'unpublish'} ${selectedIds.length} products?`)) return;
     
     try {
-      const res = await fetch(`/api/admin/products/bulk-toggle`, {
+      const res = await fetch(apiUrl(`/api/admin/products/bulk-toggle`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds, publish }),
@@ -241,7 +242,7 @@ export default function AdminProductsPage() {
     if (!window.confirm(`WARNING: Are you sure you want to permanently delete ${selectedIds.length} products and all their variations?`)) return;
     
     try {
-      const res = await fetch(`/api/admin/products/bulk`, {
+      const res = await fetch(apiUrl(`/api/admin/products/bulk`), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds }),

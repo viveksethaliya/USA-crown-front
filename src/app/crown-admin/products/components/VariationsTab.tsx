@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styles from '../products.module.css';
 import { Variation, ProductImage } from './types';
 import { toast } from 'react-hot-toast';
+import { apiUrl } from '@/lib/cart';
 
 interface VariationsTabProps {
   productId: number;
@@ -28,7 +29,7 @@ export default function VariationsTab({ variations, productImages, onChange, onG
     setUploadingVarId(varId);
     
     try {
-      const res = await fetch(`/api/admin/products/variations/${varId}/image`, {
+      const res = await fetch(apiUrl(`/api/admin/products/variations/${varId}/image`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl }),
@@ -52,7 +53,7 @@ export default function VariationsTab({ variations, productImages, onChange, onG
     if (!window.confirm("Delete this variation?")) return;
     
     try {
-      const res = await fetch(`/api/admin/products/variations/${varId}`, {
+      const res = await fetch(apiUrl(`/api/admin/products/variations/${varId}`), {
         method: 'DELETE',
         credentials: 'include'
       });

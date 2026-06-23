@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from '../products.module.css';
 import { Category } from './types';
+import { apiUrl } from "@/lib/cart";
 
 interface CategorySelectorProps {
   productId: number;
@@ -13,7 +14,7 @@ export default function CategorySelector({ selectedIds, onChange }: CategorySele
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/admin/categories`, { credentials: "include" })
+    fetch(apiUrl(`/api/admin/categories`), { credentials: "include" })
       .then(res => res.json())
       .then(data => setCategories(data.categories || []))
       .catch(err => console.error("Failed to load categories", err))

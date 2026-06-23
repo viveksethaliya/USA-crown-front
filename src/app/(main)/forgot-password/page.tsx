@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import styles from "../login/login.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -14,9 +15,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/forgot-password', {
+      const res = await fetch(apiUrl('/api/forgot-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email })
       });
       const data = await res.json();

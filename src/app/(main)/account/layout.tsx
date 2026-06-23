@@ -5,13 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./account-layout.module.css";
 import { FiUser, FiMapPin, FiBriefcase, FiUsers, FiLogOut } from "react-icons/fi";
+import { apiUrl } from "@/lib/cart";
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isSubUser, setIsSubUser] = useState(false);
 
   useEffect(() => {
-    fetch('/api/account/profile')
+    fetch(apiUrl('/api/account/profile'), { credentials: 'include' })
       .then(r => {
         if (!r.ok) throw new Error("Not logged in");
         return r.json();
@@ -39,8 +40,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <h3>My Account</h3>
-        <Link 
-          href="/account/profile" 
+        <Link
+          href="/account/profile"
           className={`${styles.navLink} ${pathname === '/account/profile' ? styles.navLinkActive : ''}`}
         >
           <FiUser /> Profile
@@ -48,20 +49,20 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         {/* Hide Company, Addresses, and Sub-Users if the current user is a Sub-User */}
         {!isSubUser && (
           <>
-            <Link 
-              href="/account/company" 
+            <Link
+              href="/account/company"
               className={`${styles.navLink} ${pathname === '/account/company' ? styles.navLinkActive : ''}`}
             >
               <FiBriefcase /> Company Details
             </Link>
-            <Link 
-              href="/account/addresses" 
+            <Link
+              href="/account/addresses"
               className={`${styles.navLink} ${pathname === '/account/addresses' ? styles.navLinkActive : ''}`}
             >
               <FiMapPin /> Addresses
             </Link>
-            <Link 
-              href="/account/users" 
+            <Link
+              href="/account/users"
               className={`${styles.navLink} ${pathname === '/account/users' ? styles.navLinkActive : ''}`}
             >
               <FiUsers /> Sub-Users
@@ -72,7 +73,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           <FiLogOut /> Logout
         </a>
       </aside>
-      
+
       <main className={styles.content}>
         {children}
       </main>

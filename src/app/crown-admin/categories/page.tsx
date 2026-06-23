@@ -5,6 +5,7 @@ import Link from "next/link";
 import adminStyles from "../admin.module.css";
 import styles from "../products/products.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface Category {
   id: number;
@@ -23,7 +24,7 @@ export default function AdminCategoriesPage() {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/categories", { credentials: "include" });
+      const res = await fetch(apiUrl("/api/admin/categories"), { credentials: "include" });
       const data = await res.json();
       
       // Build tree
@@ -57,7 +58,7 @@ export default function AdminCategoriesPage() {
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
     try {
-      const res = await fetch(`/api/admin/categories/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/categories/${id}`), {
         method: 'DELETE',
         credentials: "include"
       });

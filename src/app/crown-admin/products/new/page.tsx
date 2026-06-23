@@ -6,6 +6,7 @@ import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../products.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function NewProductPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/products`, {
+      const res = await fetch(apiUrl(`/api/admin/products`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, type, published: false }),

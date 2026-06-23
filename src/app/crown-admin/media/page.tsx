@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import styles from "./media.module.css";
-import { FiSearch, FiUploadCloud, FiTrash2, FiSave, FiAlertCircle } from "react-icons/fi";
+import { FiSearch, FiUploadCloud, FiTrash2, FiSave, FiAlertCircle, FiX, FiCheckCircle, FiAlertTriangle } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface MediaItem {
   id: string;
@@ -46,6 +47,19 @@ export default function AdminMediaPage() {
   const [usages, setUsages] = useState<Usages | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bulkInputRef = useRef<HTMLInputElement>(null);
+
+  // Bulk upload state
+  const [isDragging, setIsDragging] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  interface BulkFileStatus {
+    name: string;
+    status: 'pending' | 'uploading' | 'done' | 'error';
+    error?: string;
+  }
+  const [bulkFiles, setBulkFiles] = useState<BulkFileStatus[]>([]);
+  const [showBulkPanel, setShowBulkPanel] = useState(false);
+  const dragCounter = useRef(0);
 
   const fetchMedia = async (pageNumber = 1, searchQuery = "") => {
     setLoading(true);
@@ -98,13 +112,20 @@ export default function AdminMediaPage() {
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    setUploading(true);
 
+    // If multiple files selected, use bulk upload
+    if (e.target.files.length > 1) {
+      await handleBulkUpload(Array.from(e.target.files));
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setUploading(true);
     const formData = new FormData();
     formData.append("image", e.target.files[0]);
 
     try {
-      const res = await fetch("/api/admin/media", {
+      const res = await fetch(apiUrl("/api/admin/media"), {
         method: "POST",
         body: formData,
         credentials: "include"
@@ -128,12 +149,133 @@ export default function AdminMediaPage() {
     }
   };
 
+  // ── Bulk upload handler ────────────────────────────────────
+  const handleBulkUpload = useCallback(async (files: File[]) => {
+    const imageFiles = files.filter(f => /\.(jpe?g|png|gif|webp|svg)$/i.test(f.name));
+    if (imageFiles.length === 0) {
+      toast.error("No valid image files selected");
+      return;
+    }
+
+    const statuses: BulkFileStatus[] = imageFiles.map(f => ({ name: f.name, status: 'pending' }));
+    setBulkFiles(statuses);
+    setShowBulkPanel(true);
+    setBulkUploading(true);
+
+    let successCount = 0;
+    let failCount = 0;
+    const newMediaItems: MediaItem[] = [];
+
+    // Upload in batches of 5 for better throughput
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < imageFiles.length; i += BATCH_SIZE) {
+      const batch = imageFiles.slice(i, i + BATCH_SIZE);
+      const batchPromises = batch.map(async (file, batchIdx) => {
+        const globalIdx = i + batchIdx;
+        setBulkFiles(prev => prev.map((s, si) => si === globalIdx ? { ...s, status: 'uploading' } : s));
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+          const res = await fetch(apiUrl('/api/admin/media'), {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+          });
+          const data = await res.json();
+          if (res.ok && data.media) {
+            newMediaItems.push(data.media);
+            successCount++;
+            setBulkFiles(prev => prev.map((s, si) => si === globalIdx ? { ...s, status: 'done' } : s));
+          } else {
+            failCount++;
+            setBulkFiles(prev => prev.map((s, si) => si === globalIdx ? { ...s, status: 'error', error: data.error || 'Failed' } : s));
+          }
+        } catch {
+          failCount++;
+          setBulkFiles(prev => prev.map((s, si) => si === globalIdx ? { ...s, status: 'error', error: 'Network error' } : s));
+        }
+      });
+      await Promise.all(batchPromises);
+    }
+
+    // Prepend all successfully uploaded items
+    if (newMediaItems.length > 0) {
+      setMedia(prev => [...newMediaItems.reverse(), ...prev]);
+      setTotalCount(prev => prev + newMediaItems.length);
+    }
+
+    setBulkUploading(false);
+    if (failCount === 0) {
+      toast.success(`All ${successCount} images uploaded successfully!`);
+    } else {
+      toast(`${successCount} uploaded, ${failCount} failed`, { icon: '⚠️' });
+    }
+  }, []);
+
+  // ── Drag & drop handlers ───────────────────────────────────
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounter.current = 0;
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+
+    if (droppedFiles.length === 1) {
+      // Single file — use normal flow
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('image', droppedFiles[0]);
+      try {
+        const res = await fetch(apiUrl('/api/admin/media'), { method: 'POST', body: formData, credentials: 'include' });
+        const data = await res.json();
+        if (res.ok && data.media) {
+          setMedia(prev => [data.media, ...prev]);
+          setActiveItem(data.media);
+          setTotalCount(prev => prev + 1);
+          toast.success('File uploaded successfully');
+        } else {
+          toast.error(data.error || 'Upload failed');
+        }
+      } catch { toast.error('Error uploading file'); }
+      finally { setUploading(false); }
+    } else {
+      await handleBulkUpload(droppedFiles);
+    }
+  }, [handleBulkUpload]);
+
   const handleSaveMeta = async () => {
     if (!activeItem) return;
     setSavingMeta(true);
 
     try {
-      const res = await fetch(`/api/admin/media/${activeItem.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/media/${activeItem.id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: metaTitle, alt_text: metaAltText }),
@@ -164,7 +306,7 @@ export default function AdminMediaPage() {
     if (!window.confirm("Are you sure you want to permanently delete this media item? This action cannot be undone.")) return;
 
     try {
-      const res = await fetch(`/api/admin/media/${activeItem.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/media/${activeItem.id}`), {
         method: "DELETE",
         credentials: "include"
       });
@@ -199,10 +341,60 @@ export default function AdminMediaPage() {
   };
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className={styles.dragOverlay}>
+          <div className={styles.dragOverlayInner}>
+            <FiUploadCloud size={48} />
+            <span>Drop images here to upload</span>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk progress panel */}
+      {showBulkPanel && (
+        <div className={styles.bulkPanel}>
+          <div className={styles.bulkPanelHeader}>
+            <span className={styles.bulkPanelTitle}>
+              {bulkUploading
+                ? `Uploading ${bulkFiles.filter(f => f.status === 'done').length} / ${bulkFiles.length}...`
+                : `Upload complete — ${bulkFiles.filter(f => f.status === 'done').length} of ${bulkFiles.length} succeeded`}
+            </span>
+            {!bulkUploading && (
+              <button className={styles.bulkPanelClose} onClick={() => setShowBulkPanel(false)}>
+                <FiX size={16} />
+              </button>
+            )}
+          </div>
+          <div className={styles.bulkPanelList}>
+            {bulkFiles.map((f, idx) => (
+              <div key={idx} className={styles.bulkPanelItem}>
+                <span className={styles.bulkFileName}>{f.name}</span>
+                {f.status === 'pending' && <span className={styles.bulkStatusPending}>Pending</span>}
+                {f.status === 'uploading' && <span className={styles.bulkStatusUploading}>Uploading…</span>}
+                {f.status === 'done' && <FiCheckCircle className={styles.bulkStatusDone} />}
+                {f.status === 'error' && (
+                  <span className={styles.bulkStatusError} title={f.error}>
+                    <FiAlertTriangle /> Failed
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className={styles.header}>
         <h1>Media Library</h1>
         <div className={styles.uploadWrapper}>
+          {/* Single file upload (hidden) */}
           <input
             type="file"
             ref={fileInputRef}
@@ -210,6 +402,27 @@ export default function AdminMediaPage() {
             accept="image/*"
             onChange={handleUpload}
           />
+          {/* Bulk file upload (hidden) */}
+          <input
+            type="file"
+            ref={bulkInputRef}
+            style={{ display: "none" }}
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleBulkUpload(Array.from(e.target.files));
+                e.target.value = '';
+              }
+            }}
+          />
+          <button
+            className={styles.bulkUploadBtn}
+            onClick={() => bulkInputRef.current?.click()}
+            disabled={bulkUploading}
+          >
+            <FiUploadCloud /> Bulk Upload
+          </button>
           <button
             className={styles.uploadBtn}
             onClick={() => fileInputRef.current?.click()}

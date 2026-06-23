@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FiEye, FiSearch, FiShoppingCart } from "react-icons/fi";
 import styles from "./carts.module.css";
+import { apiUrl } from "@/lib/cart";
 
 interface CartSummary {
   id: string;
@@ -30,7 +31,7 @@ export default function CartsPage() {
 
   const fetchCarts = async () => {
     try {
-      const res = await fetch(`/api/admin/carts`, {
+      const res = await fetch(apiUrl(`/api/admin/carts`), {
         credentials: "include"
       });
       if (res.ok) {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import styles from "../../admin.module.css";
 import { FiArrowLeft, FiCheck, FiX, FiDownload, FiUserX, FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 type RegistrationDetail = {
   id: string;
@@ -49,7 +50,7 @@ export default function RegistrationDetailPage() {
     const fetchDetail = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/admin/registrations/${id}`, {
+        const res = await fetch(apiUrl(`/api/admin/registrations/${id}`), {
           credentials: "include",
         });
         if (!res.ok) {
@@ -72,7 +73,7 @@ export default function RegistrationDetailPage() {
     if (!confirm(`Are you sure you want to mark this application as ${status}?`)) return;
 
     try {
-      const res = await fetch(`/api/admin/registrations/${id}/status`, {
+      const res = await fetch(apiUrl(`/api/admin/registrations/${id}/status`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),

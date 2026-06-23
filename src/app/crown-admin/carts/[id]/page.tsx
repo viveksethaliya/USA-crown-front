@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FiArrowLeft, FiTrash2, FiPlus, FiMinus, FiSearch, FiX } from "react-icons/fi";
 import styles from "./cart-detail.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface CartItem {
   id: string;
@@ -65,7 +66,7 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
 
   const fetchCart = async () => {
     try {
-      const res = await fetch(`/api/admin/carts/${id}`, { credentials: "include" });
+      const res = await fetch(apiUrl(`/api/admin/carts/${id}`), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch cart");
       const data = await res.json();
       setCart(data.cart);
@@ -95,7 +96,7 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
   const handleUpdateItemQty = async (itemId: string, newQty: number) => {
     if (newQty < 1) return;
     try {
-      const res = await fetch(`/api/admin/carts/${id}/items/${itemId}`, {
+      const res = await fetch(apiUrl(`/api/admin/carts/${id}/items/${itemId}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: newQty })
@@ -113,7 +114,7 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
   const handleRemoveItem = async (itemId: string) => {
     if (!confirm("Are you sure you want to remove this item from the cart?")) return;
     try {
-      const res = await fetch(`/api/admin/carts/${id}/items/${itemId}`, {
+      const res = await fetch(apiUrl(`/api/admin/carts/${id}/items/${itemId}`), {
         method: "DELETE"
       });
       if (!res.ok) throw new Error("Failed to remove item");
@@ -131,7 +132,7 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
       if (searchQuery.trim().length >= 2) {
         setIsSearching(true);
         try {
-          const res = await fetch(`/api/search/smart?q=${encodeURIComponent(searchQuery)}`);
+          const res = await fetch(apiUrl(`/api/search/smart?q=${encodeURIComponent(searchQuery)}`));
           const data = await res.json();
           setSearchResults(data.products || []);
         } catch (err) {
@@ -152,7 +153,7 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
     setSelectedProduct(product);
     setSelectedVariationId(null);
     try {
-      const res = await fetch(`/api/admin/products/${product.id}`, { credentials: "include" });
+      const res = await fetch(apiUrl(`/api/admin/products/${product.id}`), { credentials: "include" });
       if (!res.ok) throw new Error();
       const data = await res.json();
       const vars = data.product?.variations || [];
@@ -184,7 +185,7 @@ export default function AdminCartDetailPage({ params }: { params: Promise<{ id: 
     try {
       const body: any = { product_id: productId, quantity: 1 };
       if (variationId) body.variation_id = variationId;
-      const res = await fetch(`/api/admin/carts/${id}/items`, {
+      const res = await fetch(apiUrl(`/api/admin/carts/${id}/items`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)

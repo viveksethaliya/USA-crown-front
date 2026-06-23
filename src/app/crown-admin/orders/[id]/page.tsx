@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import styles from "../orders.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -96,7 +97,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`/api/admin/orders/${id}`);
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}`), { credentials: 'include' });
       if (!res.ok) throw new Error("Failed to fetch order");
       const data = await res.json();
       setOrder(data.order);
@@ -133,8 +134,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleSaveEdits = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}`), {
         method: "PUT",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editData)
       });
@@ -154,8 +156,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleUpdateItemQty = async (itemId: string, newQty: number, unitPrice: number | string) => {
     if (newQty < 1) return;
     try {
-      const res = await fetch(`/api/admin/orders/${id}/items/${itemId}`, {
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/items/${itemId}`), {
         method: "PUT",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: newQty, unit_price: unitPrice })
       });
@@ -172,8 +175,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleRemoveItem = async (itemId: string) => {
     if (!confirm("Are you sure you want to remove this item?")) return;
     try {
-      const res = await fetch(`/api/admin/orders/${id}/items/${itemId}`, {
-        method: "DELETE"
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/items/${itemId}`), {
+        method: "DELETE",
+        credentials: "include"
       });
       if (!res.ok) throw new Error("Failed to remove item");
       toast.success("Item removed");
@@ -191,7 +195,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
         setIsSearching(true);
         try {
           // Use public smart search
-          const res = await fetch(`/api/search/smart?q=${encodeURIComponent(searchQuery)}`);
+          const res = await fetch(apiUrl(`/api/search/smart?q=${encodeURIComponent(searchQuery)}`));
           const data = await res.json();
           setSearchResults(data.products || []);
         } catch (err) {
@@ -211,8 +215,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     setIsAddingProduct(true);
     try {
       // Basic add (without variations for simplicity in UI, relies on defaults or main product)
-      const res = await fetch(`/api/admin/orders/${id}/items`, {
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/items`), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           product_id: product.id,
@@ -240,7 +245,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   const handleCancelOrder = async () => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
     try {
-      const res = await fetch(`/api/admin/orders/${id}/cancel`, { method: "POST" });
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/cancel`), { method: "POST", credentials: "include" });
       if (!res.ok) throw new Error("Failed to cancel order");
       toast.success("Order cancelled");
       await fetchOrder();
@@ -253,7 +258,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
   // Handle Send Payment Link
   const handleSendPaymentLink = async () => {
     try {
-      const res = await fetch(`/api/admin/orders/${id}/send-payment-link`, { method: "POST" });
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/send-payment-link`), { method: "POST", credentials: "include" });
       if (!res.ok) throw new Error("Failed to send payment link");
       const data = await res.json();
       toast.success(`Payment link generated and sent!\nLink: ${data.payment_link}`, { duration: 8000 });
@@ -268,8 +273,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     if (!order || status === order.status) return;
     setIsUpdatingStatus(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}/status`, {
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/status`), {
         method: "PUT",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
       });
@@ -288,8 +294,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     if (!noteContent.trim()) return;
     setIsAddingNote(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}/notes`, {
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/notes`), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ note: noteContent, is_customer_note: isCustomerNote })
       });
@@ -313,8 +320,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
     }
     setIsRefunding(true);
     try {
-      const res = await fetch(`/api/admin/orders/${id}/refunds`, {
+      const res = await fetch(apiUrl(`/api/admin/orders/${id}/refunds`), {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: refundAmount, reason: refundReason })
       });

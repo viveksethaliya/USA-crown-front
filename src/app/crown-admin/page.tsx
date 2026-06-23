@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface DashboardData {
   stats: {
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await fetch(`/api/admin/dashboard`, {
+        const res = await fetch(apiUrl(`/api/admin/dashboard`), {
           credentials: "include"
         });
         if (!res.ok) throw new Error("Failed to fetch dashboard");

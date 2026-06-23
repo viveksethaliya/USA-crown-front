@@ -8,6 +8,7 @@ import {
   FiMenu, FiGrid, FiFileText, FiUsers, FiSettings, FiLogOut, FiLayers, FiMail, FiImage, FiPackage, FiShoppingCart, FiPercent,
   FiList, FiTag, FiSliders, FiShield, FiUserPlus, FiFolder, FiShoppingBag
 } from "react-icons/fi";
+import { apiUrl } from "@/lib/cart";
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -21,7 +22,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch(`/api/admin/check-session`, {
+        const res = await fetch(apiUrl(`/api/admin/check-session`), {
           credentials: "include"
         });
 
@@ -67,7 +68,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
   const handleLogout = async () => {
     try {
-      await fetch(`/api/admin/logout`, {
+      await fetch(apiUrl(`/api/admin/logout`), {
         method: "POST",
         credentials: "include"
       });

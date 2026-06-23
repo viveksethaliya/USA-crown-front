@@ -5,6 +5,7 @@ import styles from "./addresses.module.css";
 import profileStyles from "../profile/profile.module.css";
 import { FiPlus } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/utils";
 
 interface Address {
   id?: string;
@@ -40,7 +41,7 @@ export default function AccountAddressesPage() {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch('/api/account/addresses', { credentials: 'include' });
+      const res = await fetch(apiUrl('/api/account/addresses'), { credentials: 'include' });
       if (res.ok) setAddresses(await res.json());
       setLoading(false);
     } catch (err) {
@@ -60,7 +61,7 @@ export default function AccountAddressesPage() {
     try {
       const method = editId ? 'PUT' : 'POST';
       const url = editId ? `/api/account/addresses/${editId}` : '/api/account/addresses';
-      const res = await fetch(url, {
+      const res = await fetch(apiUrl(url), {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -84,7 +85,7 @@ export default function AccountAddressesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this address?")) return;
     try {
-      const res = await fetch(`/api/account/addresses/${id}`, { method: 'DELETE', credentials: 'include' });
+      const res = await fetch(apiUrl(`/api/account/addresses/${id}`), { method: 'DELETE', credentials: 'include' });
       if (res.ok) {
         fetchAddresses();
         toast.success("Address deleted successfully");

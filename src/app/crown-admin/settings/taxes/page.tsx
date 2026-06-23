@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "../../admin.module.css";
 import { FiArrowLeft } from "react-icons/fi";
+import { apiUrl } from "@/lib/cart";
 
 export default function TaxesSettingsPage() {
   interface TaxClass {
@@ -16,7 +17,7 @@ export default function TaxesSettingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/admin/settings/tax-classes')
+    fetch(apiUrl('/api/admin/settings/tax-classes'), { credentials: 'include' })
       .then(res => res.json())
       .then(data => setTaxClasses(data))
       .catch(console.error)

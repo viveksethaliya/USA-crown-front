@@ -5,6 +5,7 @@ import Link from "next/link";
 import styles from "../admin.module.css";
 import { FiEye, FiCheck, FiX, FiUserX, FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 type Registration = {
   id: number;
@@ -22,7 +23,7 @@ export default function RegistrationsPage() {
 
   const fetchRegistrations = async () => {
     try {
-      const res = await fetch(`/api/admin/registrations`, {
+      const res = await fetch(apiUrl(`/api/admin/registrations`), {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch registrations");
@@ -39,7 +40,7 @@ export default function RegistrationsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/admin/registrations`, {
+        const res = await fetch(apiUrl(`/api/admin/registrations`), {
           credentials: "include",
         });
         if (!res.ok) throw new Error("Failed to fetch registrations");
@@ -58,7 +59,7 @@ export default function RegistrationsPage() {
     if (!confirm(`Are you sure you want to mark this application as ${status}?`)) return;
 
     try {
-      const res = await fetch(`/api/admin/registrations/${id}/status`, {
+      const res = await fetch(apiUrl(`/api/admin/registrations/${id}/status`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),

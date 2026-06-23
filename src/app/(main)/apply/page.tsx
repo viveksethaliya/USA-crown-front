@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useRef } from 'react';
 import styles from './apply.module.css';
 import { FiX } from 'react-icons/fi';
+import { apiUrl } from '@/lib/cart';
 
 
 
@@ -146,8 +147,9 @@ export default function ApplyPage() {
         formData.append('certificates', file);
       });
 
-      const response = await fetch('/api/register', {
+      const response = await fetch(apiUrl('/api/register'), {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 

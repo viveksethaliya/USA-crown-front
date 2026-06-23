@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "../../admin.module.css";
 import { FiArrowLeft } from "react-icons/fi";
+import { apiUrl } from "@/lib/cart";
 
 export default function ShippingSettingsPage() {
   interface ShippingZone {
@@ -16,7 +17,7 @@ export default function ShippingSettingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/admin/settings/shipping-zones')
+    fetch(apiUrl('/api/admin/settings/shipping-zones'), { credentials: 'include' })
       .then(res => res.json())
       .then(data => setZones(data))
       .catch(console.error)

@@ -6,6 +6,7 @@ import Link from "next/link";
 import adminStyles from "../../admin.module.css";
 import styles from "../../products/products.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface Attribute {
   id: number;
@@ -51,8 +52,8 @@ export default function AdminAttributeTermsPage() {
       setLoading(true);
       try {
         const [attrRes, termsRes] = await Promise.all([
-          fetch(`/api/admin/attributes/${attributeId}`, { credentials: "include" }),
-          fetch(`/api/admin/attributes/${attributeId}/terms`, { credentials: "include" })
+          fetch(apiUrl(`/api/admin/attributes/${attributeId}`), { credentials: "include" }),
+          fetch(apiUrl(`/api/admin/attributes/${attributeId}/terms`), { credentials: "include" })
         ]);
         
         const attrData = await attrRes.json();
@@ -87,7 +88,7 @@ export default function AdminAttributeTermsPage() {
     
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/attributes/${attributeId}/terms`, {
+      const res = await fetch(apiUrl(`/api/admin/attributes/${attributeId}/terms`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -119,7 +120,7 @@ export default function AdminAttributeTermsPage() {
   const handleDelete = async (termId: number) => {
     if (!window.confirm("Are you sure you want to delete this term?")) return;
     try {
-      const res = await fetch(`/api/admin/attribute-terms/${termId}`, {
+      const res = await fetch(apiUrl(`/api/admin/attribute-terms/${termId}`), {
         method: 'DELETE',
         credentials: "include"
       });
@@ -137,7 +138,7 @@ export default function AdminAttributeTermsPage() {
     if (!window.confirm("Are you sure you want to merge? The source term will be deleted and all its products/variations will be moved to the target term.")) return;
     
     try {
-      const res = await fetch(`/api/admin/attribute-terms/${sourceId}/merge`, {
+      const res = await fetch(apiUrl(`/api/admin/attribute-terms/${sourceId}/merge`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -163,7 +164,7 @@ export default function AdminAttributeTermsPage() {
 
   const handleUpdateTerm = async (id: number) => {
     try {
-      const res = await fetch(`/api/admin/attribute-terms/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/attribute-terms/${id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

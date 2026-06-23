@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './login.module.css';
 import { toast } from 'react-hot-toast';
+import { apiUrl } from '@/lib/cart';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -20,9 +21,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch(apiUrl('/api/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 

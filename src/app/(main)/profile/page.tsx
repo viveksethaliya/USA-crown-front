@@ -6,6 +6,7 @@ import Link from 'next/link';
 import styles from './profile.module.css';
 import { FiDownload, FiShoppingBag, FiPlus } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
+import { apiUrl } from "@/lib/cart";
 
 interface UserProfile {
   id: string;
@@ -75,9 +76,9 @@ export default function ProfilePage() {
     async function fetchData() {
       try {
         const [profileRes, companyRes, usersRes] = await Promise.all([
-          fetch('/api/account/profile', { credentials: 'include' }),
-          fetch('/api/account/company', { credentials: 'include' }),
-          fetch('/api/account/users', { credentials: 'include' }).catch(() => null)
+          fetch(apiUrl('/api/account/profile'), { credentials: 'include' }),
+          fetch(apiUrl('/api/account/company'), { credentials: 'include' }),
+          fetch(apiUrl('/api/account/users'), { credentials: 'include' }).catch(() => null)
         ]);
 
         if (profileRes.status === 401) {
@@ -126,7 +127,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('/api/account/profile', {
+      const res = await fetch(apiUrl('/api/account/profile'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ first_name: firstName, last_name: lastName, mobile }),
@@ -145,7 +146,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('/api/account/company', {
+      const res = await fetch(apiUrl('/api/account/company'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +175,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('/api/account/users', {
+      const res = await fetch(apiUrl('/api/account/users'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -201,7 +202,7 @@ export default function ProfilePage() {
 
   const handleToggleSubUser = async (id: string, currentStatus: boolean) => {
     try {
-      const res = await fetch(`/api/account/users/${id}`, {
+      const res = await fetch(apiUrl(`/api/account/users/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !currentStatus }),

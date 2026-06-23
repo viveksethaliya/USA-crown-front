@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "../admin.module.css";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -30,7 +31,7 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/login`, {
+      const res = await fetch(apiUrl(`/api/admin/login`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -68,7 +69,7 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/verify-otp`, {
+      const res = await fetch(apiUrl(`/api/admin/verify-otp`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: otpCode }),

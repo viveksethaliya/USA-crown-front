@@ -8,6 +8,7 @@ import styles from "../../products/products.module.css";
 import { FiTrash2, FiMenu } from "react-icons/fi";
 import MediaPicker from "@/components/media/MediaPicker";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface CollectionProduct {
   id: number;
@@ -50,9 +51,9 @@ export default function CollectionEditPage() {
   const fetchCollection = async () => {
     try {
       const [colRes, prodRes, catRes] = await Promise.all([
-        fetch(`/api/admin/collections/${collectionId}`, { credentials: "include" }),
-        fetch(`/api/admin/collections/${collectionId}/products`, { credentials: "include" }),
-        fetch(`/api/admin/categories`, { credentials: "include" })
+        fetch(apiUrl(`/api/admin/collections/${collectionId}`), { credentials: "include" }),
+        fetch(apiUrl(`/api/admin/collections/${collectionId}/products`), { credentials: "include" }),
+        fetch(apiUrl(`/api/admin/categories`), { credentials: "include" })
       ]);
       const colData = await colRes.json();
       const prodData = await prodRes.json();
@@ -122,7 +123,7 @@ export default function CollectionEditPage() {
         ...formData,
         hero_image_media_id: formData.hero_image_media_id === "" ? null : formData.hero_image_media_id
       };
-      const res = await fetch(`/api/admin/collections/${collectionId}`, {
+      const res = await fetch(apiUrl(`/api/admin/collections/${collectionId}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -143,7 +144,7 @@ export default function CollectionEditPage() {
     if (!selectedCategoryId) return;
     setAddingCategory(true);
     try {
-      const res = await fetch(`/api/admin/collections/${collectionId}/add-category`, {
+      const res = await fetch(apiUrl(`/api/admin/collections/${collectionId}/add-category`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -166,7 +167,7 @@ export default function CollectionEditPage() {
   const searchProducts = async () => {
     if (searchQuery.length < 2) return;
     try {
-      const res = await fetch(`/api/admin/products/search?q=${encodeURIComponent(searchQuery)}`, {
+      const res = await fetch(apiUrl(`/api/admin/products/search?q=${encodeURIComponent(searchQuery)}`), {
         credentials: "include"
       });
       const data = await res.json();
@@ -184,7 +185,7 @@ export default function CollectionEditPage() {
     }
 
     try {
-      const res = await fetch(`/api/admin/collections/${collectionId}/products`, {
+      const res = await fetch(apiUrl(`/api/admin/collections/${collectionId}/products`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -205,7 +206,7 @@ export default function CollectionEditPage() {
 
   const removeProduct = async (productId: number) => {
     try {
-      const res = await fetch(`/api/admin/collections/${collectionId}/products/${productId}`, {
+      const res = await fetch(apiUrl(`/api/admin/collections/${collectionId}/products/${productId}`), {
         method: "DELETE",
         credentials: "include"
       });
@@ -240,7 +241,7 @@ export default function CollectionEditPage() {
     
     const orderedIds = newArr.map(p => p.id);
     try {
-      await fetch(`/api/admin/collections/${collectionId}/products/reorder`, {
+      await fetch(apiUrl(`/api/admin/collections/${collectionId}/products/reorder`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -256,7 +257,7 @@ export default function CollectionEditPage() {
 
   const toggleFeatured = async (productId: number, isFeatured: boolean) => {
     try {
-      const res = await fetch(`/api/admin/collections/${collectionId}/products/${productId}`, {
+      const res = await fetch(apiUrl(`/api/admin/collections/${collectionId}/products/${productId}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

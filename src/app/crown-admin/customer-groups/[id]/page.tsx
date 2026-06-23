@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FiArrowLeft, FiTrash2, FiPlus, FiSearch } from "react-icons/fi";
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface CustomerGroup {
   id: string;
@@ -38,7 +39,7 @@ export default function CustomerGroupDetailPage({ params }: { params: Promise<{ 
 
   const fetchGroupDetails = async () => {
     try {
-      const res = await fetch(`/api/admin/customer-groups/${id}`, { credentials: "include" });
+      const res = await fetch(apiUrl(`/api/admin/customer-groups/${id}`), { credentials: "include" });
       if (!res.ok) {
         if (res.status === 404) {
           toast.error("Customer group not found");
@@ -56,7 +57,7 @@ export default function CustomerGroupDetailPage({ params }: { params: Promise<{ 
 
   const fetchMembers = async () => {
     try {
-      const res = await fetch(`/api/admin/customer-groups/${id}/members`, { credentials: "include" });
+      const res = await fetch(apiUrl(`/api/admin/customer-groups/${id}/members`), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch members");
       const data = await res.json();
       setMembers(data || []);
@@ -78,7 +79,7 @@ export default function CustomerGroupDetailPage({ params }: { params: Promise<{ 
   const handleRemoveMember = async (userId: string, userName: string) => {
     if (!window.confirm(`Are you sure you want to remove ${userName} from this group?`)) return;
     try {
-      const res = await fetch(`/api/admin/customer-groups/${id}/members/${userId}`, {
+      const res = await fetch(apiUrl(`/api/admin/customer-groups/${id}/members/${userId}`), {
         method: "DELETE",
         credentials: "include"
       });
@@ -97,7 +98,7 @@ export default function CustomerGroupDetailPage({ params }: { params: Promise<{ 
     try {
       const isInitialLoad = !searchQuery.trim();
       const limit = isInitialLoad ? 5 : 50;
-      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(searchQuery.trim())}&limit=${limit}`, { credentials: "include" });
+      const res = await fetch(apiUrl(`/api/admin/users?search=${encodeURIComponent(searchQuery.trim())}&limit=${limit}`), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to search users");
       const data = await res.json();
       
@@ -134,7 +135,7 @@ export default function CustomerGroupDetailPage({ params }: { params: Promise<{ 
     if (selectedUserIds.size === 0) return;
     setIsAdding(true);
     try {
-      const res = await fetch(`/api/admin/customer-groups/${id}/members`, {
+      const res = await fetch(apiUrl(`/api/admin/customer-groups/${id}/members`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userIds: Array.from(selectedUserIds) }),

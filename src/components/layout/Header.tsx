@@ -219,7 +219,7 @@ export default function Header() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch('/api/user/session', {
+        const res = await fetch(apiUrl('/api/user/session'), {
           credentials: 'include',
         });
         if (res.ok) {
@@ -271,7 +271,7 @@ export default function Header() {
     // Fetch dynamic collections for navbar
     async function fetchCollections() {
       try {
-        const res = await fetch('/api/collections');
+        const res = await fetch(apiUrl('/api/collections'));
         if (res.ok) {
           const data = await res.json();
           if (data.collections && data.collections.length > 0) {
@@ -287,7 +287,7 @@ export default function Header() {
     // Fetch product categories for mega menu
     async function fetchCategories() {
       try {
-        const res = await fetch('/api/categories');
+        const res = await fetch(apiUrl('/api/categories'));
         if (res.ok) {
           const data = await res.json();
           if (data.categories && data.categories.length > 0) {
@@ -316,7 +316,7 @@ export default function Header() {
 
     async function fetchPrices() {
       try {
-        const res = await fetch('/api/metal-prices');
+        const res = await fetch(apiUrl('/api/metal-prices'));
 
         if (res.ok) {
           const data = await res.json();
@@ -352,7 +352,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/user/logout', {
+      await fetch(apiUrl('/api/user/logout'), {
         method: 'POST',
         credentials: 'include',
       });

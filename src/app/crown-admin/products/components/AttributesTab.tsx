@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import styles from '../products.module.css';
 import { ProductAttribute } from './types';
 import { toast } from "react-hot-toast";
+import { apiUrl } from "@/lib/cart";
 
 interface AttributesTabProps {
   attributes: ProductAttribute[];
@@ -40,7 +41,7 @@ function TermSelector({ attrId, selectedTermIds, onTermsChange, legacyValues, on
     initialized.current = false;
     setLoading(true);
     setFetchError(null);
-    fetch(`/api/admin/attributes/${attrId}/terms`, { credentials: 'include' })
+    fetch(apiUrl(`/api/admin/attributes/${attrId}/terms`), { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.error) {
@@ -159,7 +160,7 @@ export default function AttributesTab({ attributes, onChange }: AttributesTabPro
   const [localAttrs, setLocalAttrs] = useState<ProductAttribute[]>(attributes || []);
 
   useEffect(() => {
-    fetch(`/api/admin/attributes`, { credentials: 'include' })
+    fetch(apiUrl(`/api/admin/attributes`), { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         setGlobalAttrs(data.attributes || []);

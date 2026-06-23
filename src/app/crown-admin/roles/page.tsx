@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "./roles.module.css";
 import { FiPlus, FiEdit2 } from "react-icons/fi";
+import { apiUrl } from "@/lib/cart";
 
 type Permission = {
   id: string;
@@ -40,8 +41,8 @@ export default function AdminRolesPage() {
     setLoading(true);
     try {
       const [resRoles, resPerms] = await Promise.all([
-        fetch(`/api/admin/roles`),
-        fetch(`/api/admin/permissions`)
+        fetch(apiUrl(`/api/admin/roles`)),
+        fetch(apiUrl(`/api/admin/permissions`))
       ]);
       if (resRoles.ok) setRoles(await resRoles.json());
       if (resPerms.ok) setPermissions(await resPerms.json());
@@ -93,7 +94,7 @@ export default function AdminRolesPage() {
     setSaving(true);
     setErrorMsg("");
 
-    const url = editingRoleId ? `/api/admin/roles/${editingRoleId}` : `/api/admin/roles`;
+    const url = editingRoleId ? apiUrl(`/api/admin/roles/${editingRoleId}`) : apiUrl(`/api/admin/roles`);
     const method = editingRoleId ? 'PUT' : 'POST';
 
     try {
