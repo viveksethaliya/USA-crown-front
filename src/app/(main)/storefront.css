@@ -1,0 +1,42 @@
+.storefront-root {
+  --color-inkblue: #001F3F;
+  --color-inkblue-hover: #00152B;
+  --color-gold: #D4AF37;
+  --color-gold-hover: #C5A017;
+  --color-white: #FFFFFF;
+  --color-bg-light: #F8F9FA;
+  --color-text-main: #333333;
+  --color-text-muted: #666666;
+  --color-border: #E0E0E0;
+
+  background-color: var(--color-bg-light);
+  color: var(--color-text-main);
+  line-height: 1.6;
+}
+
+:where(.storefront-root) *, :where(.storefront-root) *::before, :where(.storefront-root) *::after {
+  border-radius: 0 !important;
+}
+
+:where(.storefront-root) a {
+  text-decoration: none;
+  color: inherit;
+}
+
+:where(.storefront-root) ul, :where(.storefront-root) ol {
+  list-style: none;
+}
+
+:where(.storefront-root) button, 
+:where(.storefront-root) input, 
+:where(.storefront-root) select, 
+:where(.storefront-root) textarea {
+  border-radius: 0;
+  border: 1px solid var(--color-border);
+}
+
+:where(.storefront-root) button {
+  cursor: pointer;
+  background: none;
+  border: none;
+}

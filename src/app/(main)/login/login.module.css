@@ -1,0 +1,310 @@
+.page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+}
+
+.splitLayout {
+  display: flex;
+  width: 100%;
+  min-height: calc(100vh - 80px);
+}
+
+/* --- Brand Side (Left) --- */
+.brandSide {
+  flex: 1;
+  background-color: var(--color-inkblue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+}
+
+.brandContent {
+  max-width: 450px;
+}
+
+.brandLogo {
+  max-height: 50px;
+  margin-bottom: 2.5rem;
+}
+
+.brandTagline {
+  color: var(--color-gold);
+  font-size: 2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+}
+
+.brandText {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.brandFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.brandFeature {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--color-white);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.featureIcon {
+  color: var(--color-gold);
+  font-size: 1rem;
+}
+
+/* --- Form Side (Right) --- */
+.formSide {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  background-color: var(--color-bg-light);
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 440px;
+}
+
+.title {
+  color: var(--color-inkblue);
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  margin-bottom: 2.5rem;
+  line-height: 1.5;
+}
+
+/* --- Form --- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.errorMessage {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-left: 4px solid #dc3545;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-inkblue);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.required {
+  color: red;
+  font-weight: 400;
+  font-size: 0.75rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.input {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  font-size: 1rem;
+  background-color: var(--color-white);
+  color: var(--color-text-main);
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-inkblue);
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.08);
+}
+
+.passwordWrap {
+  position: relative;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-inkblue);
+  padding: 0.2rem 0.5rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.togglePassword:hover {
+  color: var(--color-gold);
+}
+
+/* --- Options Row --- */
+.formOptions {
+  display: flex;
+  align-items: center;
+}
+
+.rememberLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-main);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  accent-color: var(--color-inkblue);
+}
+
+/* --- Login Button --- */
+.loginBtn {
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--color-inkblue);
+  color: var(--color-white);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border: 2px solid var(--color-inkblue);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.loginBtn:hover {
+  background-color: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-inkblue);
+}
+
+/* --- Forgot Link --- */
+.forgotLink {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.forgotLink:hover {
+  color: var(--color-inkblue);
+  text-decoration: underline;
+}
+
+/* --- Register Prompt --- */
+.registerPrompt {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.registerPrompt p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.registerLink {
+  color: var(--color-inkblue);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.registerLink:hover {
+  color: var(--color-gold);
+}
+
+/* =============================================
+   RESPONSIVE: TABLET (≤1024px)
+   ============================================= */
+@media (max-width: 1024px) {
+  .brandSide {
+    padding: 3rem;
+  }
+
+  .formSide {
+    padding: 3rem;
+  }
+
+  .brandTagline {
+    font-size: 1.6rem;
+  }
+}
+
+/* =============================================
+   RESPONSIVE: MOBILE (≤768px)
+   ============================================= */
+@media (max-width: 768px) {
+  .splitLayout {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .page {
+    min-height: auto;
+  }
+
+  .brandSide {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .brandTagline {
+    font-size: 1.4rem;
+  }
+
+  .brandText {
+    margin-bottom: 1.5rem;
+  }
+
+  .formSide {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .formContainer {
+    max-width: 100%;
+  }
+}

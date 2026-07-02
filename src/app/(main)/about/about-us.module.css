@@ -1,0 +1,287 @@
+.main {
+  width: 100%;
+  font-family: var(--font-primary), sans-serif;
+  color: var(--color-inkblue);
+  background-color: var(--color-white);
+}
+
+/* --------------------------------
+   HERO SECTION
+-------------------------------- */
+.heroSection {
+  position: relative;
+  background: var(--color-inkblue);
+  color: var(--color-white);
+  padding: 6rem 2rem;
+  text-align: center;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+
+.heroSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/web-phts/topbnr.jpeg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.1;
+  z-index: 0;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--color-white);
+}
+
+.breadcrumbs {
+  font-size: 0.875rem;
+  color: var(--color-gold);
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.breadcrumbs span {
+  color: var(--color-white);
+}
+
+.heroText {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+
+
+
+/* --------------------------------
+   WHO WE ARE SECTION
+-------------------------------- */
+.whoWeAreSection {
+  padding: 5rem 0;
+  background-color: var(--color-white);
+}
+
+.whoWeAreTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-inkblue);
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: center;
+  position: relative;
+}
+
+.whoWeAreTitle::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: var(--color-gold);
+  margin: 1rem auto 0;
+}
+
+.whoWeAreContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .whoWeAreContent {
+    flex-direction: row;
+  }
+}
+
+.whoWeAreImageWrapper {
+  position: relative;
+  display: flex;
+}
+
+.whoWeAreImage {
+  display: block;
+  object-fit: cover;
+  height: 700px;
+  border: 1px solid #182854;
+  border-radius: 0;
+  background: #182854;
+  box-shadow: 10px 10px 0px 0px var(--color-gold);
+}
+
+.whoWeAreCornerLogo {
+  position: absolute;
+  bottom: 5%;
+  left: 5%;
+  width: 25%;
+  max-width: 150px;
+  min-width: 80px;
+  height: auto;
+  z-index: 2;
+  object-fit: contain;
+}
+
+.whoWeAreText {
+  flex: 1;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--color-inkblue);
+  white-space: pre-line;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* --------------------------------
+   COMMITMENT SECTION
+-------------------------------- */
+.commitmentSection {
+  padding: 5rem 2rem;
+  background: #f8f8f8;
+}
+
+.commitmentContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+@media (min-width: 900px) {
+  .commitmentContent {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.commitmentText {
+  flex: 1;
+  max-width: 750px;
+}
+
+.sectionLabel {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--color-gold);
+}
+
+.commitmentTitle {
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-inkblue);
+  line-height: 1.2;
+}
+
+.commitmentDescription {
+  font-size: 1rem;
+  line-height: 1.9;
+  color: #33415c;
+  margin-bottom: 1.5rem;
+}
+
+.commitmentStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.statCard {
+  background: var(--color-white);
+  border: 1px solid rgba(24, 40, 84, 0.1);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.04);
+}
+
+.statCard h3 {
+  font-size: 2rem;
+  color: var(--color-inkblue);
+  margin-bottom: 0.5rem;
+}
+
+.statCard span {
+  font-size: 0.95rem;
+  color: #5c677d;
+  line-height: 1.5;
+}
+
+
+/* --------------------------------
+   BOTTOM BANNER
+-------------------------------- */
+.bottomBanner {
+  background: linear-gradient(rgba(0, 12, 31, 0.95), rgba(0, 12, 31, 0.95)), url('/web-phts/btmbnr.jpg.jpeg');
+  background-size: cover;
+  background-position: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.bannerText {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.bannerTitle {
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.bannerBtn {
+  background: #fff;
+  color: #000;
+  padding: 0.8rem 2.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.bannerBtn:hover {
+  background: var(--color-gold);
+}

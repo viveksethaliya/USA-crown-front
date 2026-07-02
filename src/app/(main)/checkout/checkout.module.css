@@ -1,0 +1,303 @@
+.page {
+  min-height: calc(100vh - 80px);
+  background: var(--color-bg-light);
+  padding: 2rem 0 4rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  color: var(--color-gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  color: var(--color-inkblue);
+  font-size: 2rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.secondaryLink {
+  color: var(--color-inkblue);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-transform: uppercase;
+}
+
+.checkoutGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.formSections {
+  display: grid;
+  gap: 1rem;
+}
+
+.section,
+.summary,
+.confirmation,
+.emptyState {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  padding: 1.25rem;
+}
+
+.section h2,
+.summary h2 {
+  color: var(--color-inkblue);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sectionHeader h2 {
+  margin-bottom: 0;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-text-main);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.7rem 0.8rem;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.checkboxLabel,
+.termsLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-main);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.checkboxLabel input,
+.termsLabel input {
+  width: 16px;
+  height: 16px;
+}
+
+.termsLabel {
+  align-items: flex-start;
+  margin-top: 1rem;
+  line-height: 1.45;
+}
+
+.termsLabel a {
+  color: var(--color-inkblue);
+  text-decoration: underline;
+}
+
+.summary {
+  position: sticky;
+  top: 1rem;
+}
+
+.summaryItem,
+.summaryRow,
+.confirmationTotal {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.summaryItem {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.summaryItem span {
+  min-width: 0;
+}
+
+.summaryRow {
+  color: var(--color-text-main);
+}
+
+.discountRow {
+  color: var(--color-error);
+}
+
+.discountRow strong {
+  color: var(--color-error);
+}
+
+.totalRow {
+  border-top: 1px solid var(--color-gray-200);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--color-black);
+}
+
+.summaryRow strong,
+.summaryItem strong,
+.confirmationTotal strong {
+  color: var(--color-inkblue);
+  white-space: nowrap;
+}
+
+.primaryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 1rem;
+  padding: 0 1rem;
+  background: var(--color-inkblue);
+  color: var(--color-white);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.primaryButton:hover {
+  background: var(--color-gold);
+  color: var(--color-inkblue);
+}
+
+.primaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.errorBox {
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  border: 1px solid #f0b8ad;
+  background: #fff2f0;
+  color: #b42318;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.emptyState {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.emptyState h2 {
+  color: var(--color-inkblue);
+  margin-bottom: 0.5rem;
+}
+
+.emptyState .primaryButton {
+  max-width: 260px;
+  margin: 1.5rem auto 0;
+}
+
+.confirmation {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.confirmation h1 {
+  color: var(--color-inkblue);
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+}
+
+.confirmation p {
+  color: var(--color-text-main);
+}
+
+.confirmationTotal {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.confirmation .primaryButton {
+  max-width: 260px;
+  margin: 1.5rem auto 0;
+}
+
+@media (max-width: 900px) {
+  .checkoutGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .header,
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+}
