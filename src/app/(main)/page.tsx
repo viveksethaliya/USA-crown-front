@@ -2,7 +2,7 @@ import Link from "next/link";
 import Script from "next/script";
 import styles from "./page.module.css";
 import TestimonialCarousel from "@/components/TestimonialCarousel";
-import HeroBanner from "@/components/HeroBanner";
+import HeroBannerDynamic from "@/components/layout/HeroBannerDynamic";
 import { apiUrl } from "@/lib/cart";
 
 async function fetchFeaturedCategories() {
@@ -24,7 +24,7 @@ export default async function Home() {
     <div className={styles.page}>
       <Script src="//code.tidio.co/hutysrzpj6mhyrdxotho54hskhb4hgq5.js" strategy="lazyOnload" />
       {/* Dynamic Promotional Banner */}
-      <HeroBanner />
+      <HeroBannerDynamic />
 
       {/* 50/50 Split Hero Section */}
       <section className={styles.heroSplit}>

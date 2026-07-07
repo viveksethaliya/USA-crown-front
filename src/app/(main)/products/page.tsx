@@ -13,7 +13,7 @@ interface Product {
   sku: string;
   type: string;
   image: string | null;
-  metalTypes: string[];
+  swatchAttributes: { type: string; value: string; color_hex: string | null; image_url: string | null }[];
   tags?: { id: number; name: string }[];
   sizeRanges?: { name: string; range: string }[];
   priceRange?: string | null;
@@ -65,7 +65,7 @@ const CATEGORY_ORDER = [
 function sortCategories(aTitle: string, bTitle: string) {
   const aIdx = CATEGORY_ORDER.indexOf(aTitle.toUpperCase());
   const bIdx = CATEGORY_ORDER.indexOf(bTitle.toUpperCase());
-  
+
   if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
   if (aIdx !== -1) return -1;
   if (bIdx !== -1) return 1;
@@ -77,7 +77,6 @@ function ProductsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
-  const metalParam = searchParams.get('metal');
 
   const [products, setProducts] = useState<Product[]>([]);
   const [filters, setFilters] = useState<DynamicFilter[]>([]);
@@ -92,8 +91,6 @@ function ProductsContent() {
 
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>(initialSelectedAttrs);
   const [categories, setCategories] = useState<CategoryTree[]>([]);
-  const [allMetalTypes, setAllMetalTypes] = useState<string[]>([]);
-  const [metalColorMap, setMetalColorMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const [sortBy, setSortBy] = useState('name');
@@ -110,9 +107,6 @@ function ProductsContent() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     categoryParam ? categoryParam.split(',') : []
   );
-  const [selectedMetals, setSelectedMetals] = useState<string[]>(
-    metalParam ? metalParam.split(',') : []
-  );
   const [mobileSidebar, setMobileSidebar] = useState(false);
 
   const [page, setPage] = useState(1);
@@ -120,18 +114,22 @@ function ProductsContent() {
   const [total, setTotal] = useState(0);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userPermission, setUserPermission] = useState<string | null>(null);
 
   // Check user session on mount
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/session`, {
-          credentials: 'include',
+        const token = localStorage.getItem('storeToken');
+        if (!token) return;
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/store/auth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) {
             setIsAuthenticated(true);
+            setUserPermission(data.user?.purchasing_permission || 'can_place_orders');
           }
         }
       } catch {
@@ -145,7 +143,7 @@ function ProductsContent() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/categories`);
         const data = await res.json();
         setCategories(data.categories || []);
       } catch (err) {
@@ -163,11 +161,9 @@ function ProductsContent() {
         if (categoryParam) queryParams.set('category', categoryParam);
         const s = searchParams.get('search');
         if (s) queryParams.set('search', s);
-        
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/filters?${queryParams.toString()}`);
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/filters?${queryParams.toString()}`);
         const data = await res.json();
-        setAllMetalTypes(data.metalTypes || []);
-        setMetalColorMap(data.metalColors || {});
         setFilters(data.filters || []);
       } catch (err) {
         console.error('Failed to fetch product filters', err);
@@ -180,12 +176,11 @@ function ProductsContent() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setSelectedCategories(categoryParam ? categoryParam.split(',') : []);
-    setSelectedMetals(metalParam ? metalParam.split(',') : []);
     const s = searchParams.get('search') || '';
     setSearchQuery(s);
     setDebouncedSearchQuery(s);
     setPage(1);
-  }, [categoryParam, metalParam, searchParams]);
+  }, [categoryParam, searchParams]);
 
   // Fetch products
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
@@ -194,7 +189,6 @@ function ProductsContent() {
     search: string,
     sort: string,
     categorySlugs: string[],
-    metalTypes: string[],
     attrs: Record<string, string[]>,
     signal?: AbortSignal
   ) => {
@@ -202,12 +196,11 @@ function ProductsContent() {
       const params = new URLSearchParams({ page: String(p), limit: '24', sort });
       if (search) params.set('search', search);
       if (categorySlugs.length > 0) params.set('category', categorySlugs.join(','));
-      if (metalTypes.length > 0) params.set('metal', metalTypes.join(','));
       Object.entries(attrs).forEach(([slug, values]) => {
         if (Array.isArray(values) && values.length > 0) params.set(`attr_${slug}`, values.join(','));
       });
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?${params}`, { signal });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/products?${params}`, { signal });
       const data = await res.json();
 
       if (signal?.aborted) return;
@@ -237,13 +230,13 @@ function ProductsContent() {
   useEffect(() => {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
-      fetchProducts(page, debouncedSearchQuery, sortBy, selectedCategories, selectedMetals, selectedAttributes, controller.signal);
+      fetchProducts(page, debouncedSearchQuery, sortBy, selectedCategories, selectedAttributes, controller.signal);
     }, 0);
     return () => {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [page, debouncedSearchQuery, sortBy, selectedCategories, selectedMetals, selectedAttributes, fetchProducts]);
+  }, [page, debouncedSearchQuery, sortBy, selectedCategories, selectedAttributes, fetchProducts]);
 
   const handleSearch = (val: string) => {
     setSearchQuery(val);
@@ -266,7 +259,7 @@ function ProductsContent() {
   const toggleCategorySelection = (slug: string, descendantSlugs: string[], ancestorSlugs: string[]) => {
     setLoading(true);
     let newCats: string[];
-    
+
     if (selectedCategories.includes(slug)) {
       // Unchecking: remove this slug and ensure descendants are also removed
       newCats = selectedCategories.filter(c => c !== slug && !descendantSlugs.includes(c));
@@ -275,7 +268,7 @@ function ProductsContent() {
       newCats = selectedCategories.filter(c => !ancestorSlugs.includes(c) && !descendantSlugs.includes(c));
       newCats.push(slug);
     }
-    
+
     setSelectedCategories(newCats);
     updateUrlParams(newCats, selectedAttributes);
     setPage(1);
@@ -315,9 +308,9 @@ function ProductsContent() {
             {category.name}
           </label>
           {hasChildren && (
-            <button 
-              type="button" 
-              onClick={() => setExpandedCategories(prev => 
+            <button
+              type="button"
+              onClick={() => setExpandedCategories(prev =>
                 prev.includes(category.slug) ? prev.filter(c => c !== category.slug) : [...prev, category.slug]
               )}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '1.2rem', color: '#666' }}
@@ -350,23 +343,9 @@ function ProductsContent() {
     setPage(1);
   };
 
-  const toggleMetal = (metal: string) => {
-    setLoading(true);
-    let newMetals: string[];
-    if (selectedMetals.includes(metal)) {
-      newMetals = selectedMetals.filter(m => m !== metal);
-    } else {
-      newMetals = [...selectedMetals, metal];
-    }
-    setSelectedMetals(newMetals);
-    updateUrlParams(selectedCategories, selectedAttributes);
-    setPage(1);
-  };
-
   const resetFilters = () => {
     setLoading(true);
     setSelectedCategories([]);
-    setSelectedMetals([]);
     setSearchQuery('');
     setDebouncedSearchQuery('');
     setPage(1);
@@ -403,7 +382,7 @@ function ProductsContent() {
 
           {/* Categories */}
           <div className={styles.filterBlock}>
-            <h3 
+            <h3
               className={styles.filterTitle}
               onClick={() => toggleFilterExpand('categories')}
               style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', userSelect: 'none' }}
@@ -417,36 +396,12 @@ function ProductsContent() {
             )}
           </div>
 
-          {/* Metal Type */}
-          <div className={styles.filterBlock}>
-            <h3 
-              className={styles.filterTitle}
-              onClick={() => toggleFilterExpand('metal_type')}
-              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', userSelect: 'none' }}
-            >
-              Metal Type <span>{expandedFilters.includes('metal_type') ? '−' : '+'}</span>
-            </h3>
-            {expandedFilters.includes('metal_type') && (
-              <div className={styles.filterList}>
-                {allMetalTypes.map(metal => (
-                  <label key={metal} className={styles.checkLabel}>
-                    <input
-                      type="checkbox"
-                      checked={selectedMetals.includes(metal)}
-                      onChange={() => toggleMetal(metal)}
-                      className={styles.checkInput}
-                    />
-                    {metal}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
+
 
           {/* Dynamic attribute filters */}
           {filters.map(filter => (
             <div key={filter.id} className={styles.filterBlock}>
-              <h3 
+              <h3
                 className={styles.filterTitle}
                 onClick={() => toggleFilterExpand(filter.slug)}
                 style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', userSelect: 'none' }}
@@ -463,8 +418,12 @@ function ProductsContent() {
                         onChange={() => toggleAttribute(filter.slug, term.name)}
                         className={styles.checkInput}
                       />
-                      {term.color_hex && (
-                        <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', background: term.color_hex, marginRight: 4, border: '1px solid #ccc' }} />
+                      {filter.type === 'color' && term.color_hex && (
+                        <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: '50%', background: term.color_hex, marginRight: 6, border: '1px solid #ccc' }} />
+                      )}
+                      {filter.type === 'image' && term.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={term.image_url} alt={term.name} style={{ width: 14, height: 14, borderRadius: '50%', marginRight: 6, border: '1px solid #ccc', objectFit: 'cover' }} />
                       )}
                       {term.name}
                     </label>
@@ -555,30 +514,36 @@ function ProductsContent() {
                   </div>
                   <div className={styles.productInfo}>
                     <h3 className={styles.productName}>{product.name}</h3>
-                    <div className={styles.metalRow}>
-                      <span className={styles.metalLabel}>Metal Type:</span>
-                      <div className={styles.metalDots}>
-                        {(product.metalTypes || []).map(m => (
-                          <span
-                            key={m}
-                            className={styles.metalDot}
-                            style={
-                              metalColorMap[m]
-                                ? { backgroundColor: metalColorMap[m] }
-                                : { background: 'transparent', backgroundImage: 'linear-gradient(to bottom right, transparent 45%, #d0d5dd 45%, #d0d5dd 55%, transparent 55%)', border: '1px solid #d0d5dd' }
-                            }
-                            title={m}
-                          ></span>
-                        ))}
+                    {product.swatchAttributes && product.swatchAttributes.length > 0 && (
+                      <div className={styles.metalRow}>
+                        <span className={styles.metalLabel}>Options:</span>
+                        <div className={styles.metalDots}>
+                          {product.swatchAttributes.map(swatch => (
+                            <span
+                              key={swatch.value}
+                              className={styles.metalDot}
+                              style={
+                                swatch.type === 'color' && swatch.color_hex
+                                  ? { backgroundColor: swatch.color_hex, border: '1px solid rgba(0,0,0,0.1)' }
+                                  : swatch.type === 'image' && swatch.image_url
+                                    ? { backgroundImage: `url(${swatch.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(0,0,0,0.1)' }
+                                    : { background: '#f4f6f8', border: '1px solid #d0d5dd', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#555', fontWeight: 600, letterSpacing: '-0.5px' }
+                              }
+                              title={swatch.value}
+                            >
+                              {(!swatch.color_hex && !swatch.image_url) ? swatch.value.substring(0, 3).toUpperCase() : ''}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     {product.sizeRanges && product.sizeRanges.map((sz, i) => (
                       <div key={i} className={styles.metalRow}>
                         <span className={styles.metalLabel}>{sz.name}:</span>
                         <span className={styles.metalValue}>{sz.range}</span>
                       </div>
                     ))}
-                    {isAuthenticated && product.priceRange && (
+                    {isAuthenticated && userPermission !== 'view_only' && product.priceRange && (
                       <div className={styles.metalRow}>
                         <span className={styles.metalLabel}>Price:</span>
                         <span className={styles.priceValue}>{product.priceRange}</span>

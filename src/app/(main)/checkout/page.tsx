@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import {
   apiUrl,
   formatMoney,
-  getGuestCartId,
+  cartFetch,
   type CartApiResponse,
   type CartSummary
 } from '@/lib/cart';
@@ -102,10 +102,7 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      const guestId = getGuestCartId();
-      const cartResponse = await fetch(apiUrl(`/api/cart?guestId=${encodeURIComponent(guestId)}`), {
-        credentials: 'include',
-      });
+      const cartResponse = await cartFetch('/api/store/cart');
       const cartData = await cartResponse.json() as CartApiResponse;
 
       if (!cartResponse.ok) throw new Error(cartData.error || 'Failed to load cart');
@@ -121,10 +118,8 @@ export default function CheckoutPage() {
 
       setCart(cartData.cart);
 
-      if (cartData.cart.authenticated) {
-        const profileResponse = await fetch(apiUrl('/api/user/profile'), {
-          credentials: 'include',
-        });
+      if (cartData.cart?.id) {
+        const profileResponse = await cartFetch('/api/user/profile');
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json() as ProfileResponse;
@@ -237,10 +232,10 @@ export default function CheckoutPage() {
 
         {loading ? (
           <div className={styles.emptyState}>Loading checkout...</div>
-        ) : !cart?.authenticated ? (
+        ) : !cart ? (
           <div className={styles.emptyState}>
             <h2>Login required</h2>
-            <p>Your cart will merge into your member account after login.</p>
+            <p>You must be logged in to access checkout.</p>
             <Link href="/login" className={styles.primaryButton}>Login to Continue</Link>
           </div>
         ) : cart.items.length === 0 ? (

@@ -323,8 +323,8 @@
   animation: slideDown 0.2s ease forwards;
   
   /* Slightly short height but big enough */
-  min-height: 400px;
-  max-height: 60vh; 
+  min-height: 550px;
+  max-height: 75vh; 
   display: flex;
   justify-content: center;
 }
@@ -343,19 +343,19 @@
 .megaMenuInner {
   display: flex;
   width: 100%;
-  max-width: 1400px; /* limits inner content width while background is full width */
+  max-width: none;
   margin: 0 auto;
 }
 
 /* --- LEFT SIDE: CATEGORIES --- */
 .categorySidebar {
-  width: 280px;
+  width: 320px;
   flex-shrink: 0;
   background-color: #f8f9fa;
   border-right: 1px solid #e9ecef;
   padding: 1rem 0;
   overflow-y: auto;
-  max-height: 60vh;
+  max-height: 75vh;
 }
 
 .categoryList {
@@ -405,7 +405,7 @@
   background-color: #ffffff;
   padding: 2rem 3rem;
   overflow-y: auto;
-  max-height: 60vh;
+  max-height: 75vh;
 }
 
 .sectionTitle {
@@ -552,6 +552,49 @@
 
 .mobileCatalogOverlay {
   display: none;
+}
+
+/* --- Promo Banner --- */
+.promoBanner {
+  background-color: var(--color-inkblue);
+  color: var(--color-gold);
+  text-align: center;
+  padding: 0.5rem 2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.promoCloseBtn {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--color-gold);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+}
+
+/* --- View Full Catalog Button --- */
+.viewFullCatalogBtn {
+  display: inline-block;
+  background-color: var(--color-gold);
+  color: var(--color-inkblue);
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.viewFullCatalogBtn:hover {
+  opacity: 0.9;
 }
 
 /* =============================================

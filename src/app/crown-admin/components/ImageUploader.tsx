@@ -3,7 +3,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 
-const API = 'http://localhost:5000/api/admin/upload';
+import { ADMIN_API } from '@/lib/config';
+const API = `${ADMIN_API}/upload`;
 
 /**
  * Reusable image uploader component.
@@ -69,11 +70,26 @@ export default function ImageUploader({ folder = 'misc', onUploaded, multiple = 
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files) return;
-    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const fileArray = Array.from(files);
+    
+    const processFile = (file: File) => {
+      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        const id = Math.random().toString(36).slice(2);
+        setUploading(prev => [...prev, { id, name: file.name, done: true, error: 'Invalid file type. Only images and PDFs are allowed.' }]);
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        const id = Math.random().toString(36).slice(2);
+        setUploading(prev => [...prev, { id, name: file.name, done: true, error: 'File size exceeds the 2MB limit.' }]);
+        return;
+      }
+      uploadFile(file);
+    };
+
     if (!multiple) {
-      uploadFile(imageFiles[0]);
+      if (fileArray[0]) processFile(fileArray[0]);
     } else {
-      imageFiles.forEach(uploadFile);
+      fileArray.forEach(processFile);
     }
   }, [multiple, uploadFile]);
 
@@ -105,17 +121,17 @@ export default function ImageUploader({ folder = 'misc', onUploaded, multiple = 
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,application/pdf"
           multiple={multiple}
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
         />
         <Upload className={`w-8 h-8 mx-auto mb-3 transition-colors ${isDragging ? 'text-blue-400' : 'text-gray-600'}`} />
         <p className={`text-sm font-medium ${isDragging ? 'text-blue-300' : 'text-gray-400'}`}>
-          {isDragging ? 'Drop to upload' : 'Drag & drop images here'}
+          {isDragging ? 'Drop to upload' : 'Drag & drop files here'}
         </p>
         <p className="text-xs text-gray-600 mt-1">
-          or <span className="text-blue-400 hover:text-blue-300">click to browse</span> · Max 15 MB · JPG, PNG, WebP, AVIF
+          or <span className="text-blue-400 hover:text-blue-300">click to browse</span> · Max 2 MB · Images & PDF
         </p>
       </div>
 

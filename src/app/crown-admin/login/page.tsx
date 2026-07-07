@@ -2,11 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 export default function AdminLogin() {
   const router = useRouter();
+  const [step, setStep] = useState<'login' | 'otp'>('login');
+  
+  // Login fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // OTP fields
+  const [otp, setOtp] = useState('');
+  const [tempToken, setTempToken] = useState('');
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -14,29 +23,47 @@ export default function AdminLogin() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+      if (!response.ok) throw new Error(data.message || 'Login failed');
+      
+      if (data.step === 'otp') {
+        setTempToken(data.tempToken);
+        setStep('otp');
+      } else {
+        // Fallback if backend doesn't enforce OTP for some reason
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminUser', JSON.stringify(data.user));
+        router.push('/crown-admin');
       }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      // Save token and user info
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, otp }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Verification failed');
+      
       localStorage.setItem('adminToken', data.token);
       localStorage.setItem('adminUser', JSON.stringify(data.user));
-
-      // Redirect to dashboard
       router.push('/crown-admin');
-      
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -45,58 +72,109 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-[#f0ede5] flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo Card */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 mb-2">
-            Crown Admin
-          </h1>
-          <p className="text-gray-400 text-sm">Sign in to manage your store</p>
+          <h1 className="text-4xl font-bold text-[#d1a054] tracking-wide mb-2">Crown Admin</h1>
+          <p className="text-[#312f2c]/50 text-sm">
+            {step === 'login' ? 'Sign in to manage your store' : 'Enter verification code'}
+          </p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
-            {error}
-          </div>
-        )}
+        <div className="bg-[#ece9e1] border border-[#312f2c]/10 rounded-2xl p-8 shadow-sm">
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/8 border border-red-500/20 rounded-lg text-red-600 text-sm text-center">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-950 border border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all"
-              placeholder="admin@yourstore.com"
-              required
-            />
-          </div>
+          {step === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-[#312f2c]/60 mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-[#312f2c]/12 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] placeholder:text-[#312f2c]/30 transition-all"
+                  placeholder="admin@yourstore.com"
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-950 border border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white transition-all"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-[#312f2c]/60 mb-1.5">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-[#312f2c]/12 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] placeholder:text-[#312f2c]/30 transition-all"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-medium rounded-lg shadow-lg shadow-blue-900/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Authenticating...' : 'Sign In'}
-          </button>
-        </form>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 px-4 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Authenticating...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-5">
+              <div className="text-center mb-6">
+                <p className="text-sm text-[#312f2c]/70">We sent a 6-digit code to</p>
+                <p className="font-semibold text-[#312f2c]">{email}</p>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  className="w-full px-4 py-4 text-center tracking-[0.5em] text-2xl bg-white border border-[#312f2c]/12 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] transition-all"
+                  placeholder="------"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || otp.length !== 6}
+                className="w-full py-3 px-4 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify & Login'
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStep('login')}
+                className="w-full py-2 text-sm text-[#312f2c]/60 hover:text-[#312f2c] transition-colors"
+              >
+                Back to Login
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

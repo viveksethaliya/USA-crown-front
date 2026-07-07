@@ -140,34 +140,30 @@ export default function SmartSearchBar() {
       abortRef.current = new AbortController();
 
       try {
-        // 1. Hit Meilisearch directly from the client for lightning fast search!
-        const meiliRes = await fetch(
-          `${process.env.NEXT_PUBLIC_MEILISEARCH_HOST}/indexes/products/search`,
+        // 1. Hit our backend API for robust search fallback
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const res = await fetch(
+          `${apiUrl}/api/store/catalog/products?search=${encodeURIComponent(debouncedQuery)}&limit=6`,
           {
-            method: 'POST',
+            method: 'GET',
             headers: {
-              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_MEILISEARCH_PUBLIC_KEY}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              q: debouncedQuery,
-              limit: 6
-            }),
             signal: abortRef.current.signal
           }
         );
 
-        if (meiliRes.ok) {
-          const data = await meiliRes.json();
+        if (res.ok) {
+          const data = await res.json();
           
-          const mappedProducts = (data.hits || []).map((hit: any) => ({
+          const mappedProducts = (data.products || []).map((hit: any) => ({
             id: hit.id,
             name: hit.name,
             sku: hit.sku,
-            image: hit.image,
+            image: hit.product_images?.[0]?.url || hit.image, // Depends on what backend returns for image
             price: hit.regular_price ? `$${hit.regular_price.toFixed(2)}` : undefined,
-            category: hit.tags && hit.tags.length > 0 ? hit.tags[0] : undefined,
-            matchScore: 10 // meilisearch handles relevance perfectly
+            category: hit.product_categories?.[0]?.categories?.name,
+            matchScore: (hit.name.toLowerCase().includes(debouncedQuery.toLowerCase()) || hit.sku.toLowerCase().includes(debouncedQuery.toLowerCase())) ? 10 : 5
           }));
 
           setProducts(mappedProducts);
@@ -208,7 +204,7 @@ Given a user's search query, respond ONLY with a valid JSON object (no markdown,
 {
   "correctedQuery": "corrected spelling if needed, or null",
   "suggestions": [
-    { "label": "suggestion text", "type": "correction|synonym|category|popular|ai" }
+    { "label": "suggestion text", "type": "correction|synonym|popular|ai" }
   ],
   "context": "one sentence describing what the user is likely looking for, or null"
 }
@@ -217,7 +213,6 @@ Rules:
 - Detect spelling mistakes and offer the corrected form as type "correction"
 - IMPORTANT: If the query looks like a SKU or product code (e.g., contains numbers and dashes like "FR-123"), DO NOT autocorrect it. Return correctedQuery as null.
 - Expand abbreviations (e.g. "18k" → "18 karat gold")
-- Offer related categories as type "category"
 - Keep labels short (≤ 5 words)
 - context: plain helpful note (e.g. "Looks like you're searching for gold chains") or null`
               },
@@ -245,31 +240,30 @@ Rules:
           if (parsed.context) setAiContext(parsed.context);
 
           // If the primary search found nothing, but AI offered a correction or synonym, fetch products for it!
-          const fallbackTerm = parsed.correctedQuery || (parsed.suggestions && parsed.suggestions[0]?.type !== 'category' ? parsed.suggestions[0]?.label : null);
+          const fallbackTerm = parsed.correctedQuery || (parsed.suggestions && parsed.suggestions[0]?.label ? parsed.suggestions[0]?.label : null);
           if (fallbackTerm) {
             // We only need to fetch if the current products list is empty
             setProducts((currentProducts) => {
               if (currentProducts.length === 0) {
-                fetch(`${process.env.NEXT_PUBLIC_MEILISEARCH_HOST}/indexes/products/search`, {
-                  method: 'POST',
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                fetch(`${apiUrl}/api/store/catalog/products?search=${encodeURIComponent(fallbackTerm)}&limit=6`, {
+                  method: 'GET',
                   headers: {
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_MEILISEARCH_PUBLIC_KEY}`,
                     'Content-Type': 'application/json'
                   },
-                  body: JSON.stringify({ q: fallbackTerm, limit: 6 }),
                   signal: aiAbortRef.current?.signal 
                 })
                   .then(r => r.json())
                   .then(data => {
-                    if (data.hits && data.hits.length > 0) {
-                      const mappedProducts = data.hits.map((hit: any) => ({
+                    if (data.products && data.products.length > 0) {
+                      const mappedProducts = data.products.map((hit: any) => ({
                         id: hit.id,
                         name: hit.name,
                         sku: hit.sku,
-                        image: hit.image,
+                        image: hit.product_images?.[0]?.url || hit.image,
                         price: hit.regular_price ? `$${hit.regular_price.toFixed(2)}` : undefined,
-                        category: hit.tags && hit.tags.length > 0 ? hit.tags[0] : undefined,
-                        matchScore: 10
+                        category: hit.product_categories?.[0]?.categories?.name,
+                        matchScore: (hit.name.toLowerCase().includes(fallbackTerm.toLowerCase()) || hit.sku.toLowerCase().includes(fallbackTerm.toLowerCase())) ? 10 : 5
                       }));
                       setProducts(mappedProducts);
                     }
@@ -342,7 +336,7 @@ Rules:
         <input
           ref={inputRef}
           type="text"
-          placeholder="Search by SKU, name, category, or material…"
+          placeholder="Search by SKU, name, or material…"
           className={styles.searchInput}
           value={query}
           autoComplete="off"
@@ -451,8 +445,7 @@ Rules:
                               <span className={styles.suggestionIcon} aria-hidden="true">
                                 {s.type === "correction" ? "✎" :
                                   s.type === "synonym" ? "↔" :
-                                    s.type === "category" ? "◈" :
-                                      s.type === "ai" ? "✦" : "🔍"}
+                                    s.type === "ai" ? "✦" : "🔍"}
                               </span>
                               {s.label}
                             </button>

@@ -16,6 +16,8 @@ interface UserProfile {
   mobile: string;
   created_at: string;
   roles: { name: string }[];
+  level?: number;
+  parent_user_id?: string | null;
 }
 
 interface CompanyProfile {
@@ -35,6 +37,8 @@ interface SubUser {
   mobile: string;
   is_active: boolean;
   created_at: string;
+  purchasing_permission?: string;
+  spending_limit?: number | null;
   roles: { name: string }[];
 }
 
@@ -71,14 +75,24 @@ export default function ProfilePage() {
   const [newSubUserEmail, setNewSubUserEmail] = useState('');
   const [newSubUserMobile, setNewSubUserMobile] = useState('');
   const [newSubUserPassword, setNewSubUserPassword] = useState('');
+  const [newSubUserPermission, setNewSubUserPermission] = useState('can_place_orders');
+  const [newSubUserSpendingLimit, setNewSubUserSpendingLimit] = useState('');
 
   useEffect(() => {
     async function fetchData() {
       try {
+        const token = localStorage.getItem('storeToken');
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        const headers = { 'Authorization': `Bearer ${token}` };
+
         const [profileRes, companyRes, usersRes] = await Promise.all([
-          fetch(apiUrl('/api/account/profile'), { credentials: 'include' }),
-          fetch(apiUrl('/api/account/company'), { credentials: 'include' }),
-          fetch(apiUrl('/api/account/users'), { credentials: 'include' }).catch(() => null)
+          fetch(apiUrl('/api/store/account/profile'), { headers }),
+          fetch(apiUrl('/api/store/account/company'), { headers }),
+          fetch(apiUrl('/api/store/account/users'), { headers }).catch(() => null)
         ]);
 
         if (profileRes.status === 401) {
@@ -87,12 +101,15 @@ export default function ProfilePage() {
         }
 
         if (profileRes.ok) {
-          const data = await profileRes.json();
-          setProfile(data);
-          setFirstName(data.first_name || '');
-          setLastName(data.last_name || '');
-          setMobile(data.mobile || '');
-          setEmail(data.email || '');
+          const pData = await profileRes.json();
+          setProfile(pData);
+          setFirstName(pData.first_name || '');
+          setLastName(pData.last_name || '');
+          setMobile(pData.mobile || '');
+          setEmail(pData.email || '');
+          if (pData.level === 1 && activeTab === 'subusers') {
+            setActiveTab('personal');
+          }
         }
 
         if (companyRes.ok) {
@@ -127,11 +144,11 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(apiUrl('/api/account/profile'), {
+      const token = localStorage.getItem('storeToken');
+      const res = await fetch(apiUrl('/api/store/account/profile'), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ first_name: firstName, last_name: lastName, mobile }),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update profile');
       toast.success('Profile updated successfully!');
@@ -146,9 +163,10 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(apiUrl('/api/account/company'), {
+      const token = localStorage.getItem('storeToken');
+      const res = await fetch(apiUrl('/api/store/account/company'), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           company_name: companyName,
           website: companyWebsite,
@@ -160,7 +178,6 @@ export default function ProfilePage() {
           postal_code: postalCode,
           country: country
         }),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update company. Sub-users cannot update company profile.');
       toast.success('Company info updated successfully!');
@@ -175,24 +192,26 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch(apiUrl('/api/account/users'), {
+      const token = localStorage.getItem('storeToken');
+      const res = await fetch(apiUrl('/api/store/account/users'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           first_name: newSubUserFirstName,
           last_name: newSubUserLastName,
           email: newSubUserEmail,
           mobile: newSubUserMobile,
-          password: newSubUserPassword
+          password: newSubUserPassword,
+          purchasing_permission: newSubUserPermission,
+          spending_limit: newSubUserSpendingLimit
         }),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create sub-user. Sub-users cannot create other users.');
       const data = await res.json();
       setSubUsers([...subUsers, data]);
       toast.success('Sub-user created successfully!');
       setNewSubUserFirstName('');
-      setNewSubUserLastName(''); setNewSubUserEmail(''); setNewSubUserMobile(''); setNewSubUserPassword('');
+      setNewSubUserLastName(''); setNewSubUserEmail(''); setNewSubUserMobile(''); setNewSubUserPassword(''); setNewSubUserPermission('can_place_orders'); setNewSubUserSpendingLimit('');
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -202,17 +221,61 @@ export default function ProfilePage() {
 
   const handleToggleSubUser = async (id: string, currentStatus: boolean) => {
     try {
-      const res = await fetch(apiUrl(`/api/account/users/${id}`), {
+      const res = await fetch(apiUrl(`/api/store/account/users/${id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !currentStatus }),
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('storeToken')}`
+        },
+        body: JSON.stringify({ is_active: !currentStatus })
       });
-      if (res.ok) {
-        setSubUsers(subUsers.map(u => u.id === id ? { ...u, is_active: !currentStatus } : u));
-      }
-    } catch (err) {
-      console.error(err);
+      if (!res.ok) throw new Error('Failed to update sub-user');
+      
+      const updatedUser = await res.json();
+      setSubUsers(subUsers.map(u => u.id === id ? { ...u, is_active: updatedUser.status === 'approved' } : u));
+      toast.success(`Sub-user ${!currentStatus ? 'activated' : 'deactivated'}`);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleUpdatePermission = async (id: string, newPermission: string) => {
+    try {
+      const res = await fetch(apiUrl(`/api/store/account/users/${id}/permission`), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('storeToken')}`
+        },
+        body: JSON.stringify({ purchasing_permission: newPermission })
+      });
+      if (!res.ok) throw new Error('Failed to update permission');
+      
+      const updatedUser = await res.json();
+      setSubUsers(subUsers.map(u => u.id === id ? { ...u, purchasing_permission: updatedUser.purchasing_permission } : u));
+      toast.success('Permission updated!');
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleUpdateSpendingLimit = async (id: string, newLimit: string) => {
+    try {
+      const res = await fetch(apiUrl(`/api/store/account/users/${id}/permission`), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('storeToken')}`
+        },
+        body: JSON.stringify({ spending_limit: newLimit })
+      });
+      if (!res.ok) throw new Error('Failed to update spending limit');
+      
+      const updatedUser = await res.json();
+      setSubUsers(subUsers.map(u => u.id === id ? { ...u, spending_limit: updatedUser.spending_limit } : u));
+      toast.success('Spending limit updated!');
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
@@ -246,7 +309,9 @@ export default function ProfilePage() {
         <div className={styles.tabs}>
           <button className={`${styles.tabBtn} ${activeTab === 'personal' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('personal')}>Personal Profile</button>
           <button className={`${styles.tabBtn} ${activeTab === 'company' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('company')}>Company Info</button>
-          <button className={`${styles.tabBtn} ${activeTab === 'subusers' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('subusers')}>Team / Sub-Users</button>
+          {profile?.level !== 1 && (
+            <button className={`${styles.tabBtn} ${activeTab === 'subusers' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('subusers')}>Team / Sub-Users</button>
+          )}
         </div>
 
         {activeTab === 'personal' && (
@@ -256,11 +321,11 @@ export default function ProfilePage() {
               <div className={styles.row}>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
-                  <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={styles.input} required />
+                  <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Last Name <span className={styles.req}>*</span></label>
-                  <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={styles.input} required />
+                  <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
               </div>
               <div className={styles.inputGroup}>
@@ -270,12 +335,14 @@ export default function ProfilePage() {
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Mobile <span className={styles.req}>*</span></label>
-                <input type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} className={styles.input} required />
+                <input type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
               </div>
             </div>
-            <div className={styles.actions}>
-              <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
-            </div>
+            {profile?.level !== 1 && (
+              <div className={styles.actions}>
+                <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+              </div>
+            )}
           </form>
         )}
 
@@ -286,45 +353,45 @@ export default function ProfilePage() {
               <div className={styles.row}>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Company Name <span className={styles.req}>*</span></label>
-                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={styles.input} required />
+                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Company Website</label>
-                  <input type="text" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className={styles.input} />
+                  <input type="text" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className={styles.input} disabled={profile?.level === 1} />
                 </div>
               </div>
               <div className={styles.inputGroup}>
                 <label className={styles.label}>Address Line 1 <span className={styles.req}>*</span></label>
-                <input type="text" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} className={styles.input} required />
+                <input type="text" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
               </div>
               <div className={styles.row}>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>City <span className={styles.req}>*</span></label>
-                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={styles.input} required />
+                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>State/Province <span className={styles.req}>*</span></label>
-                  <input type="text" value={state} onChange={(e) => setState(e.target.value)} className={styles.input} required />
+                  <input type="text" value={state} onChange={(e) => setState(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
               </div>
               <div className={styles.row}>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Zip/Postal Code <span className={styles.req}>*</span></label>
-                  <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={styles.input} required />
+                  <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Country <span className={styles.req}>*</span></label>
-                  <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} className={styles.input} required />
+                  <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
               </div>
               <div className={styles.row}>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Company Phone</label>
-                  <input type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className={styles.input} />
+                  <input type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className={styles.input} disabled={profile?.level === 1} />
                 </div>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Tax ID</label>
-                  <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} className={styles.input} />
+                  <input type="text" value={taxId} onChange={(e) => setTaxId(e.target.value)} className={styles.input} disabled={profile?.level === 1} />
                 </div>
               </div>
 
@@ -339,9 +406,11 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div className={styles.actions}>
-              <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
-            </div>
+            {profile?.level !== 1 && (
+              <div className={styles.actions}>
+                <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+              </div>
+            )}
           </form>
         )}
 
@@ -361,10 +430,32 @@ export default function ProfilePage() {
                         <div style={{ fontSize: '0.8rem', color: user.is_active ? 'green' : 'red', fontWeight: 600 }}>
                           Status: {user.is_active ? 'Active' : 'Deactivated'}
                         </div>
+                        <div style={{ fontSize: '0.8rem', color: '#555', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 600 }}>Permission:</span>
+                          <select 
+                            value={user.purchasing_permission || 'can_place_orders'}
+                            onChange={(e) => handleUpdatePermission(user.id, e.target.value)}
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer' }}
+                          >
+                            <option value="can_view_pricing">Can view pricing only</option>
+                            <option value="can_place_orders">Can place orders</option>
+                            <option value="view_only">View only (No Pricing)</option>
+                          </select>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#555', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 600 }}>Spending Limit ($):</span>
+                          <input 
+                            type="number" step="0.01" placeholder="No limit"
+                            value={user.spending_limit ?? ''}
+                            onChange={(e) => setSubUsers(subUsers.map(u => u.id === user.id ? { ...u, spending_limit: e.target.value ? parseFloat(e.target.value) : null } : u))}
+                            onBlur={(e) => handleUpdateSpendingLimit(user.id, e.target.value)}
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', width: '100px' }}
+                          />
+                        </div>
                       </div>
                       <div className={styles.subUserActions}>
-                        <button 
-                          className={`${styles.btnSmall} ${user.is_active ? styles.btnSmallDanger : ''}`} 
+                        <button
+                          className={`${styles.btnSmall} ${user.is_active ? styles.btnSmallDanger : ''}`}
                           onClick={() => handleToggleSubUser(user.id, user.is_active)}
                         >
                           {user.is_active ? 'Deactivate' : 'Activate'}
@@ -378,7 +469,7 @@ export default function ProfilePage() {
 
             <div className={styles.section}>
               <h2 className={styles.sectionTitle}>Add New Team Member</h2>
-              <form onSubmit={handleAddSubUser} className={styles.row}>
+              <form onSubmit={handleAddSubUser} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div className={styles.row}>
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
@@ -389,21 +480,39 @@ export default function ProfilePage() {
                     <input type="text" value={newSubUserLastName} onChange={(e) => setNewSubUserLastName(e.target.value)} className={styles.input} required />
                   </div>
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Email <span className={styles.req}>*</span></label>
-                  <input type="email" value={newSubUserEmail} onChange={(e) => setNewSubUserEmail(e.target.value)} className={styles.input} required />
+                <div className={styles.row}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Email <span className={styles.req}>*</span></label>
+                    <input type="email" value={newSubUserEmail} onChange={(e) => setNewSubUserEmail(e.target.value)} className={styles.input} required />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Mobile <span className={styles.req}>*</span></label>
+                    <input type="tel" value={newSubUserMobile} onChange={(e) => setNewSubUserMobile(e.target.value)} className={styles.input} required />
+                  </div>
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Mobile <span className={styles.req}>*</span></label>
-                  <input type="tel" value={newSubUserMobile} onChange={(e) => setNewSubUserMobile(e.target.value)} className={styles.input} required />
+                <div className={styles.row}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Purchasing Permission <span className={styles.req}>*</span></label>
+                    <select value={newSubUserPermission} onChange={(e) => setNewSubUserPermission(e.target.value)} className={styles.input} required>
+                      <option value="can_view_pricing">Can view pricing only</option>
+                      <option value="can_place_orders">Can place orders</option>
+                      <option value="view_only">View only (No Pricing)</option>
+                    </select>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Spending Limit ($)</label>
+                    <input type="number" step="0.01" placeholder="No limit" value={newSubUserSpendingLimit} onChange={(e) => setNewSubUserSpendingLimit(e.target.value)} className={styles.input} />
+                  </div>
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Password <span className={styles.req}>*</span></label>
-                  <input type="password" value={newSubUserPassword} onChange={(e) => setNewSubUserPassword(e.target.value)} className={styles.input} required minLength={8} />
+                <div className={styles.row}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Password <span className={styles.req}>*</span></label>
+                    <input type="password" value={newSubUserPassword} onChange={(e) => setNewSubUserPassword(e.target.value)} className={styles.input} required minLength={8} />
+                  </div>
                 </div>
-                <div style={{ gridColumn: '1 / -1', marginTop: '1rem' }}>
+                <div style={{ marginTop: '0.5rem' }}>
                   <button type="submit" className={styles.saveBtn} disabled={saving}>
-                    {saving ? 'Creating...' : <><FiPlus /> Create User</>}
+                    {saving ? 'Creating...' : <> Create User</>}
                   </button>
                 </div>
               </form>

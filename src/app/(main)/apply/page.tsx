@@ -63,6 +63,21 @@ export default function ApplyPage() {
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  const getPasswordStrength = (pass: string) => {
+    if (!pass) return { label: '', color: 'transparent' };
+    let score = 0;
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[a-z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+    
+    if (score < 3) return { label: 'Weak', color: '#ff4d4f' };
+    if (score < 5) return { label: 'Medium', color: '#faad14' };
+    return { label: 'Strong', color: '#52c41a' };
+  };
+  const strength = getPasswordStrength(password);
+
   const handleNext = () => {
     if (step === 1) {
       if (!firstName.trim()) { setErrorField('firstName'); firstNameRef.current?.focus(); return; }
@@ -70,6 +85,7 @@ export default function ApplyPage() {
       if (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim())) { setErrorField('email'); emailRef.current?.focus(); return; }
       if (!hearAbout) { setErrorField('hearAbout'); hearAboutRef.current?.focus(); return; }
       if (!password) { setErrorField('password'); passwordRef.current?.focus(); return; }
+      if (getPasswordStrength(password).label === 'Weak') { setErrorField('password'); passwordRef.current?.focus(); return; }
       if (!confirmPassword) { setErrorField('confirmPassword'); confirmPasswordRef.current?.focus(); return; }
     } else if (step === 2) {
       if (!companyName.trim()) { setErrorField('companyName'); companyNameRef.current?.focus(); return; }
@@ -299,6 +315,22 @@ export default function ApplyPage() {
                       placeholder="Password"
                       required
                     />
+                    {password && (
+                      <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ flex: 1, height: '4px', background: '#e8e8e8', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ 
+                            height: '100%', 
+                            width: strength.label === 'Weak' ? '33%' : strength.label === 'Medium' ? '66%' : '100%', 
+                            background: strength.color,
+                            transition: 'all 0.3s'
+                          }} />
+                        </div>
+                        <span style={{ color: strength.color, fontWeight: 500, minWidth: '45px' }}>{strength.label}</span>
+                      </div>
+                    )}
+                    {errorField === 'password' && strength.label === 'Weak' && (
+                      <p style={{ color: '#ff4d4f', fontSize: '0.85rem', marginTop: '0.5rem' }}>Password is too weak. Must be at least 8 characters and contain a mix of uppercase, lowercase, numbers, and special characters.</p>
+                    )}
                   </div>
 
                   <div className={styles.inputGroup}>

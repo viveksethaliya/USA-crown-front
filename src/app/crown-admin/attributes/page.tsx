@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, SlidersHorizontal, Loader2, Search, ChevronDown, ChevronRight, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, SlidersHorizontal, Search, ChevronDown, ChevronRight, X, ImageIcon, Loader2 } from 'lucide-react';
+import ImageUploader from '../components/ImageUploader';
 import { toast } from 'react-hot-toast';
 
-const API = 'http://localhost:5000/api/admin/attributes';
+import { ADMIN_API } from '@/lib/config';
+const API = `${ADMIN_API}/attributes`;
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
 interface AttributeValue {
   id: number;
   value: string;
@@ -32,16 +31,15 @@ interface FormData {
   is_global: boolean;
 }
 
-// ─────────────────────────────────────────────
-// Inline Values Manager for a single attribute
-// ─────────────────────────────────────────────
 function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
   const [values, setValues] = useState<AttributeValue[]>(attribute.attribute_values || []);
   const [newValue, setNewValue] = useState<string>('');
-  const [newColorHex, setNewColorHex] = useState<string>('#ffffff');
+  const [newColorHex, setNewColorHex] = useState<string>('#d1a054');
+  const [newImageUrl, setNewImageUrl] = useState<string>('');
   const [editingValueId, setEditingValueId] = useState<number | null>(null);
   const [editText, setEditText] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [showImageUploader, setShowImageUploader] = useState<boolean>(false);
 
   const getToken = (): string | null => localStorage.getItem('adminToken');
 
@@ -52,24 +50,26 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
       const res = await fetch(`${API}/${attribute.id}/values`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({
-          value: newValue.trim(),
-          color_hex: attribute.type === 'color' ? newColorHex : null,
-          position: values.length
+        body: JSON.stringify({ 
+          value: newValue.trim(), 
+          color_hex: attribute.type === 'color' ? newColorHex : null, 
+          image_url: attribute.type === 'image' ? newImageUrl : null,
+          position: values.length 
         })
       });
-      const data: AttributeValue = await res.json();
+      const data: any = await res.json();
       if (res.ok) {
         setValues(prev => [...prev, data]);
         setNewValue('');
-        setNewColorHex('#ffffff');
+        setNewColorHex('#d1a054');
+        setNewImageUrl('');
+        setShowImageUploader(false);
         toast.success('Value added successfully');
       } else {
-        toast.error('Failed to add value');
+        toast.error(data.error || 'Failed to add value');
       }
-    } catch (e) {
-      console.error(e);
-      toast.error('An error occurred');
+    } catch (e: any) {
+      toast.error(e.message || 'An error occurred');
     } finally {
       setIsSaving(false);
     }
@@ -82,17 +82,15 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ value: editText })
       });
+      const data = await res.json();
       if (res.ok) {
         setValues(prev => prev.map(v => v.id === valueId ? { ...v, value: editText } : v));
         setEditingValueId(null);
         toast.success('Value updated');
       } else {
-        toast.error('Failed to update value');
+        toast.error(data.error || 'Failed to update value');
       }
-    } catch (e) {
-      console.error(e);
-      toast.error('An error occurred');
-    }
+    } catch (e: any) { toast.error(e.message || 'An error occurred'); }
   };
 
   const handleDeleteValue = async (valueId: number): Promise<void> => {
@@ -108,22 +106,18 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
       } else {
         toast.error('Failed to delete value');
       }
-    } catch (e) {
-      console.error(e);
-      toast.error('An error occurred');
-    }
+    } catch { toast.error('An error occurred'); }
   };
 
   return (
-    <div className="px-4 pb-4 border-t border-gray-800 mt-0 bg-gray-950/40">
+    <div className="px-4 pb-4 border-t border-[#312f2c]/8 mt-0 bg-[#312f2c]/3">
       <div className="pt-4 space-y-2">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+        <p className="text-xs font-semibold text-[#312f2c]/40 uppercase tracking-wider mb-3">
           Values — e.g. "{attribute.name === 'Metal Type' ? '14K Yellow Gold' : attribute.name === 'Ring Size' ? '7' : 'Value 1'}"
         </p>
 
-        {/* Existing Values */}
         {values.length === 0 ? (
-          <p className="text-sm text-gray-600 italic py-2">No values yet. Add the first one below.</p>
+          <p className="text-sm text-[#312f2c]/35 italic py-2">No values yet. Add the first one below.</p>
         ) : (
           <div className="flex flex-wrap gap-2 mb-3">
             {values.sort((a, b) => a.position - b.position).map(v => (
@@ -136,35 +130,43 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
                       onChange={(e) => setEditText(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleUpdateValue(v.id)}
                       autoFocus
-                      className="bg-gray-900 border border-purple-500 rounded-lg px-3 py-1 text-white text-sm w-36 focus:outline-none"
+                      className="bg-white border border-[#d1a054]/40 rounded-lg px-3 py-1 text-[#312f2c] text-sm w-36 focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40"
                     />
                     <button
                       onClick={() => handleUpdateValue(v.id)}
-                      className="px-2 py-1 bg-purple-600 text-white rounded text-xs"
+                      className="px-2 py-1 bg-[#d1a054] text-[#f0ede5] rounded text-xs font-medium"
                     >✓</button>
                     <button
                       onClick={() => setEditingValueId(null)}
-                      className="px-2 py-1 bg-gray-800 text-gray-400 rounded text-xs"
+                      className="px-2 py-1 bg-[#312f2c]/8 text-[#312f2c]/60 rounded text-xs"
                     >✕</button>
                   </div>
                 ) : (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200">
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#312f2c]/10 rounded-lg text-sm text-[#312f2c]">
                     {v.color_hex && (
                       <span
-                        className="w-3 h-3 rounded-full border border-gray-600 flex-shrink-0"
+                        className="w-3 h-3 rounded-full border border-[#312f2c]/15 flex-shrink-0"
                         style={{ backgroundColor: v.color_hex }}
+                      />
+                    )}
+                    {v.image_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img 
+                        src={v.image_url} 
+                        alt={v.value} 
+                        className="w-4 h-4 rounded-full border border-[#312f2c]/15 object-cover" 
                       />
                     )}
                     {v.value}
                     <button
                       onClick={() => { setEditingValueId(v.id); setEditText(v.value); }}
-                      className="ml-1 opacity-0 group-hover:opacity-100 text-gray-500 hover:text-purple-400 transition-opacity"
+                      className="ml-1 opacity-0 group-hover:opacity-100 text-[#312f2c]/35 hover:text-[#d1a054] transition-opacity"
                     >
                       <Pencil className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => handleDeleteValue(v.id)}
-                      className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-opacity"
+                      className="opacity-0 group-hover:opacity-100 text-[#312f2c]/35 hover:text-red-500 transition-opacity"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -175,16 +177,32 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
           </div>
         )}
 
-        {/* Add New Value */}
-        <div className="flex items-center gap-2 pt-2 border-t border-gray-800/50">
+        <div className="flex items-center gap-2 pt-2 border-t border-[#312f2c]/8">
           {attribute.type === 'color' && (
             <input
               type="color"
               value={newColorHex}
               onChange={(e) => setNewColorHex(e.target.value)}
-              className="w-9 h-9 rounded-lg cursor-pointer border border-gray-700 bg-gray-900 p-0.5"
+              className="w-9 h-9 rounded-lg cursor-pointer border border-[#312f2c]/12 bg-white p-0.5"
               title="Pick color"
             />
+          )}
+          {attribute.type === 'image' && (
+            <div className="relative">
+              <button 
+                type="button"
+                onClick={() => setShowImageUploader(!showImageUploader)}
+                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-colors ${newImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
+                title={newImageUrl ? 'Image selected' : 'Upload image'}
+              >
+                {newImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={newImageUrl} alt="Swatch" className="w-full h-full rounded-md object-cover p-0.5" />
+                ) : (
+                  <ImageIcon className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           )}
           <input
             type="text"
@@ -192,31 +210,46 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
             onChange={(e) => setNewValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddValue()}
             placeholder={`Add value (e.g. ${attribute.name === 'Metal Type' ? '14K Yellow Gold' : attribute.name === 'Ring Size' ? '7' : 'New value'})`}
-            className="flex-1 bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            className="flex-1 bg-white border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none placeholder:text-[#312f2c]/35"
           />
           <button
             onClick={handleAddValue}
             disabled={isSaving || !newValue.trim()}
-            className="flex items-center gap-1.5 px-3 py-2 bg-purple-600/80 hover:bg-purple-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg text-sm font-medium transition-colors disabled:opacity-40"
           >
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
             Add
           </button>
         </div>
+        
+        {/* Render Image Uploader Dropdown if open */}
+        {attribute.type === 'image' && showImageUploader && (
+          <div className="mt-3 p-4 bg-white border border-[#312f2c]/10 rounded-xl shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-semibold text-[#312f2c]/50">Upload Swatch Image</span>
+              <button onClick={() => setShowImageUploader(false)} className="text-[#312f2c]/40 hover:text-[#312f2c]">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <ImageUploader 
+              folder="attributes" 
+              onUploaded={(url) => {
+                setNewImageUrl(url);
+                setShowImageUploader(false);
+              }} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// Main Attributes Page
-// ─────────────────────────────────────────────
 export default function AttributesPage() {
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<FormData>({ name: '', slug: '', type: 'select', is_global: true });
@@ -226,9 +259,7 @@ export default function AttributesPage() {
 
   const fetchAttributes = async (): Promise<void> => {
     try {
-      const res = await fetch(API, {
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
+      const res = await fetch(API, { headers: { 'Authorization': `Bearer ${getToken()}` } });
       if (res.ok) setAttributes(await res.json());
     } catch (error) {
       console.error(error);
@@ -267,16 +298,16 @@ export default function AttributesPage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify(formData)
       });
+      const data = await res.json();
       if (res.ok) {
         toast.success(editingId ? 'Attribute updated successfully' : 'Attribute created successfully');
         await fetchAttributes();
         handleCloseForm();
       } else {
-        toast.error('Failed to save attribute');
+        toast.error(data.error || 'Failed to save attribute');
       }
-    } catch (error) {
-      console.error(error);
-      toast.error('An error occurred');
+    } catch (e: any) {
+      toast.error(e.message || 'An error occurred');
     } finally {
       setIsSaving(false);
     }
@@ -285,58 +316,40 @@ export default function AttributesPage() {
   const handleDelete = async (id: number): Promise<void> => {
     if (!confirm('Delete this attribute? All its values will be lost.')) return;
     try {
-      const res = await fetch(`${API}/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      if (res.ok) {
-        toast.success('Attribute deleted successfully');
-        fetchAttributes();
-      } else {
-        toast.error('Failed to delete attribute');
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error('An error occurred');
-    }
+      const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      if (res.ok) { toast.success('Attribute deleted successfully'); fetchAttributes(); }
+      else toast.error('Failed to delete attribute');
+    } catch { toast.error('An error occurred'); }
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const name = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
-    }));
+    setFormData(prev => ({ ...prev, name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') }));
   };
 
-  const filteredAttributes = attributes.filter(a =>
-    a.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredAttributes = attributes.filter(a => a.name.toLowerCase().includes(search.toLowerCase()));
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#d1a054]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
-            Attributes & Values
-          </h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-[#312f2c]">Attributes & Values</h2>
+          <p className="text-[#312f2c]/55 text-sm mt-1">
             Define variation dimensions (Metal Type, Ring Size, Stone, etc.) then add their possible values
           </p>
         </div>
         <button
           onClick={() => handleOpenForm()}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg shadow-lg shadow-purple-900/20 transition-all font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg shadow-sm transition-all font-medium"
         >
           <Plus className="w-4 h-4" />
           Add Attribute
@@ -344,44 +357,44 @@ export default function AttributesPage() {
       </div>
 
       {/* Hint box */}
-      <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-4 text-sm text-purple-300/80">
-        <strong className="text-purple-300">Workflow:</strong> Create an attribute (e.g. <em>Metal Type</em>) → click to expand → add values (e.g. <em>14K Yellow Gold</em>, <em>Sterling Silver 925</em>) → then on a Variable product's Variations tab, those values become available.
+      <div className="bg-[#d1a054]/8 border border-[#d1a054]/20 rounded-xl p-4 text-sm text-[#312f2c]/70">
+        <strong className="text-[#d1a054]">Workflow:</strong> Create an attribute (e.g. <em>Metal Type</em>) → click to expand → add values (e.g. <em>14K Yellow Gold</em>, <em>Sterling Silver 925</em>) → then on a Variable product's Variations tab, those values become available.
       </div>
 
       {/* Create/Edit Form */}
       {showForm && (
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-pink-500"></div>
-          <h3 className="text-lg font-medium mb-4">{editingId ? 'Edit Attribute' : 'Create New Attribute'}</h3>
+        <div className="bg-[#ece9e1] border border-[#312f2c]/10 p-6 rounded-xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[#d1a054]"></div>
+          <h3 className="text-lg font-medium text-[#312f2c] mb-4">{editingId ? 'Edit Attribute' : 'Create New Attribute'}</h3>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Attribute Name</label>
+                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Attribute Name</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={handleNameChange}
                   placeholder="e.g. Metal Type, Ring Size, Stone"
-                  className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all"
+                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">URL Slug</label>
+                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">URL Slug</label>
                 <input
                   type="text"
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-gray-400 focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all"
+                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c]/60 focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">Display Type</label>
+                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Display Type</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none transition-all"
+                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
                 >
                   <option value="select">Dropdown Select</option>
                   <option value="color">Color Swatch (shows color pickers)</option>
@@ -390,12 +403,12 @@ export default function AttributesPage() {
                 </select>
               </div>
               <div className="flex items-center mt-6">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-300 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm font-medium text-[#312f2c]/65 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.is_global}
                     onChange={(e) => setFormData({ ...formData, is_global: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-800 bg-gray-950 text-purple-500 focus:ring-purple-500"
+                    className="w-4 h-4 rounded border-[#312f2c]/20 accent-[#d1a054]"
                   />
                   Global (usable across all products)
                 </label>
@@ -403,11 +416,11 @@ export default function AttributesPage() {
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={handleCloseForm}
-                className="px-4 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                className="px-4 py-2 text-[#312f2c]/55 hover:text-[#312f2c] hover:bg-[#312f2c]/8 rounded-lg transition-colors">
                 Cancel
               </button>
               <button type="submit" disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50">
+                className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg transition-colors disabled:opacity-50">
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 {editingId ? 'Update Attribute' : 'Save Attribute'}
               </button>
@@ -417,66 +430,66 @@ export default function AttributesPage() {
       )}
 
       {/* Search */}
-      <div className="flex items-center bg-gray-900/50 p-2 border border-gray-800 rounded-xl backdrop-blur-sm">
-        <Search className="w-5 h-5 text-gray-500 ml-2" />
+      <div className="flex items-center bg-white/60 p-2 border border-[#312f2c]/10 rounded-xl">
+        <Search className="w-5 h-5 text-[#312f2c]/35 ml-2" />
         <input
           type="text"
           placeholder="Search attributes..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-transparent border-none focus:ring-0 text-white px-4 py-2 w-full outline-none"
+          className="bg-transparent border-none focus:ring-0 text-[#312f2c] placeholder:text-[#312f2c]/35 px-4 py-2 w-full outline-none text-sm"
         />
       </div>
 
-      {/* Attributes — Accordion List */}
+      {/* Attributes Accordion List */}
       <div className="space-y-2">
         {filteredAttributes.length === 0 ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center text-gray-500">
+          <div className="bg-[#ece9e1] border border-[#312f2c]/10 rounded-xl p-12 text-center text-[#312f2c]/40">
             <SlidersHorizontal className="w-12 h-12 mx-auto mb-3 opacity-20" />
             No attributes found
           </div>
         ) : (
           filteredAttributes.map(attr => (
-            <div key={attr.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden shadow-sm hover:border-gray-700 transition-colors">
+            <div key={attr.id} className="bg-[#ece9e1] border border-[#312f2c]/10 rounded-xl overflow-hidden hover:border-[#d1a054]/30 transition-colors">
               {/* Row Header */}
               <div
-                className="flex items-center gap-3 p-4 cursor-pointer"
+                className="flex items-center gap-3 p-4 cursor-pointer hover:bg-[#312f2c]/3 transition-colors"
                 onClick={() => setExpandedId(expandedId === attr.id ? null : attr.id)}
               >
-                <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20 flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[#d1a054]/10 text-[#d1a054] flex items-center justify-center border border-[#d1a054]/20 flex-shrink-0">
                   <SlidersHorizontal className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">{attr.name}</span>
-                    <span className="px-2 py-0.5 bg-gray-800 rounded text-xs text-gray-400">{attr.type}</span>
+                    <span className="font-medium text-[#312f2c]">{attr.name}</span>
+                    <span className="px-2 py-0.5 bg-[#312f2c]/6 rounded text-xs text-[#312f2c]/50">{attr.type}</span>
                     {attr.is_global && (
-                      <span className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-xs text-purple-400">global</span>
+                      <span className="px-2 py-0.5 bg-[#d1a054]/10 border border-[#d1a054]/20 rounded text-xs text-[#d1a054]">global</span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 font-mono mt-0.5">{attr.slug}</div>
+                  <div className="text-xs text-[#312f2c]/40 font-mono mt-0.5">{attr.slug}</div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-[#312f2c]/40">
                     {attr.attribute_values?.length || 0} value{(attr.attribute_values?.length || 0) !== 1 ? 's' : ''}
                   </span>
                   <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleOpenForm(attr)}
-                      className="p-2 bg-gray-800 hover:bg-purple-500/20 hover:text-purple-400 text-gray-400 rounded-lg transition-colors"
+                      className="p-2 bg-[#312f2c]/6 hover:bg-[#d1a054]/12 hover:text-[#d1a054] text-[#312f2c]/50 rounded-lg transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(attr.id)}
-                      className="p-2 bg-gray-800 hover:bg-red-500/20 hover:text-red-400 text-gray-400 rounded-lg transition-colors"
+                      className="p-2 bg-[#312f2c]/6 hover:bg-red-500/10 hover:text-red-600 text-[#312f2c]/50 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                   {expandedId === attr.id
-                    ? <ChevronDown className="w-4 h-4 text-gray-500" />
-                    : <ChevronRight className="w-4 h-4 text-gray-600" />
+                    ? <ChevronDown className="w-4 h-4 text-[#d1a054]" />
+                    : <ChevronRight className="w-4 h-4 text-[#312f2c]/30" />
                   }
                 </div>
               </div>

@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Image, Package, Tag, Tags, SlidersHorizontal, Shapes,
-  Users, Building2, LogOut, ChevronRight
+  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
@@ -34,6 +34,14 @@ const NAV: NavElement[] = [
   { label: 'Dashboard', href: '/crown-admin', icon: LayoutDashboard, exact: true },
   { label: 'Media Library', href: '/crown-admin/media', icon: Image, exact: false },
   {
+    group: 'Management',
+    items: [
+      { label: 'Approvals', href: '/crown-admin/b2b', icon: Building2 },
+      { label: 'Settings', href: '/crown-admin/settings', icon: Settings },
+      { label: 'Active Carts', href: '/crown-admin/carts', icon: ShoppingCart },
+    ]
+  },
+  {
     group: 'Catalog',
     items: [
       { label: 'Products', href: '/crown-admin/products', icon: Package },
@@ -44,10 +52,11 @@ const NAV: NavElement[] = [
     ]
   },
   {
-    group: 'Users & B2B',
+    group: 'Users & Settings',
     items: [
       { label: 'Customers', href: '/crown-admin/customers', icon: Users },
-      { label: 'Approvals', href: '/crown-admin/b2b', icon: Building2 },
+      { label: 'Groups and Discount', href: '/crown-admin/groups', icon: UsersRound },
+      { label: 'Banner', href: '/crown-admin/banner', icon: Layout },
     ]
   },
 ];
@@ -58,15 +67,17 @@ function NavLink({ href, icon: Icon, label, exact }: NavLinkProps) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${
-        isActive
-          ? 'bg-blue-600/20 text-blue-400 shadow-sm shadow-blue-900/10'
-          : 'text-gray-400 hover:text-white hover:bg-gray-800/70'
-      }`}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive
+        ? 'bg-[#312f2c]/10 text-[#d1a054]'
+        : 'text-[#312f2c]/60 hover:text-[#312f2c] hover:bg-[#312f2c]/8'
+        }`}
     >
-      <Icon className={`w-4 h-4 flex-shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-blue-400' : ''}`} />
+      <Icon
+        className={`w-4 h-4 flex-shrink-0 transition-transform group-hover:scale-110 ${isActive ? 'text-[#d1a054]' : ''
+          }`}
+      />
       {label}
-      {isActive && <ChevronRight className="w-3 h-3 ml-auto text-blue-500" />}
+      {isActive && <ChevronRight className="w-3 h-3 ml-auto text-[#d1a054]" />}
     </Link>
   );
 }
@@ -81,7 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     const user = localStorage.getItem('adminUser');
-    if (user) { try { setAdminUser(JSON.parse(user)); } catch (e) {} }
+    if (user) { try { setAdminUser(JSON.parse(user)); } catch (e) { } }
 
     if (!token && pathname !== '/crown-admin/login') {
       router.push('/crown-admin/login');
@@ -94,28 +105,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#f0ede5]">
+        <div className="w-8 h-8 border-2 border-[#d1a054] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (pathname === '/crown-admin/login') return (
     <>
-      <Toaster position="top-right" toastOptions={{ style: { background: '#1f2937', color: '#fff' } }} />
+      <Toaster position="top-right" toastOptions={{ style: { background: '#312f2c', color: '#f0ede5' } }} />
       {children}
     </>
   );
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen bg-gray-950 text-white font-sans overflow-hidden">
-      <Toaster position="top-right" toastOptions={{ style: { background: '#1f2937', color: '#fff', border: '1px solid #374151' } }} />
+    <div className="flex h-screen bg-[#f0ede5] text-[#312f2c] font-sans overflow-hidden">
+      <Toaster position="top-right" toastOptions={{ style: { background: '#312f2c', color: '#f0ede5', border: '1px solid #4a473f' } }} />
+
       {/* Sidebar */}
-      <aside className="w-60 bg-gray-950 border-r border-gray-800/80 flex flex-col flex-shrink-0">
+      <aside className="w-60 bg-[#e8e4d8] border-r border-[#312f2c]/10 flex flex-col flex-shrink-0">
         {/* Logo */}
-        <div className="h-16 flex items-center px-5 border-b border-gray-800/80 shrink-0">
-          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+        <div className="h-16 flex items-center px-5 border-b border-[#312f2c]/10 shrink-0">
+          <h1 className="text-lg font-bold text-[#d1a054] tracking-wide">
             Crown Admin
           </h1>
         </div>
@@ -128,7 +140,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }
             return (
               <div key={i} className="pt-4 first:pt-0">
-                <p className="px-3 pb-2 text-[10px] font-semibold text-gray-600 uppercase tracking-widest">
+                <p className="px-3 pb-2 text-[10px] font-semibold text-[#312f2c]/35 uppercase tracking-widest">
                   {item.group}
                 </p>
                 <div className="space-y-0.5">
@@ -143,23 +155,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-gray-900/30">
-        <header className="h-16 border-b border-gray-800/80 flex items-center px-8 sticky top-0 bg-gray-950/80 backdrop-blur-sm z-10">
+      <main className="flex-1 overflow-y-auto bg-[#f0ede5]">
+        <header className="h-16 border-b border-[#312f2c]/10 flex items-center px-8 sticky top-0 bg-[#f0ede5]/90 backdrop-blur-sm z-10">
           <div className="ml-auto flex items-center gap-6">
             {adminUser && (
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-200">{adminUser.username || adminUser.first_name || adminUser.email || 'Admin'}</p>
-                <p className="text-xs text-indigo-400 font-medium">Administrator</p>
+                <p className="text-sm font-medium text-[#312f2c]">{adminUser.username || adminUser.first_name || adminUser.email || 'Admin'}</p>
+                <p className="text-xs text-[#d1a054] font-medium">Administrator</p>
               </div>
             )}
-            <div className="w-px h-8 bg-gray-800"></div>
+            <div className="w-px h-8 bg-[#312f2c]/10"></div>
             <button
               onClick={() => {
                 localStorage.removeItem('adminToken');
                 localStorage.removeItem('adminUser');
                 router.push('/crown-admin/login');
               }}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-all"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#312f2c]/60 hover:text-[#312f2c] hover:bg-[#312f2c]/8 rounded-lg transition-all"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -173,4 +185,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
-

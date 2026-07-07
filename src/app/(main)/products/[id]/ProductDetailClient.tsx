@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { getGuestCartId, apiUrl } from '../../../../lib/cart';
+import { apiUrl, cartFetch } from '../../../../lib/cart';
 import styles from './detail.module.css';
 import { toast } from 'react-hot-toast';
 
@@ -13,14 +13,18 @@ interface ProductVariation {
   regular_price: number | null;
   sale_price: number | null;
   weight_g: number | null;
-  attributes: { name: string; slug: string; value: string }[];
+  length_in: number | null;
+  width_in: number | null;
+  height_in: number | null;
+  attributes: { name: string; slug: string; type: string; value: string; color_hex: string | null; image_url: string | null }[];
   images: { url: string }[];
 }
 
 interface ProductAttribute {
   name: string;
   slug: string;
-  values: string;
+  type: string;
+  values: { value: string; color_hex: string | null; image_url: string | null }[];
   is_visible: boolean;
   is_for_variation: boolean;
 }
@@ -47,6 +51,9 @@ interface ProductData {
   description: string;
   short_description: string;
   weight_g: number | null;
+  length_in: number | null;
+  width_in: number | null;
+  height_in: number | null;
   measurement_type: 'none' | 'inch' | 'plate';
   attributes: ProductAttribute[];
   variations: ProductVariation[];
@@ -60,17 +67,18 @@ interface ProductApiResponse {
 
 const uniqueUrls = (urls: string[]) => Array.from(new Set(urls.filter(Boolean)));
 
-export default function ProductDetailClient({ initialProduct: _initialProduct }: { initialProduct: ProductData | null }) {
+export default function ProductDetailClient({ initialProduct }: { initialProduct: ProductData | null }) {
   const params = useParams();
   const productId = params.id as string;
 
-  const [product, setProduct] = useState<ProductData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [product, setProduct] = useState<ProductData | null>(initialProduct);
+  const [loading, setLoading] = useState(initialProduct ? false : true);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userPermission, setUserPermission] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState(false);
 
   // Custom Measurements
@@ -103,13 +111,18 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch(apiUrl(`/api/user/session`), { 
-          credentials: 'include',
+        const token = localStorage.getItem('storeToken');
+        if (!token) return;
+        const res = await fetch(apiUrl('/api/store/auth/me'), {
+          headers: { 'Authorization': `Bearer ${token}` },
           cache: 'no-store'
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.authenticated) setIsAuthenticated(true);
+          if (data.authenticated) {
+            setIsAuthenticated(true);
+            setUserPermission(data.user?.purchasing_permission || 'can_place_orders');
+          }
         }
       } catch { }
     }
@@ -117,23 +130,20 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
   }, []);
 
   useEffect(() => {
+    if (initialProduct) {
+      setProduct(initialProduct);
+      setLoading(false);
+      return;
+    }
+
     const fetchProduct = async () => {
       try {
-        const res = await fetch(apiUrl(`/api/products/${productId}`));
+        const res = await fetch(apiUrl(`/api/store/catalog/products/${productId}`));
         if (!res.ok) throw new Error('Not found');
         const data = await res.json() as ProductApiResponse;
         if (!data.product) throw new Error('Not found');
 
         setProduct(data.product);
-
-        // Initialize options with the first variation if available
-        if (data.product?.variations?.length > 0) {
-          const initialOptions: Record<string, string> = {};
-          data.product.variations[0].attributes.forEach((a) => {
-            initialOptions[a.slug] = a.value;
-          });
-          setSelectedOptions(initialOptions);
-        }
       } catch (err: any) {
         if (err.message !== 'Not found') {
           console.error('Failed to fetch product', err);
@@ -144,7 +154,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     };
 
     fetchProduct();
-  }, [productId]);
+  }, [productId, initialProduct]);
 
   // --- Variation Logic ---
 
@@ -226,22 +236,26 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
 
   const handleAddToCart = async () => {
     if (!product) return;
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to cart.");
+      return;
+    }
+    if (userPermission !== 'can_place_orders') {
+      toast.error("You do not have permission to place orders.");
+      return;
+    }
     if (product.type === 'variable' && !currentVariation) {
       toast.error("Please select product options before adding to cart.");
       return;
     }
     setAddingToCart(true);
     try {
-      const guestId = isAuthenticated ? null : getGuestCartId();
-      const res = await fetch(apiUrl('/api/cart/items'), {
+      const res = await cartFetch('/api/store/cart/items', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           productId: product.id,
           variationId: currentVariation ? currentVariation.id : null,
           quantity,
-          guestId,
           length: customLength || undefined,
           width: customWidth || undefined
         })
@@ -261,11 +275,18 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
 
 
   // 4. Determine current active variation
-  const currentVariation = product?.variations?.find(v =>
-    variationAttributes.every(attr =>
+  const currentVariation = product?.variations?.find(v => {
+    if (variationAttributes.length === 0) return false;
+
+    // Check if ALL attributes have a selected option
+    const allSelected = variationAttributes.every(attr => selectedOptions[attr.slug]);
+    if (!allSelected) return false;
+
+    // If fully selected, find the matching variation
+    return variationAttributes.every(attr =>
       v.attributes.find(a => a.slug === attr.slug)?.value === selectedOptions[attr.slug]
-    )
-  ) || null;
+    );
+  }) || null;
 
   // --- Dynamic Data for UI ---
   // const displaySku = currentVariation?.sku || product?.sku || 'N/A';
@@ -276,7 +297,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
     async function fetchDiscounts() {
       if (!productId) return;
       try {
-        const res = await fetch(apiUrl(`/api/products/${productId}/discounts`), {
+        const res = await fetch(apiUrl(`/api/store/catalog/products/${productId}/discounts`), {
           method: 'POST',
           credentials: 'include',
           cache: 'no-store'
@@ -303,7 +324,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
         if (customLength) body.length = customLength;
         if (customWidth) body.width = customWidth;
 
-        const res = await fetch(apiUrl(`/api/products/calculate-price`), {
+        const res = await fetch(apiUrl(`/api/store/catalog/products/calculate-price`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -437,56 +458,108 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
               {product.name} – Wholesale
             </h1>
 
+            {product.short_description && (
+              <div
+                className={styles.shortDescription}
+                style={{ marginBottom: '1.5rem', color: '#555', fontSize: '0.95rem', lineHeight: '1.5' }}
+                dangerouslySetInnerHTML={{ __html: product.short_description }}
+              />
+            )}
+
             <div className={styles.skuBadge}>
               <span className={styles.skuLabel}>SKU:</span>
               <span className={styles.skuValue}>{currentVariation?.sku || product.sku || 'N/A'}</span>
             </div>
 
             <p className={styles.productDesc}>
-              {product.description || product.short_description || `Elevate your jewelry creations with the ${product.name}, a premium-quality jewelry finding crafted to meet the needs of professional jewelers and wholesale buyers.`}
+              {product.short_description || product.description || `Elevate your jewelry creations with the ${product.name}, a premium-quality jewelry finding crafted to meet the needs of professional jewelers and wholesale buyers.`}
             </p>
 
             {variationAttributes.length > 0 && (
-              <p className={styles.selectPrompt}>Select options to view details</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <p className={styles.selectPrompt} style={{ margin: 0 }}>Select options to view details</p>
+                {Object.keys(selectedOptions).length > 0 && (
+                  <button
+                    onClick={() => setSelectedOptions({})}
+                    style={{ fontSize: '0.85rem', color: 'var(--color-inkblue)', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                  >
+                    Clear Selection
+                  </button>
+                )}
+              </div>
             )}
 
             {/* Dynamic Variation Selectors */}
             {variationAttributes.map((attr, attrIdx) => {
-              const allOptions = Array.from(new Set(
-                product.variations.flatMap(v => v.attributes.filter(a => a.slug === attr.slug).map(a => a.value))
-              ));
+              // Extract valid options with swatch details from the product structure
+              const allOptionsMap = new Map();
+              product.variations.forEach(v => {
+                const varAttr = v.attributes.find(a => a.slug === attr.slug);
+                if (varAttr) {
+                  allOptionsMap.set(varAttr.value, varAttr);
+                }
+              });
 
-              allOptions.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+              const allOptions = Array.from(allOptionsMap.values());
+              allOptions.sort((a, b) => a.value.localeCompare(b.value, undefined, { numeric: true, sensitivity: 'base' }));
 
-              const isMetal = attr.slug === 'metal' || attr.name.toLowerCase() === 'metal';
+              const attrType = attr.type || 'select';
 
-              if (isMetal) {
+              if (attrType === 'color' || attrType === 'image') {
                 return (
                   <div key={attr.slug} className={styles.metalSection}>
                     <h4 className={styles.sectionLabel}>{attr.name}</h4>
                     <div className={styles.metalOptions}>
                       {allOptions.map((opt) => {
-                        const valid = isOptionValid(attrIdx, attr.slug, opt);
+                        const valid = isOptionValid(attrIdx, attr.slug, opt.value);
 
-                        // Find a variation that has this metal option to get its image
-                        const varForImage = product.variations.find(v =>
-                          v.attributes.some(a => a.slug === attr.slug && a.value === opt) &&
-                          v.images && v.images.length > 0
-                        );
-
-                        const btnImg = varForImage ? varForImage.images[0].url : images[0];
+                        let swatchElement = null;
+                        
+                        if (attrType === 'color') {
+                          swatchElement = (
+                            <div 
+                              className={styles.colorSwatch} 
+                              style={{ backgroundColor: opt.color_hex || '#ccc' }} 
+                            />
+                          );
+                        } else if (attrType === 'image') {
+                          let btnImg = opt.image_url;
+                          // Fallback to variation image if swatch image isn't set
+                          if (!btnImg) {
+                            const varForImage = product.variations.find(v =>
+                              v.attributes.some(a => a.slug === attr.slug && a.value === opt.value) &&
+                              v.images && v.images.length > 0
+                            );
+                            btnImg = varForImage ? varForImage.images[0].url : images[0];
+                          }
+                          swatchElement = btnImg ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={btnImg} alt={opt.value} className={styles.metalImg} />
+                          ) : (
+                            <div 
+                              className={styles.colorSwatch}
+                              style={{ 
+                                background: '#f4f6f8', border: '1px solid #d0d5dd', 
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                fontSize: '10px', color: '#555', fontWeight: 600, letterSpacing: '-0.5px' 
+                              }}
+                            >
+                              {opt.value.substring(0, 3).toUpperCase()}
+                            </div>
+                          );
+                        }
 
                         return (
                           <button
-                            key={opt}
+                            key={opt.value}
                             disabled={!valid}
-                            className={`${styles.metalOption} ${selectedOptions[attr.slug] === opt ? styles.metalSelected : ''}`}
-                            onClick={() => handleOptionSelect(attrIdx, attr.slug, opt)}
+                            title={opt.value}
+                            className={`${styles.metalOption} ${selectedOptions[attr.slug] === opt.value ? styles.metalSelected : ''}`}
+                            onClick={() => handleOptionSelect(attrIdx, attr.slug, opt.value)}
                             style={{ opacity: valid ? 1 : 0.3, cursor: valid ? 'pointer' : 'not-allowed' }}
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={btnImg} alt={opt} className={styles.metalImg} />
-                            <span className={styles.metalCode}>{opt}</span>
+                            {swatchElement}
+                            {attrType === 'image' && <span className={styles.metalCode}>{opt.value}</span>}
                           </button>
                         );
                       })}
@@ -506,10 +579,10 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                     >
                       {!selectedOptions[attr.slug] && <option value="" disabled>Select {attr.name}</option>}
                       {allOptions.map(opt => {
-                        const valid = isOptionValid(attrIdx, attr.slug, opt);
+                        const valid = isOptionValid(attrIdx, attr.slug, opt.value);
                         return (
-                          <option key={opt} value={opt} disabled={!valid}>
-                            {opt} {!valid ? '(Unavailable)' : ''}
+                          <option key={opt.value} value={opt.value} disabled={!valid}>
+                            {opt.value} {!valid ? '(Unavailable)' : ''}
                           </option>
                         );
                       })}
@@ -566,7 +639,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                     </span>
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px dashed #ddd' }}>
-                    * Final wholesale price includes manufacturing markup and current spot market fluctuations. Must be logged in to view accurate pricing.
+                    * Final wholesale price includes manufacturing markup and current spot market fluctuations.
                   </div>
                 </div>
               </div>
@@ -630,7 +703,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
 
             {/* Pricing Display */}
             <div style={{ marginTop: '2rem', marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
-              {isAuthenticated ? (
+              {isAuthenticated && userPermission !== 'view_only' ? (
                 <>
                   <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-gold)' }}>
                     {regularPrice !== null && calculatedPrice !== null && regularPrice > calculatedPrice && (
@@ -665,6 +738,10 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                     </div>
                   )}
                 </>
+              ) : isAuthenticated && userPermission === 'view_only' ? (
+                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                  Pricing Restricted
+                </div>
               ) : (
                 <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                   Please login to view wholesale pricing and bulk discounts.
@@ -717,6 +794,17 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
           </div>
         </div>
 
+        {/* Full Description */}
+        {product.description && (
+          <div className={styles.descriptionSection} style={{ marginTop: '2rem', marginBottom: '2rem', padding: '2rem', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #eaeaea' }}>
+            <h2 style={{ fontSize: '1.3rem', marginBottom: '1.5rem', color: 'var(--color-inkblue)', borderBottom: '2px solid var(--color-gold)', display: 'inline-block', paddingBottom: '0.5rem' }}>Description</h2>
+            <div
+              style={{ lineHeight: '1.6', color: '#444', fontSize: '0.95rem' }}
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+          </div>
+        )}
+
         {/* Additional Information */}
         <div className={styles.additionalSection}>
           <div className={styles.tabBar}>
@@ -728,9 +816,31 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
                 <th>Weight</th>
                 <td>{weightDisplay}</td>
               </tr>
+              {currentVariation?.length_in || product.length_in ? (
+                <tr>
+                  <th>Length</th>
+                  <td>{currentVariation?.length_in || product.length_in} in</td>
+                </tr>
+              ) : null}
+              {currentVariation?.width_in || product.width_in ? (
+                <tr>
+                  <th>Width</th>
+                  <td>{currentVariation?.width_in || product.width_in} in</td>
+                </tr>
+              ) : null}
+              {currentVariation?.height_in || product.height_in ? (
+                <tr>
+                  <th>Height</th>
+                  <td>{currentVariation?.height_in || product.height_in} in</td>
+                </tr>
+              ) : null}
               <tr>
                 <th>Unit</th>
-                <td>PC</td>
+                <td>
+                  {product.measurement_type === 'inch' ? 'Inch'
+                    : product.measurement_type === 'plate' ? 'Plate'
+                      : 'Piece (PC)'}
+                </td>
               </tr>
 
               {variationAttributes.map(attr => (
@@ -744,7 +854,7 @@ export default function ProductDetailClient({ initialProduct: _initialProduct }:
               {visibleAttrs.map((attr, idx) => (
                 <tr key={idx}>
                   <th>{attr.name}</th>
-                  <td>{attr.values}</td>
+                  <td>{attr.values.map(v => v.value).join(', ')}</td>
                 </tr>
               ))}
             </tbody>

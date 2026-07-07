@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiUrl, getGuestCartId, type CartApiResponse } from '@/lib/cart';
+import { apiUrl, cartFetch } from '@/lib/cart';
 import styles from './Header.module.css';
 import SmartSearchBar from './SmartSearchBar';
 import { FiUser, FiMapPin, FiLogOut } from 'react-icons/fi';
@@ -73,6 +73,7 @@ interface UserSession {
   firstName: string;
   lastName: string;
   companyName: string;
+  level?: number;
 }
 
 interface Product {
@@ -208,14 +209,28 @@ export default function Header() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch(apiUrl('/api/user/session'), {
-          credentials: 'include',
+        const token = localStorage.getItem('storeToken');
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
+        const res = await fetch(apiUrl('/api/store/auth/me'), {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) {
             setUser(data.user);
+          } else {
+            setUser(null);
+            localStorage.removeItem('storeToken');
           }
+        } else {
+          setUser(null);
+          localStorage.removeItem('storeToken');
         }
       } catch {
         // silently fail
@@ -224,15 +239,17 @@ export default function Header() {
 
     async function loadCartCount() {
       try {
-        const guestId = getGuestCartId();
-        const res = await fetch(apiUrl(`/api/cart?guestId=${encodeURIComponent(guestId)}`), {
-          credentials: 'include',
-        });
+        const token = localStorage.getItem('storeToken');
+        if (!token) {
+          setCartCount(0);
+          return;
+        }
+        
+        const res = await cartFetch('/api/store/cart');
 
         if (res.ok) {
           const data = await res.json();
-          // Backend returns { cart: { id, status }, items: [] }
-          setCartCount(data.items?.length || 0);
+          setCartCount(data.cart?.itemCount || 0);
         }
       } catch {
         // silently fail
@@ -331,9 +348,11 @@ export default function Header() {
       }
     }
 
+
     fetchCollections();
     fetchCategories();
     fetchPrices();
+
     // Refresh every 5 minutes
     const interval = setInterval(fetchPrices, 5 * 60 * 1000);
     return () => clearInterval(interval);
@@ -341,10 +360,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch(apiUrl('/api/user/logout'), {
-        method: 'POST',
-        credentials: 'include',
-      });
+      localStorage.removeItem('storeToken');
       setUser(null);
       setUserMenuOpen(false);
       window.dispatchEvent(new Event('user-auth-change'));
@@ -369,8 +385,6 @@ export default function Header() {
           </div>
           <div className={styles.topLinks}>
             <Link href="/NYS-ResaleCertificate-ST120.pdf" target="_blank" className={styles.topLink}>Download Resale Certificate</Link>
-            <span className={styles.topDivider} />
-            <Link href="/calculator" className={styles.topLink}>MM to Carat Calculator</Link>
             <span className={styles.topDivider} />
             <Link href="/" className={styles.topLink}>Home</Link>
             <span className={styles.topDivider} />
@@ -406,19 +420,21 @@ export default function Header() {
                       <span>{user.companyName}</span>
                     </div>
                     <Link
-                      href="/account/profile"
+                      href="/profile"
                       className={styles.userDropdownItem}
                       onClick={() => setUserMenuOpen(false)}
                     >
                       <FiUser /> My Profile
                     </Link>
-                    <Link
-                      href="/account/addresses"
-                      className={styles.userDropdownItem}
-                      onClick={() => setUserMenuOpen(false)}
-                    >
-                      <FiMapPin /> Addresses
-                    </Link>
+                    {user.level !== 1 && (
+                      <Link
+                        href="/account/addresses"
+                        className={styles.userDropdownItem}
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <FiMapPin /> Addresses
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className={styles.userDropdownLogout}
@@ -593,6 +609,7 @@ export default function Header() {
                                 <div className={styles.subCategoryGrid}>
                                   {[...megaMenuData[activeCategory].links]
                                     .sort((a, b) => a.label.localeCompare(b.label))
+                                    .slice(0, 12) // Shorter Mega Menu (limit to 12 items)
                                     .map((link, idx) => (
                                       <Link href={link.href} key={idx} className={styles.subCategoryLink} onClick={() => setIsMegaMenuOpen(false)}>
                                         {link.label}
@@ -600,6 +617,16 @@ export default function Header() {
                                   ))}
                                 </div>
                               )}
+                              {/* Catalog Access Link */}
+                              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
+                                <Link 
+                                  href={`/products?category=${megaMenuData[activeCategory].slug}`} 
+                                  className={styles.viewFullCatalogBtn}
+                                  onClick={() => setIsMegaMenuOpen(false)}
+                                >
+                                  View Full Catalog →
+                                </Link>
+                              </div>
                             </div>
                           </>
                         )}

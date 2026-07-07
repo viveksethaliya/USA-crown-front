@@ -1,25 +1,11 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-
-
+/* 
+  Global palette — everything else is done via Tailwind arbitrary values in components.
+  Sand Dune: #f0ede5 | Jet: #312f2c | Royal Gold: #d1a054
+*/
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: #f0ede5;
+  color: #312f2c;
   font-family: Arial, Helvetica, sans-serif;
-}
-
-dummy{
-  color: #fff;
 }

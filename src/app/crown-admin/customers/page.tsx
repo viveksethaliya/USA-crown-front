@@ -3,16 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Search, Trash2, Loader2, ChevronLeft, ChevronRight, Mail, Edit2 } from 'lucide-react';
 import Link from 'next/link';
-import { toast } from 'react-hot-toast';
 import { Pagination } from '@/types/admin';
 
-const API = 'http://localhost:5000/api/admin';
-
-const ROLES = [
-  { id: 1, name: 'Admin', slug: 'admin' },
-  { id: 4, name: 'Customer', slug: 'customer' },
-  { id: 5, name: 'Employee', slug: 'employee' }
-];
+import { ADMIN_API as API } from '@/lib/config';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -20,8 +13,6 @@ export default function CustomersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
@@ -34,20 +25,10 @@ export default function CustomersPage() {
       const token = localStorage.getItem('adminToken');
       const params = new URLSearchParams({ page: String(page), limit: String(25) });
       if (debouncedSearch) params.set('search', debouncedSearch);
-
-      const res = await fetch(`${API}/customers?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`${API}/customers?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
       const json = await res.json();
       setCustomers(json.data || []);
       setPagination(json.pagination || { total: 0, page: 1, totalPages: 1 });
-
-      // Update selected user if in list
-      setSelectedUser((prev: any) => {
-        if (!prev) return prev;
-        const updated = (json.data || []).find((c: any) => c.id === prev.id);
-        return updated || prev;
-      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -61,32 +42,34 @@ export default function CustomersPage() {
     if (!confirm(`Delete user "${username || id}"? This cannot be undone.`)) return;
     const token = localStorage.getItem('adminToken');
     try {
-      await fetch(`${API}/customers/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (selectedUser?.id === id) setSelectedUser(null);
+      await fetch(`${API}/customers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       fetchCustomers(pagination.page);
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (error) { console.error(error); }
   };
 
   const getRoleBadge = (roles: any) => {
     if (!roles) return null;
     const colors: Record<string, string> = {
-      admin: 'bg-red-500/10 text-red-400 border-red-500/20',
-      customer: 'bg-green-500/10 text-green-400 border-green-500/20',
-      wholesale: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-      employee: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-      b2b: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+      admin: 'bg-[#312f2c]/10 text-[#312f2c] border-[#312f2c]/20',
+      customer: 'bg-[#d1a054]/10 text-[#d1a054] border-[#d1a054]/20',
+      wholesale: 'bg-[#d1a054]/15 text-[#d1a054] border-[#d1a054]/25',
+      employee: 'bg-[#312f2c]/8 text-[#312f2c]/70 border-[#312f2c]/15',
+      'sub-user': 'bg-[#312f2c]/8 text-[#312f2c]/70 border-[#312f2c]/15',
+      b2b: 'bg-[#d1a054]/10 text-[#d1a054] border-[#d1a054]/20',
     };
-    const cls = colors[roles.slug] || 'bg-gray-800 text-gray-400 border-gray-700';
+    const cls = colors[roles.slug] || 'bg-[#312f2c]/6 text-[#312f2c]/60 border-[#312f2c]/10';
     return (
-      <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold ${cls}`}>
+      <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border ${cls}`}>
         {roles.name}
       </span>
     );
+  };
+
+  const getStatusColor = (status: string) => {
+    if (status === 'approved') return 'text-[#d1a054]';
+    if (status === 'pending') return 'text-[#312f2c]/60';
+    if (status === 'rejected') return 'text-red-500';
+    return 'text-[#312f2c]/50';
   };
 
   return (
@@ -94,35 +77,34 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Customers
-          </h2>
-          <p className="text-gray-400 text-sm mt-1">{pagination.total} registered accounts</p>
+          <h2 className="text-2xl font-bold text-[#312f2c]">Customers</h2>
+          <p className="text-[#312f2c]/55 text-sm mt-1">{pagination.total} registered accounts</p>
         </div>
         <div className="w-full sm:w-auto flex items-center gap-3">
-          <div className="flex items-center bg-gray-900/50 p-2 border border-gray-800 rounded-xl backdrop-blur-sm">
-            <Search className="w-5 h-5 text-gray-500 ml-2" />
+          <div className="flex items-center bg-white/60 p-2 border border-[#312f2c]/10 rounded-xl">
+            <Search className="w-5 h-5 text-[#312f2c]/35 ml-2" />
             <input
               type="text"
               placeholder="Search by username or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent border-none focus:ring-0 text-white px-4 py-1 w-64 outline-none"
+              className="bg-transparent border-none focus:ring-0 text-[#312f2c] placeholder:text-[#312f2c]/35 px-4 py-1 w-64 outline-none text-sm"
             />
           </div>
           <Link
             href="/crown-admin/customers/new"
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors border border-indigo-500/50 shadow-lg shadow-indigo-500/20"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-xl font-medium transition-colors shadow-sm"
           >
             Create User
           </Link>
         </div>
       </div>
 
-      <div className="bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-xl">
+      {/* Table */}
+      <div className="bg-[#ece9e1] border border-[#312f2c]/10 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-400">
-            <thead className="bg-gray-800/50 text-xs uppercase text-gray-500 border-b border-gray-800">
+          <table className="w-full text-left text-sm text-[#312f2c]/60">
+            <thead className="bg-[#312f2c]/5 text-xs uppercase text-[#312f2c]/40 border-b border-[#312f2c]/10">
               <tr>
                 <th className="px-6 py-4 font-medium">Username</th>
                 <th className="px-6 py-4 font-medium">First Name</th>
@@ -134,50 +116,45 @@ export default function CustomersPage() {
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800/50">
+            <tbody className="divide-y divide-[#312f2c]/8">
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
-                    <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
+                    <Loader2 className="w-8 h-8 text-[#d1a054] animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-[#312f2c]/40">
                     <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
                     <p>No customers found</p>
                   </td>
                 </tr>
               ) : (
                 customers.map(customer => (
-                  <tr key={customer.id} className="hover:bg-gray-800/30 transition-colors">
-                    <td className="px-6 py-4 font-medium text-white whitespace-nowrap">
+                  <tr key={customer.id} className="hover:bg-[#312f2c]/4 transition-colors">
+                    <td className="px-6 py-4 font-medium text-[#312f2c] whitespace-nowrap">
                       {customer.username || '-'}
                     </td>
-                    <td className="px-6 py-4">{customer.first_name || '-'}</td>
-                    <td className="px-6 py-4">{customer.last_name || '-'}</td>
+                    <td className="px-6 py-4 text-[#312f2c]/70">{customer.first_name || '-'}</td>
+                    <td className="px-6 py-4 text-[#312f2c]/70">{customer.last_name || '-'}</td>
                     <td className="px-6 py-4 flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-gray-500" />
-                      {customer.email}
+                      <Mail className="w-3.5 h-3.5 text-[#312f2c]/35" />
+                      <span className="text-[#312f2c]/70">{customer.email}</span>
                     </td>
                     <td className="px-6 py-4">{getRoleBadge(customer.roles)}</td>
                     <td className="px-6 py-4">
-                      <span className={`capitalize ${
-                        customer.status === 'approved' ? 'text-emerald-400' :
-                        customer.status === 'pending' ? 'text-amber-400' :
-                        customer.status === 'rejected' ? 'text-red-400' :
-                        'text-gray-400'
-                      }`}>
+                      <span className={`capitalize font-medium ${getStatusColor(customer.status)}`}>
                         {customer.status || 'pending'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-[#312f2c]/50">
                       {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : '-'}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <Link
                         href={`/crown-admin/customers/${customer.id}`}
-                        className="p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors mr-2 inline-flex"
+                        className="p-2 text-[#312f2c]/50 hover:text-[#d1a054] hover:bg-[#d1a054]/10 rounded-lg transition-colors mr-1 inline-flex"
                         title="Edit User"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -185,7 +162,7 @@ export default function CustomersPage() {
                       {customer.roles?.slug !== 'admin' && (
                         <button
                           onClick={() => handleDelete(customer.id, customer.username)}
-                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                          className="p-2 text-[#312f2c]/50 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                           title="Delete User"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -198,15 +175,17 @@ export default function CustomersPage() {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-800 bg-gray-900/50">
-            <button onClick={() => fetchCustomers(pagination.page - 1)} disabled={pagination.page === 1} className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30 transition-colors text-gray-400 hover:text-white">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-[#312f2c]/10">
+            <button onClick={() => fetchCustomers(pagination.page - 1)} disabled={pagination.page === 1}
+              className="p-2 hover:bg-[#312f2c]/8 rounded-lg disabled:opacity-30 transition-colors text-[#312f2c]/50 hover:text-[#312f2c]">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="text-sm text-gray-400">Page {pagination.page} of {pagination.totalPages}</span>
-            <button onClick={() => fetchCustomers(pagination.page + 1)} disabled={pagination.page === pagination.totalPages} className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30 transition-colors text-gray-400 hover:text-white">
+            <span className="text-sm text-[#312f2c]/50">Page {pagination.page} of {pagination.totalPages}</span>
+            <button onClick={() => fetchCustomers(pagination.page + 1)} disabled={pagination.page === pagination.totalPages}
+              className="p-2 hover:bg-[#312f2c]/8 rounded-lg disabled:opacity-30 transition-colors text-[#312f2c]/50 hover:text-[#312f2c]">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
