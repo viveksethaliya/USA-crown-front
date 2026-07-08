@@ -108,7 +108,7 @@ const CATEGORY_ORDER = [
 function sortCategories(aTitle: string, bTitle: string) {
   const aIdx = CATEGORY_ORDER.indexOf(aTitle.toUpperCase());
   const bIdx = CATEGORY_ORDER.indexOf(bTitle.toUpperCase());
-  
+
   if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
   if (aIdx !== -1) return -1;
   if (bIdx !== -1) return 1;
@@ -244,7 +244,7 @@ export default function Header() {
           setCartCount(0);
           return;
         }
-        
+
         const res = await cartFetch('/api/store/cart');
 
         if (res.ok) {
@@ -384,7 +384,9 @@ export default function Header() {
             <span>Monday – Friday 9:00 AM – 5:00 PM</span>
           </div>
           <div className={styles.topLinks}>
-            <Link href="/NYS-ResaleCertificate-ST120.pdf" target="_blank" className={styles.topLink}>Download Resale Certificate</Link>
+            <Link href="/resale-certificate" className={styles.topLink}>Generate Resale Certificate</Link>
+            <span className={styles.topDivider} />
+            <Link href="/NYS-ResaleCertificate-ST120.pdf" className={styles.topLink} target="_blank" rel="noopener noreferrer">Download Resale Certificate</Link>
             <span className={styles.topDivider} />
             <Link href="/" className={styles.topLink}>Home</Link>
             <span className={styles.topDivider} />
@@ -484,7 +486,7 @@ export default function Header() {
                 } else {
                   displayStr = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(metal.value);
                 }
-                
+
                 return (
                   <div key={metal.label} className={styles.metalItem}>
                     <span className={styles.metalName}>{metal.label}</span>
@@ -521,7 +523,7 @@ export default function Header() {
           <nav className={styles.nav}>
             {/* Desktop Nav */}
             <ul className={styles.navList}>
-              <li 
+              <li
                 className={styles.navItem}
                 onMouseEnter={() => setIsMegaMenuOpen(true)}
                 onMouseLeave={() => setIsMegaMenuOpen(false)}
@@ -539,7 +541,7 @@ export default function Header() {
                 {isMegaMenuOpen && (
                   <div className={styles.megaMenuDropdown}>
                     <div className={styles.megaMenuInner}>
-                      
+
                       {/* Left Side: Categories */}
                       <div className={styles.categorySidebar}>
                         {Object.keys(megaMenuData)
@@ -567,7 +569,7 @@ export default function Header() {
                               <h4 className={styles.sectionTitle}>
                                 Recommended in {megaMenuData[activeCategory].title}
                               </h4>
-                              
+
                               {loadingProducts && (!recommendedCache[activeCategory] || recommendedCache[activeCategory].length === 0) ? (
                                 <div style={{ color: '#888' }}>Finding recommendations...</div>
                               ) : (!recommendedCache[activeCategory] || recommendedCache[activeCategory].length === 0) ? (
@@ -614,13 +616,13 @@ export default function Header() {
                                       <Link href={link.href} key={idx} className={styles.subCategoryLink} onClick={() => setIsMegaMenuOpen(false)}>
                                         {link.label}
                                       </Link>
-                                  ))}
+                                    ))}
                                 </div>
                               )}
                               {/* Catalog Access Link */}
                               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
-                                <Link 
-                                  href={`/products?category=${megaMenuData[activeCategory].slug}`} 
+                                <Link
+                                  href={`/products?category=${megaMenuData[activeCategory].slug}`}
                                   className={styles.viewFullCatalogBtn}
                                   onClick={() => setIsMegaMenuOpen(false)}
                                 >

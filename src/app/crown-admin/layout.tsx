@@ -47,7 +47,7 @@ const NAV: NavElement[] = [
       { label: 'Products', href: '/crown-admin/products', icon: Package },
       { label: 'Categories', href: '/crown-admin/categories', icon: Shapes },
       { label: 'Tags', href: '/crown-admin/tags', icon: Tags },
-      { label: 'Brands', href: '/crown-admin/brands', icon: Tag },
+      { label: 'Collections', href: '/crown-admin/brands', icon: Tag },
       { label: 'Attributes', href: '/crown-admin/attributes', icon: SlidersHorizontal },
     ]
   },

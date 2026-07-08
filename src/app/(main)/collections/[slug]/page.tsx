@@ -10,7 +10,7 @@ export async function generateMetadata(
   { params }: Props
 ): Promise<Metadata> {
   const { slug } = await params;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collections/${slug}`, { next: { revalidate: 60 } });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/collections/${slug}`, { next: { revalidate: 60 } });
   
   if (!res.ok) {
     return { title: 'Collection Not Found' };
@@ -35,9 +35,9 @@ export default async function CollectionPage({ params }: Props) {
   const { slug } = await params;
 
   const [colRes, prodRes, filtersRes] = await Promise.all([
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collections/${slug}`, { next: { revalidate: 60 } }),
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collections/${slug}/products`, { next: { revalidate: 60 } }),
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/filters`, { next: { revalidate: 3600 } })
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/collections/${slug}`, { next: { revalidate: 60 } }),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/collections/${slug}/products`, { next: { revalidate: 60 } }),
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/filters`, { next: { revalidate: 3600 } })
   ]);
 
   if (!colRes.ok) {
