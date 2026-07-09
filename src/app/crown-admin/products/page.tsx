@@ -140,6 +140,7 @@ export default function ProductsPage() {
                   <th className="p-4 font-medium hidden lg:table-cell">Price</th>
                   <th className="p-4 font-medium">Stock</th>
                   <th className="p-4 font-medium hidden md:table-cell">Type</th>
+                  <th className="p-4 font-medium hidden lg:table-cell">Tags</th>
                   <th className="p-4 font-medium">Published</th>
                   <th className="p-4 font-medium text-right">Actions</th>
                 </tr>
@@ -147,7 +148,7 @@ export default function ProductsPage() {
               <tbody className="divide-y divide-[#312f2c]/8">
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-12 text-center text-[#312f2c]/40">
+                    <td colSpan={8} className="p-12 text-center text-[#312f2c]/40">
                       <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
                       No products found
                     </td>
@@ -192,6 +193,19 @@ export default function ProductsPage() {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${typeBadge(product.type)}`}>
                           {product.type}
                         </span>
+                      </td>
+                      <td className="p-4 hidden lg:table-cell max-w-[150px] truncate">
+                        <div className="flex flex-wrap gap-1">
+                          {product.product_tags && product.product_tags.length > 0 ? (
+                            product.product_tags.map((pt: any, i: number) => (
+                              <span key={i} className="px-1.5 py-0.5 bg-[#312f2c]/5 text-[#312f2c]/70 rounded text-[10px] uppercase font-semibold">
+                                {pt.tags?.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[#312f2c]/30 text-xs">-</span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
                         {product.is_published ? (

@@ -180,6 +180,12 @@ export default function CartPage() {
                         {item.sku && (
                           <div className="text-sm text-[#666666] mt-2 font-mono">SKU: {item.sku}</div>
                         )}
+                        {(item as any).measurementType === 'inch' && (item as any).customLength && (
+                          <div className="text-sm text-[#d4af37] mt-1 font-medium">📏 Length: {(item as any).customLength}"</div>
+                        )}
+                        {(item as any).measurementType === 'plate' && (item as any).customLength && (item as any).customWidth && (
+                          <div className="text-sm text-[#d4af37] mt-1 font-medium">📐 Dimensions: {(item as any).customLength}" × {(item as any).customWidth}"</div>
+                        )}
                       </div>
                     </div>
                   </td>

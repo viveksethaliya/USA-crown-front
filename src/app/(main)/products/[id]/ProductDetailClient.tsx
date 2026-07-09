@@ -87,10 +87,20 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const [_metalPriceMultiplier, setMetalPriceMultiplier] = useState(1);
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [basePrice, setBasePrice] = useState<number | null>(null);
-  const [regularPrice, setRegularPrice] = useState<number | null>(null);
 
-  interface Discount { id: number; min_quantity: number; type: string; amount: number; }
+  interface Discount {
+    id: number;
+    scope: string;
+    min_quantity: number;
+    max_quantity: number | null;
+    measurement_type: 'inch' | 'plate' | null;
+    type: string;
+    amount: number;
+  }
   const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [appliedDiscountPct, setAppliedDiscountPct] = useState(0);
+  const [appliedDiscountAmount, setAppliedDiscountAmount] = useState(0);
+  const [appliedDiscountScope, setAppliedDiscountScope] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchMetalPrice() {
@@ -276,7 +286,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   // 4. Determine current active variation
   const currentVariation = product?.variations?.find(v => {
-    if (variationAttributes.length === 0) return false;
+    if (variationAttributes.length === 0) return true; // Default to first variation if no attributes exist
 
     // Check if ALL attributes have a selected option
     const allSelected = variationAttributes.every(attr => selectedOptions[attr.slug]);
@@ -297,9 +307,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     async function fetchDiscounts() {
       if (!productId) return;
       try {
-        const res = await fetch(apiUrl(`/api/store/catalog/products/${productId}/discounts`), {
+        const res = await cartFetch(`/api/store/catalog/products/${productId}/discounts`, {
           method: 'POST',
-          credentials: 'include',
           cache: 'no-store'
         });
         if (res.ok) {
@@ -320,28 +329,30 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         const body: Record<string, string | number | null> = {
           productId: product.id,
           variationId: currentVariation ? currentVariation.id : null,
+          quantity,
         };
         if (customLength) body.length = customLength;
         if (customWidth) body.width = customWidth;
 
-        const res = await fetch(apiUrl(`/api/store/catalog/products/calculate-price`), {
+        const res = await cartFetch(`/api/store/catalog/products/calculate-price`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
           body: JSON.stringify(body),
-          credentials: 'include'
         });
         if (res.ok) {
           const data = await res.json();
           setCalculatedPrice(data.price);
           setBasePrice(data.originalBasePrice);
-          setRegularPrice(data.regularPrice);
+          setAppliedDiscountPct(data.discountPct || 0);
+          setAppliedDiscountAmount(data.discountAmount || 0);
+          setAppliedDiscountScope(data.discountScope || null);
         }
       } catch (e) {
         console.error(e);
       }
     }
     fetchPrice();
-  }, [product, currentVariation, customLength, customWidth]);
+  }, [product, currentVariation, customLength, customWidth, quantity]);
 
 
   const images = uniqueUrls(
@@ -630,14 +641,20 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: '#666' }}>Estimated Base Price:</span>
                     <span style={{ fontWeight: 600, color: 'var(--color-gold)' }}>
-                      {isAuthenticated && regularPrice !== null && calculatedPrice !== null && regularPrice > calculatedPrice && (
+                      {isAuthenticated && basePrice !== null && calculatedPrice !== null && basePrice > calculatedPrice && (
                         <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '6px', fontWeight: 'normal' }}>
-                          ${regularPrice.toFixed(2)}
+                          ${basePrice.toFixed(2)}
                         </span>
                       )}
                       ${isAuthenticated && calculatedPrice !== null ? calculatedPrice.toFixed(2) : (isAuthenticated ? '0.00' : 'Login Required')}
                     </span>
                   </div>
+                  {isAuthenticated && appliedDiscountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'green', fontWeight: 600 }}>
+                      <span>Discount Applied ({appliedDiscountPct}%{appliedDiscountScope ? ` ${appliedDiscountScope}` : ''})</span>
+                      <span>-${appliedDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px dashed #ddd' }}>
                     * Final wholesale price includes manufacturing markup and current spot market fluctuations.
                   </div>
@@ -686,14 +703,20 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: '#666' }}>Estimated Base Price:</span>
                     <span style={{ fontWeight: 600, color: 'var(--color-gold)' }}>
-                      {isAuthenticated && regularPrice !== null && calculatedPrice !== null && regularPrice > calculatedPrice && (
+                      {isAuthenticated && basePrice !== null && calculatedPrice !== null && basePrice > calculatedPrice && (
                         <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '6px', fontWeight: 'normal' }}>
-                          ${regularPrice.toFixed(2)}
+                          ${basePrice.toFixed(2)}
                         </span>
                       )}
                       ${isAuthenticated && calculatedPrice !== null ? calculatedPrice.toFixed(2) : (isAuthenticated ? '0.00' : 'Login Required')}
                     </span>
                   </div>
+                  {isAuthenticated && appliedDiscountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'green', fontWeight: 600 }}>
+                      <span>Discount Applied ({appliedDiscountPct}%{appliedDiscountScope ? ` ${appliedDiscountScope}` : ''})</span>
+                      <span>-${appliedDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.8rem', paddingTop: '0.8rem', borderTop: '1px dashed #ddd' }}>
                     * Final wholesale price includes manufacturing markup and current spot market fluctuations. Must be logged in to view accurate pricing.
                   </div>
@@ -706,14 +729,19 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               {isAuthenticated && userPermission !== 'view_only' ? (
                 <>
                   <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-gold)' }}>
-                    {regularPrice !== null && calculatedPrice !== null && regularPrice > calculatedPrice && (
+                    {basePrice !== null && calculatedPrice !== null && basePrice > calculatedPrice && (
                       <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '8px', fontSize: '1.4rem' }}>
-                        ${regularPrice.toFixed(2)}
+                        ${basePrice.toFixed(2)}
                       </span>
                     )}
                     ${calculatedPrice !== null ? calculatedPrice.toFixed(2) : (basePrice ? basePrice.toFixed(2) : '0.00')}
                     <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}> / each</span>
                   </div>
+                  {appliedDiscountAmount > 0 && (
+                    <div style={{ marginTop: '0.5rem', color: 'green', fontWeight: 700, fontSize: '0.95rem' }}>
+                      {appliedDiscountPct}% discount applied - you save ${appliedDiscountAmount.toFixed(2)} per unit
+                    </div>
+                  )}
                   {discounts.length > 0 && (
                     <div style={{ marginTop: '1rem' }}>
                       <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--color-inkblue)' }}>Bulk Order Discounts:</p>
@@ -727,9 +755,13 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                         <tbody>
                           {discounts.map(d => (
                             <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
-                              <td style={{ padding: '0.4rem 0' }}>{d.min_quantity}+</td>
+                              <td style={{ padding: '0.4rem 0' }}>
+                                {d.max_quantity ? `${d.min_quantity} - ${d.max_quantity}` : `${d.min_quantity}+`}
+                                {d.measurement_type ? ` ${d.measurement_type === 'plate' ? 'sq. in.' : 'in.'}` : ''}
+                              </td>
                               <td style={{ padding: '0.4rem 0', color: 'green', fontWeight: 600 }}>
                                 {d.type === 'percentage' ? `${d.amount}% off` : `$${d.amount} off`}
+                                <span style={{ color: '#777', fontWeight: 400 }}> ({d.scope})</span>
                               </td>
                             </tr>
                           ))}

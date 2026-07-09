@@ -31,6 +31,8 @@ export default function AdminCartDetailPage() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [selectedVariationId, setSelectedVariationId] = useState<number | null>(null);
   const [addQuantity, setAddQuantity] = useState(1);
+  const [addLength, setAddLength] = useState<number | ''>('');
+  const [addWidth, setAddWidth] = useState<number | ''>('');
   const [isAdding, setIsAdding] = useState(false);
 
   const fetchCart = async () => {
@@ -116,10 +118,22 @@ export default function AdminCartDetailPage() {
       toast.error('Please select a variation');
       return;
     }
-    await addDirectlyToCart(selectedProduct.id, selectedVariationId, addQuantity);
+    await addDirectlyToCart(
+      selectedProduct.id, 
+      selectedVariationId, 
+      addQuantity,
+      addLength === '' ? undefined : addLength,
+      addWidth === '' ? undefined : addWidth
+    );
   };
 
-  const addDirectlyToCart = async (productId: string, variationId: number | null, quantity: number) => {
+  const addDirectlyToCart = async (
+    productId: string, 
+    variationId: number | null, 
+    quantity: number,
+    customLength?: number,
+    customWidth?: number
+  ) => {
     setIsAdding(true);
     try {
       const token = localStorage.getItem('adminToken');
@@ -129,7 +143,9 @@ export default function AdminCartDetailPage() {
         body: JSON.stringify({
           productId,
           variationId,
-          quantity
+          quantity,
+          customLength,
+          customWidth
         })
       });
       if (!res.ok) {
@@ -180,6 +196,8 @@ export default function AdminCartDetailPage() {
     setSelectedProduct(null);
     setSelectedVariationId(null);
     setAddQuantity(1);
+    setAddLength('');
+    setAddWidth('');
   };
 
   return (
@@ -249,6 +267,11 @@ export default function AdminCartDetailPage() {
                             <div>
                               <p className="font-medium text-[#312f2c] text-sm">{item.productName}</p>
                               {item.variationLabel && <p className="text-xs text-[#312f2c]/55 mt-0.5">{item.variationLabel}</p>}
+                              {(item.measurementType === 'inch' || item.measurementType === 'plate') && (
+                                <p className="text-[10px] uppercase font-bold text-[#d1a054] mt-1 bg-[#d1a054]/10 px-1.5 py-0.5 rounded inline-block">
+                                  {item.customLength || 1}&quot; {item.measurementType === 'plate' ? `× ${item.customWidth || 1}"` : 'Length'}
+                                </p>
+                              )}
                               {item.sku && <p className="text-[10px] font-mono text-[#312f2c]/40 mt-0.5">SKU: {item.sku}</p>}
                             </div>
                           </div>
@@ -268,6 +291,7 @@ export default function AdminCartDetailPage() {
                             <div>
                               <p className="line-through text-xs text-[#312f2c]/40">{formatMoney(item.lineTotal)}</p>
                               <p className="font-medium text-[#312f2c]">{formatMoney(item.finalLineTotal)}</p>
+                              <p className="text-[10px] font-semibold text-[#d1a054]">Saved {formatMoney(item.discountAmount)}</p>
                             </div>
                           ) : (
                             <p className="font-medium text-[#312f2c]">{formatMoney(item.lineTotal)}</p>
@@ -397,8 +421,39 @@ export default function AdminCartDetailPage() {
                     </div>
                   )}
 
+                  {(selectedProduct.measurement_type === 'inch' || selectedProduct.measurement_type === 'plate') && (
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-[#312f2c]/55 uppercase tracking-wide mb-1.5">Length (Inches)</label>
+                        <input 
+                          type="number" 
+                          min="0.1" 
+                          step="0.1"
+                          value={addLength} 
+                          onChange={e => setAddLength(parseFloat(e.target.value) || '')}
+                          className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2.5 text-sm text-[#312f2c] focus:outline-none focus:border-[#d1a054]"
+                          placeholder="e.g. 10"
+                        />
+                      </div>
+                      {selectedProduct.measurement_type === 'plate' && (
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-[#312f2c]/55 uppercase tracking-wide mb-1.5">Width (Inches)</label>
+                          <input 
+                            type="number" 
+                            min="0.1" 
+                            step="0.1"
+                            value={addWidth} 
+                            onChange={e => setAddWidth(parseFloat(e.target.value) || '')}
+                            className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2.5 text-sm text-[#312f2c] focus:outline-none focus:border-[#d1a054]"
+                            placeholder="e.g. 5"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div>
-                    <label className="block text-xs font-medium text-[#312f2c]/55 uppercase tracking-wide mb-1.5">Quantity</label>
+                    <label className="block text-xs font-medium text-[#312f2c]/55 uppercase tracking-wide mb-1.5">Quantity (Units)</label>
                     <input 
                       type="number" 
                       min="1" 

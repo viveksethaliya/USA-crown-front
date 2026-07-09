@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Tag, Loader2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, Loader2, Search, Package } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { Brand } from '@/types/admin';
 import { ADMIN_API as API } from '@/lib/config';
@@ -212,6 +213,13 @@ export default function BrandsPage() {
                   </td>
                   <td className="p-4 text-[#312f2c]/50 font-mono text-sm">{brand.slug}</td>
                   <td className="p-4 text-right space-x-2">
+                    <Link
+                      href={`/crown-admin/brands/${brand.id}`}
+                      title="Manage Products"
+                      className="inline-flex p-2 bg-[#312f2c]/6 hover:bg-[#d1a054]/12 hover:text-[#d1a054] text-[#312f2c]/50 rounded-lg transition-colors"
+                    >
+                      <Package className="w-4 h-4" />
+                    </Link>
                     <button
                       onClick={() => handleOpenForm(brand)}
                       className="p-2 bg-[#312f2c]/6 hover:bg-[#d1a054]/12 hover:text-[#d1a054] text-[#312f2c]/50 rounded-lg transition-colors"

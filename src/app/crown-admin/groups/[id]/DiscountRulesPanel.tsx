@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Trash2, Plus, Search, Tag } from 'lucide-react';
+import { Loader2, Trash2, Plus, Search, Tag, Ruler } from 'lucide-react';
 import { apiUrl } from '@/lib/cart';
 
 interface DiscountRule {
   id: number;
-  scope: 'global' | 'category' | 'product';
+  scope: 'global' | 'category' | 'product' | 'measurement';
   category_id: number | null;
   product_id: number | null;
   min_qty: number;
+  max_qty: number | null;
+  measurement_type: 'inch' | 'plate' | null;
   discount_pct: number;
   categories?: { id: number; name: string };
   products?: { id: number; name: string; sku: string };
@@ -22,7 +24,9 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
   const [form, setForm] = useState({
     scope: 'global',
     category_id: '',
+    measurement_type: 'inch',
     min_qty: '1',
+    max_qty: '',
     discount_pct: ''
   });
 
@@ -61,7 +65,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
     let current = categories.find(c => c.id === categoryId);
     while (current && current.parent_id) {
       depth++;
-      current = categories.find(c => c.id === current.parent_id);
+      current = categories.find(c => c.id === current!.parent_id);
     }
     return depth;
   }, [categories]);
@@ -96,6 +100,14 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
       alert("Please select at least one product.");
       return;
     }
+    if (form.scope === 'measurement' && (!form.min_qty || !form.max_qty)) {
+      alert("Please enter both Min and Max measurement values.");
+      return;
+    }
+    if (form.scope === 'measurement' && parseFloat(form.min_qty) >= parseFloat(form.max_qty)) {
+      alert("Max value must be greater than Min value.");
+      return;
+    }
     setAdding(true);
     try {
       const res = await fetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules`), {
@@ -105,7 +117,9 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
           scope: form.scope,
           category_id: form.category_id ? parseInt(form.category_id) : null,
           product_ids: selectedProducts.map(p => p.id),
-          min_qty: parseInt(form.min_qty),
+          measurement_type: form.scope === 'measurement' ? form.measurement_type : null,
+          min_qty: parseFloat(form.min_qty),
+          max_qty: form.scope === 'measurement' ? parseFloat(form.max_qty) : null,
           discount_pct: parseFloat(form.discount_pct)
         })
       });
@@ -113,7 +127,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
         const data = await res.json();
         throw new Error(data.error);
       }
-      setForm({ scope: 'global', category_id: '', min_qty: '1', discount_pct: '' });
+      setForm({ scope: 'global', category_id: '', measurement_type: 'inch', min_qty: '1', max_qty: '', discount_pct: '' });
       setSelectedProducts([]);
       setSearchProduct('');
       fetchRules();
@@ -147,106 +161,155 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
       case 'global': return 'bg-[#312f2c]/10 text-[#312f2c] border-[#312f2c]/20';
       case 'category': return 'bg-[#d1a054]/15 text-[#d1a054] border-[#d1a054]/25';
       case 'product': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'measurement': return 'bg-blue-100 text-blue-800 border-blue-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  const isMeasurementScope = form.scope === 'measurement';
 
   return (
     <div className="space-y-6">
       {/* Add Form */}
       <div className="bg-white p-5 rounded-xl border border-[#312f2c]/10 shadow-sm">
         <h3 className="text-lg font-bold text-[#312f2c] mb-1">Add Advanced Rule</h3>
-        <p className="text-sm text-[#312f2c]/60 mb-4">Define minimum quantity thresholds for specific products or categories. Most specific rules take priority.</p>
+        <p className="text-sm text-[#312f2c]/60 mb-4">
+          Define discounts by product, category, or total measurement ordered (inches/sq.inches). Most specific rules take priority.
+        </p>
         
-        <form onSubmit={handleAddRule} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-          <div className="col-span-12 md:col-span-3">
-            <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Scope</label>
-            <select value={form.scope} onChange={e => setForm({ ...form, scope: e.target.value })} 
-              className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] bg-white text-sm">
-              <option value="global">Global (All Products)</option>
-              <option value="category">Specific Category</option>
-              <option value="product">Specific Product(s)</option>
-            </select>
-          </div>
+        <form onSubmit={handleAddRule} className="space-y-4">
+          {/* Row 1: Scope + Target */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div className="col-span-12 md:col-span-3">
+              <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Scope</label>
+              <select value={form.scope} onChange={e => setForm({ ...form, scope: e.target.value, max_qty: '' })} 
+                className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] bg-white text-sm">
+                <option value="global">Global (All Products)</option>
+                <option value="category">Specific Category</option>
+                <option value="product">Specific Product(s)</option>
+                <option value="measurement">Measurement (Inch / Plate)</option>
+              </select>
+            </div>
 
-          <div className="col-span-12 md:col-span-5">
-            {form.scope === 'global' && (
-              <div className="h-[38px] flex items-center text-sm text-[#312f2c]/50 bg-gray-50 rounded-lg px-3 border border-transparent">
-                Applies to all products
-              </div>
-            )}
-            
-            {form.scope === 'category' && (
-              <div>
-                <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Category</label>
-                <select required value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })} 
-                  className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] bg-white text-sm">
-                  <option value="">Select a category...</option>
-                  {displayCategories.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {'\u00A0\u00A0\u00A0'.repeat(c.depth)}{c.depth > 0 ? '↳ ' : ''}{c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {form.scope === 'product' && (
-              <div className="relative">
-                <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Products</label>
-                
-                {selectedProducts.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {selectedProducts.map(sp => (
-                      <div key={sp.id} className="flex items-center gap-1.5 bg-[#312f2c] text-[#f0ede5] px-2 py-1 rounded-md text-xs font-medium">
-                        {sp.name}
-                        <button type="button" onClick={() => setSelectedProducts(prev => prev.filter(p => p.id !== sp.id))} className="hover:text-red-300">×</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#312f2c]/40" />
-                  <input type="text" placeholder="Search and add products..." value={searchProduct} onChange={e => setSearchProduct(e.target.value)} 
-                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm" />
+            <div className="col-span-12 md:col-span-5">
+              {form.scope === 'global' && (
+                <div className="h-[38px] flex items-center text-sm text-[#312f2c]/50 bg-gray-50 rounded-lg px-3 border border-transparent">
+                  Applies to all products
                 </div>
-                
-                {searchProduct && (
-                  <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[#312f2c]/20 rounded-lg max-h-48 overflow-y-auto z-10 shadow-xl">
-                    {products.length === 0 ? <div className="p-3 text-sm text-[#312f2c]/50">No products found</div> : products.map(p => {
-                      const isSelected = selectedProducts.some(sp => sp.id === p.id);
-                      return (
-                        <div key={p.id} onClick={() => {
-                          if (!isSelected) {
-                            setSelectedProducts(prev => [...prev, p]);
-                            setSearchProduct('');
-                          }
-                        }} className={`p-2.5 text-sm border-b border-[#312f2c]/5 flex justify-between items-center ${isSelected ? 'opacity-50 cursor-default bg-gray-50' : 'cursor-pointer hover:bg-[#312f2c]/5'}`}>
-                          <span>{p.name} <span className="text-xs text-[#312f2c]/50">({p.sku})</span></span>
-                          {isSelected && <span className="text-xs font-bold text-emerald-600">Added</span>}
+              )}
+              
+              {form.scope === 'category' && (
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Category</label>
+                  <select required value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })} 
+                    className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] bg-white text-sm">
+                    <option value="">Select a category...</option>
+                    {displayCategories.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {'\u00A0\u00A0\u00A0'.repeat(c.depth)}{c.depth > 0 ? '↳ ' : ''}{c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {form.scope === 'product' && (
+                <div className="relative">
+                  <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Products</label>
+                  
+                  {selectedProducts.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {selectedProducts.map(sp => (
+                        <div key={sp.id} className="flex items-center gap-1.5 bg-[#312f2c] text-[#f0ede5] px-2 py-1 rounded-md text-xs font-medium">
+                          {sp.name}
+                          <button type="button" onClick={() => setSelectedProducts(prev => prev.filter(p => p.id !== sp.id))} className="hover:text-red-300">×</button>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#312f2c]/40" />
+                    <input type="text" placeholder="Search and add products..." value={searchProduct} onChange={e => setSearchProduct(e.target.value)} 
+                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm" />
                   </div>
-                )}
+                  
+                  {searchProduct && (
+                    <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[#312f2c]/20 rounded-lg max-h-48 overflow-y-auto z-10 shadow-xl">
+                      {products.length === 0 ? <div className="p-3 text-sm text-[#312f2c]/50">No products found</div> : products.map(p => {
+                        const isSelected = selectedProducts.some(sp => sp.id === p.id);
+                        return (
+                          <div key={p.id} onClick={() => {
+                            if (!isSelected) {
+                              setSelectedProducts(prev => [...prev, p]);
+                              setSearchProduct('');
+                            }
+                          }} className={`p-2.5 text-sm border-b border-[#312f2c]/5 flex justify-between items-center ${isSelected ? 'opacity-50 cursor-default bg-gray-50' : 'cursor-pointer hover:bg-[#312f2c]/5'}`}>
+                            <span>{p.name} <span className="text-xs text-[#312f2c]/50">({p.sku})</span></span>
+                            {isSelected && <span className="text-xs font-bold text-emerald-600">Added</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {form.scope === 'measurement' && (
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Measurement Type</label>
+                  <select value={form.measurement_type} onChange={e => setForm({ ...form, measurement_type: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] bg-white text-sm">
+                    <option value="inch">Inch (Wire / Chain — total inches ordered)</option>
+                    <option value="plate">Plate (total sq. inches ordered)</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Min / Max qty columns — for measurement show both, otherwise just Min */}
+            {isMeasurementScope ? (
+              <>
+                <div className="col-span-6 md:col-span-2">
+                  <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">
+                    <Ruler className="w-3 h-3 inline mr-1" />Min
+                  </label>
+                  <input required type="number" min="0" step="0.01" value={form.min_qty} onChange={e => setForm({ ...form, min_qty: e.target.value })} 
+                    className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm"
+                    placeholder="e.g. 120" />
+                </div>
+                <div className="col-span-6 md:col-span-2">
+                  <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">
+                    <Ruler className="w-3 h-3 inline mr-1" />Max
+                  </label>
+                  <input required type="number" min="1" step="0.01" value={form.max_qty} onChange={e => setForm({ ...form, max_qty: e.target.value })} 
+                    className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm"
+                    placeholder="e.g. 299" />
+                </div>
+              </>
+            ) : (
+              <div className="col-span-6 md:col-span-2">
+                <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Min Qty</label>
+                <input required type="number" min="1" value={form.min_qty} onChange={e => setForm({ ...form, min_qty: e.target.value })} 
+                  className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm" />
               </div>
             )}
+
+            <div className={`${isMeasurementScope ? 'col-span-12' : 'col-span-6'} md:col-span-2`}>
+              <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Discount %</label>
+              <input required type="number" min="0.1" max="100" step="0.1" value={form.discount_pct} onChange={e => setForm({ ...form, discount_pct: e.target.value })} 
+                className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm" />
+            </div>
           </div>
 
-          <div className="col-span-6 md:col-span-2">
-            <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Min Qty</label>
-            <input required type="number" min="1" value={form.min_qty} onChange={e => setForm({ ...form, min_qty: e.target.value })} 
-              className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm" />
-          </div>
+          {/* Measurement hint */}
+          {isMeasurementScope && (
+            <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <strong>How it works:</strong> For <strong>inch</strong> products, the total = qty × chosen length. For <strong>plate</strong> products, the total = qty × length × width. If the total falls within Min–Max, this discount is applied.
+            </p>
+          )}
 
-          <div className="col-span-6 md:col-span-2">
-            <label className="block text-xs font-semibold uppercase text-[#312f2c]/70 mb-1.5">Discount %</label>
-            <input required type="number" min="0.1" max="100" step="0.1" value={form.discount_pct} onChange={e => setForm({ ...form, discount_pct: e.target.value })} 
-              className="w-full px-3 py-2 rounded-lg border border-[#312f2c]/20 focus:outline-none focus:border-[#d1a054] focus:ring-1 focus:ring-[#d1a054] text-sm" />
-          </div>
-
-          <div className="col-span-12 mt-2">
+          <div>
             <button type="submit" disabled={adding || (form.scope === 'category' && !form.category_id) || (form.scope === 'product' && selectedProducts.length === 0)}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-[#312f2c] text-[#f0ede5] hover:bg-[#312f2c]/90 rounded-lg font-medium transition-colors disabled:opacity-70 text-sm">
               {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Add Rule
@@ -262,7 +325,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
             <tr>
               <th className="px-6 py-4 font-medium">Scope</th>
               <th className="px-6 py-4 font-medium">Target</th>
-              <th className="px-6 py-4 font-medium">Min Quantity</th>
+              <th className="px-6 py-4 font-medium">Range</th>
               <th className="px-6 py-4 font-medium">Discount</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
@@ -295,9 +358,22 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
                   {rule.scope === 'product' && (
                     <span>{rule.products?.name} <span className="text-xs font-normal text-[#312f2c]/50">({rule.products?.sku})</span></span>
                   )}
+                  {rule.scope === 'measurement' && (
+                    <div className="flex items-center gap-2">
+                      <Ruler className="w-3.5 h-3.5 text-blue-600" />
+                      <span className="capitalize">{rule.measurement_type}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold border border-blue-200 text-blue-700 bg-blue-50 tracking-wider">
+                        {rule.measurement_type === 'inch' ? 'inches' : 'sq.inches'}
+                      </span>
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4">
-                  <span className="font-semibold text-[#312f2c]">{rule.min_qty}</span> units
+                  {rule.scope === 'measurement' ? (
+                    <span className="font-semibold text-[#312f2c]">{rule.min_qty} – {rule.max_qty}</span>
+                  ) : (
+                    <span><span className="font-semibold text-[#312f2c]">{rule.min_qty}</span>+ units</span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-bold text-[#059669]">{rule.discount_pct}%</span>
