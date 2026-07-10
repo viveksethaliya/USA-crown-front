@@ -97,4 +97,5 @@ export interface Product {
   stock_quantity?: number;
   is_published?: boolean;
   brands?: { id: string; name: string };
+  product_tags?: any[];
 }
