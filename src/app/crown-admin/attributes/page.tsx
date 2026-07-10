@@ -12,6 +12,7 @@ interface AttributeValue {
   id: number;
   value: string;
   color_hex: string | null;
+  image_url?: string | null;
   position: number;
 }
 
