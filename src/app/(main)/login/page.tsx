@@ -21,8 +21,8 @@ export default function LoginPage() {
 
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
     setIsLoading(true);
 
     try {
@@ -243,7 +243,7 @@ export default function LoginPage() {
                     </label>
                   </div>
 
-                  <button type="button" onClick={() => submitForm()} className={styles.loginBtn} disabled={isLoading}>
+                  <button type="button" onClick={(e) => submitForm(e)} className={styles.loginBtn} disabled={isLoading}>
                     {isLoading ? 'Signing in...' : 'Log in'}
                   </button>
 
@@ -284,7 +284,7 @@ export default function LoginPage() {
                     ))}
                   </div>
 
-                  <button type="button" onClick={() => submitForm()} className={styles.loginBtn} disabled={isLoading}>
+                  <button type="button" onClick={(e) => submitForm(e)} className={styles.loginBtn} disabled={isLoading}>
                     {isLoading ? 'Verifying...' : 'Verify OTP'}
                   </button>
 
