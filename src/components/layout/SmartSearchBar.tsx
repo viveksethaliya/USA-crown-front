@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { API_URL } from "@/lib/config";
 import styles from "./SmartSearchBar.module.css";
 
 interface ProductPreview {
@@ -141,9 +142,8 @@ export default function SmartSearchBar() {
 
       try {
         // 1. Hit our backend API for robust search fallback
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
         const res = await fetch(
-          `${apiUrl}/api/store/catalog/products?search=${encodeURIComponent(debouncedQuery)}&limit=6`,
+          `${API_URL}/api/store/catalog/products?search=${encodeURIComponent(debouncedQuery)}&limit=6`,
           {
             method: 'GET',
             headers: {
@@ -245,8 +245,7 @@ Rules:
             // We only need to fetch if the current products list is empty
             setProducts((currentProducts) => {
               if (currentProducts.length === 0) {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-                fetch(`${apiUrl}/api/store/catalog/products?search=${encodeURIComponent(fallbackTerm)}&limit=6`, {
+                fetch(`${API_URL}/api/store/catalog/products?search=${encodeURIComponent(fallbackTerm)}&limit=6`, {
                   method: 'GET',
                   headers: {
                     'Content-Type': 'application/json'

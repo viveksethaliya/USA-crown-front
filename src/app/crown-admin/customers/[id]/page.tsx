@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Loader2, Save, Edit2, Trash2, Building2, Users, FileText, Eye, ChevronLeft } from 'lucide-react';
+import { Loader2, Save, Edit2, Trash2, Building2, Users, FileText, Eye, ChevronLeft, MapPin, Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -38,6 +38,12 @@ export default function CustomerDetailPage() {
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [allCustomers, setAllCustomers] = useState<any[]>([]);
 
+  // Address Management
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [addressForm, setAddressForm] = useState<any>({});
+  const [isEditingAddress, setIsEditingAddress] = useState<number | 'new' | null>(null);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
   useEffect(() => {
     const fetchAllCustomers = async () => {
       try {
@@ -50,12 +56,23 @@ export default function CustomerDetailPage() {
     fetchAllCustomers();
   }, []);
 
+  const fetchAddresses = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/customers/${id}/addresses`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        setAddresses(await res.json());
+      }
+    } catch (e) { console.error(e); }
+  };
+
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem('adminToken');
       const res = await fetch(`${API}/customers/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (!res.ok) throw new Error('User not found');
       handleSetUser(await res.json());
+      await fetchAddresses();
     } catch (error: any) {
       toast.error(error.message);
       router.push('/crown-admin/customers');
@@ -144,6 +161,47 @@ export default function CustomerDetailPage() {
       setSelectedUser((prev: any) => ({ ...prev, user_documents: prev.user_documents.filter((d: any) => d.id !== docId) }));
       toast.success("Document deleted successfully");
     } catch { toast.error("Error deleting document"); }
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingAddress(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const method = isEditingAddress === 'new' ? 'POST' : 'PUT';
+      const url = isEditingAddress === 'new'
+        ? `${API}/customers/${id}/addresses`
+        : `${API}/customers/${id}/addresses/${isEditingAddress}`;
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(addressForm)
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to save address');
+      }
+      toast.success('Address saved successfully');
+      await fetchAddresses();
+      setIsEditingAddress(null);
+      setAddressForm({});
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: number) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/customers/${id}/addresses/${addressId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error('Failed to delete address');
+      toast.success("Address deleted successfully");
+      await fetchAddresses();
+    } catch { toast.error("Error deleting address"); }
   };
 
   if (isLoading) {
@@ -330,6 +388,112 @@ export default function CustomerDetailPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Addresses */}
+            {!isCreatingUser && Number(formData.role_id) !== 5 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-[#312f2c]/10 pb-2">
+                  <h4 className="text-sm font-semibold text-[#d1a054] flex items-center gap-2"><MapPin className="w-4 h-4" /> Addresses</h4>
+                  {!isEditingAddress && (
+                    <button type="button" onClick={() => { setIsEditingAddress('new'); setAddressForm({}); }} className="px-3 py-1.5 bg-[#312f2c] text-white text-xs rounded-lg hover:bg-[#312f2c]/85 transition-colors flex items-center gap-1 font-medium">
+                      <Plus className="w-3 h-3" /> Add Address
+                    </button>
+                  )}
+                </div>
+
+                {isEditingAddress ? (
+                  <div className="bg-white/60 p-5 rounded-xl border border-[#312f2c]/10 relative">
+                    <h5 className="font-semibold text-[#312f2c] mb-4">{isEditingAddress === 'new' ? 'New Address' : 'Edit Address'}</h5>
+                    <div className="bg-white/60 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelCls}>Type</label>
+                        <select value={addressForm.type || 'shipping'} onChange={e => setAddressForm({ ...addressForm, type: e.target.value })} className={inputCls}>
+                          <option value="shipping">Shipping</option>
+                          <option value="billing">Billing</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center mt-6">
+                        <label className="flex items-center gap-2 cursor-pointer text-sm text-[#312f2c]">
+                          <input type="checkbox" checked={addressForm.is_default || false} onChange={e => setAddressForm({ ...addressForm, is_default: e.target.checked })} className="w-4 h-4 rounded border-[#312f2c]/20 accent-[#d1a054]" />
+                          Set as default for this type
+                        </label>
+                      </div>
+                      <div>
+                        <label className={labelCls}>Address Line 1 *</label>
+                        <input type="text" value={addressForm.address_line1 || ''} onChange={e => setAddressForm({ ...addressForm, address_line1: e.target.value })} className={inputCls} required />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Address Line 2</label>
+                        <input type="text" value={addressForm.address_line2 || ''} onChange={e => setAddressForm({ ...addressForm, address_line2: e.target.value })} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>City *</label>
+                        <input type="text" value={addressForm.city || ''} onChange={e => setAddressForm({ ...addressForm, city: e.target.value })} className={inputCls} required />
+                      </div>
+                      <div>
+                        <label className={labelCls}>State/Province *</label>
+                        <input type="text" value={addressForm.state || ''} onChange={e => setAddressForm({ ...addressForm, state: e.target.value })} className={inputCls} required />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Zip/Postal Code *</label>
+                        <input type="text" value={addressForm.postal_code || ''} onChange={e => setAddressForm({ ...addressForm, postal_code: e.target.value })} className={inputCls} required />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Country *</label>
+                        <input type="text" value={addressForm.country || ''} onChange={e => setAddressForm({ ...addressForm, country: e.target.value })} className={inputCls} required />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Phone</label>
+                        <input type="text" value={addressForm.phone || ''} onChange={e => setAddressForm({ ...addressForm, phone: e.target.value })} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Fax</label>
+                        <input type="text" value={addressForm.fax || ''} onChange={e => setAddressForm({ ...addressForm, fax: e.target.value })} className={inputCls} />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3 mt-6">
+                      <button type="button" onClick={() => setIsEditingAddress(null)} className="px-4 py-2 text-sm text-[#312f2c]/60 hover:text-[#312f2c] transition-colors">Cancel</button>
+                      <button type="button" onClick={handleSaveAddress} disabled={isSavingAddress} className="px-4 py-2 bg-[#d1a054] text-white text-sm font-medium rounded-lg hover:bg-[#d1a054]/90 transition-colors flex items-center gap-2">
+                        {isSavingAddress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save Address
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {addresses.length === 0 ? (
+                      <div className="bg-white/60 p-6 rounded-xl border border-[#312f2c]/10 text-center">
+                        <p className="text-[#312f2c]/40 text-sm">No addresses saved.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {addresses.map((addr: any) => (
+                          <div key={addr.id} className="bg-white/60 p-4 rounded-xl border border-[#312f2c]/10 relative group">
+                            {addr.is_default && <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider bg-[#d1a054]/10 text-[#d1a054] px-2 py-0.5 rounded-full">Default {addr.type}</span>}
+                            <h5 className="font-semibold text-[#312f2c] text-sm capitalize mb-1">{addr.type} Address</h5>
+                            <div className="text-sm text-[#312f2c]/70 leading-relaxed mb-4">
+                              <p>{addr.address_line1}</p>
+                              {addr.address_line2 && <p>{addr.address_line2}</p>}
+                              <p>{addr.city}, {addr.state} {addr.postal_code}</p>
+                              <p>{addr.country}</p>
+                              {addr.phone && <p className="mt-1">Phone: {addr.phone}</p>}
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => { setAddressForm(addr); setIsEditingAddress(addr.id); }} className="p-2 bg-[#d1a054]/10 text-[#d1a054] rounded-lg hover:bg-[#d1a054]/20 transition-colors" title="Edit">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button type="button" onClick={() => handleDeleteAddress(addr.id)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors" title="Delete">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 

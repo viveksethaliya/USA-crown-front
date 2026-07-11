@@ -61,6 +61,21 @@ export default function LoginPage() {
     }
   };
 
+  const submitForm = (e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
+    if (step === 1) {
+      handleSubmit(e as React.FormEvent);
+    } else {
+      handleOtpSubmit();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      submitForm(e);
+    }
+  };
+
   const handleOtpChange = (index: number, value: string) => {
     // Only allow numbers
     const cleanValue = value.replace(/[^0-9]/g, '');
@@ -170,7 +185,7 @@ export default function LoginPage() {
               Ready to dive back into the world of premium jewelry findings?
             </p>
 
-            <form onSubmit={step === 1 ? handleSubmit : (e) => { e.preventDefault(); handleOtpSubmit(); }} className={styles.form}>
+            <div className={styles.form}>
               
               {step === 1 ? (
                 <>
@@ -183,6 +198,7 @@ export default function LoginPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       className={styles.input}
                       placeholder="Enter your email"
                       required
@@ -199,6 +215,7 @@ export default function LoginPage() {
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className={styles.input}
                         placeholder="Enter your password"
                         required
@@ -226,7 +243,7 @@ export default function LoginPage() {
                     </label>
                   </div>
 
-                  <button type="submit" className={styles.loginBtn} disabled={isLoading}>
+                  <button type="button" onClick={() => submitForm()} className={styles.loginBtn} disabled={isLoading}>
                     {isLoading ? 'Signing in...' : 'Log in'}
                   </button>
 
@@ -247,7 +264,10 @@ export default function LoginPage() {
                         maxLength={6}
                         value={digit}
                         onChange={(e) => handleOtpChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        onKeyDown={(e) => {
+                          handleOtpKeyDown(index, e);
+                          if (e.key === 'Enter') submitForm(e);
+                        }}
                         style={{
                           width: '45px',
                           height: '50px',
@@ -264,7 +284,7 @@ export default function LoginPage() {
                     ))}
                   </div>
 
-                  <button type="submit" className={styles.loginBtn} disabled={isLoading}>
+                  <button type="button" onClick={() => submitForm()} className={styles.loginBtn} disabled={isLoading}>
                     {isLoading ? 'Verifying...' : 'Verify OTP'}
                   </button>
 
@@ -279,7 +299,7 @@ export default function LoginPage() {
                   </div>
                 </div>
               )}
-            </form>
+            </div>
 
             {step === 1 && (
               <div className={styles.registerPrompt}>

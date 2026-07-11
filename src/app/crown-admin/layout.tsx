@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Image, Package, Tag, Tags, SlidersHorizontal, Shapes,
-  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart
+  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
@@ -57,6 +57,7 @@ const NAV: NavElement[] = [
       { label: 'Customers', href: '/crown-admin/customers', icon: Users },
       { label: 'Groups and Discount', href: '/crown-admin/groups', icon: UsersRound },
       { label: 'Banner', href: '/crown-admin/banner', icon: Layout },
+      { label: 'Audit Logs', href: '/crown-admin/audit-logs', icon: Activity },
     ]
   },
 ];

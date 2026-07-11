@@ -20,6 +20,20 @@ interface UserProfile {
   parent_user_id?: string | null;
 }
 
+interface Address {
+  id: number;
+  type: string;
+  is_default: boolean;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  phone: string;
+  fax: string;
+}
+
 interface CompanyProfile {
   company_name: string;
   company_address: string;
@@ -45,7 +59,7 @@ interface SubUser {
 export default function ProfilePage() {
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'company' | 'subusers'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'company' | 'subusers' | 'addresses'>('personal');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -55,6 +69,14 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
+
+  // Password Change Form
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [sendingForgot, setSendingForgot] = useState(false);
 
   // Company Form
   const [company, setCompany] = useState<CompanyProfile | null>(null);
@@ -78,6 +100,12 @@ export default function ProfilePage() {
   const [newSubUserPermission, setNewSubUserPermission] = useState('can_place_orders');
   const [newSubUserSpendingLimit, setNewSubUserSpendingLimit] = useState('');
 
+  // Addresses
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
+  const [addressForm, setAddressForm] = useState<Partial<Address>>({});
+  const [showAddressForm, setShowAddressForm] = useState(false);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -89,10 +117,11 @@ export default function ProfilePage() {
 
         const headers = { 'Authorization': `Bearer ${token}` };
 
-        const [profileRes, companyRes, usersRes] = await Promise.all([
+        const [profileRes, companyRes, usersRes, addressesRes] = await Promise.all([
           fetch(apiUrl('/api/store/account/profile'), { headers }),
           fetch(apiUrl('/api/store/account/company'), { headers }),
-          fetch(apiUrl('/api/store/account/users'), { headers }).catch(() => null)
+          fetch(apiUrl('/api/store/account/users'), { headers }).catch(() => null),
+          fetch(apiUrl('/api/store/account/addresses'), { headers }).catch(() => null)
         ]);
 
         if (profileRes.status === 401) {
@@ -131,6 +160,11 @@ export default function ProfilePage() {
           if (Array.isArray(uData)) setSubUsers(uData);
         }
 
+        if (addressesRes && addressesRes.ok) {
+          const aData = await addressesRes.json();
+          if (Array.isArray(aData)) setAddresses(aData);
+        }
+
       } catch (err: any) {
         toast.error('Failed to load profile data.');
       } finally {
@@ -150,12 +184,64 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ first_name: firstName, last_name: lastName, mobile }),
       });
+      if (res.status === 401) {
+        localStorage.removeItem('storeToken');
+        window.dispatchEvent(new Event('storage'));
+        router.push('/login');
+        throw new Error('Session expired. Please log in again.');
+      }
       if (!res.ok) throw new Error('Failed to update profile');
       toast.success('Profile updated successfully!');
     } catch (err: any) {
       toast.error(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmNewPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const token = localStorage.getItem('storeToken');
+      const res = await fetch(apiUrl('/api/store/account/password'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update password');
+      toast.success('Password updated successfully! Please log in again.');
+      localStorage.removeItem('storeToken');
+      // Trigger a storage event to let other tabs/components know if needed
+      window.dispatchEvent(new Event('storage'));
+      router.push('/login');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setSendingForgot(true);
+    try {
+      const res = await fetch(apiUrl('/api/store/auth/forgot-password'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send reset link');
+      toast.success(data.message || 'Password reset link sent to your email.');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSendingForgot(false);
     }
   };
 
@@ -179,6 +265,12 @@ export default function ProfilePage() {
           country: country
         }),
       });
+      if (res.status === 401) {
+        localStorage.removeItem('storeToken');
+        window.dispatchEvent(new Event('storage'));
+        router.push('/login');
+        throw new Error('Session expired. Please log in again.');
+      }
       if (!res.ok) throw new Error('Failed to update company. Sub-users cannot update company profile.');
       toast.success('Company info updated successfully!');
     } catch (err: any) {
@@ -206,6 +298,12 @@ export default function ProfilePage() {
           spending_limit: newSubUserSpendingLimit
         }),
       });
+      if (res.status === 401) {
+        localStorage.removeItem('storeToken');
+        window.dispatchEvent(new Event('storage'));
+        router.push('/login');
+        throw new Error('Session expired. Please log in again.');
+      }
       if (!res.ok) throw new Error('Failed to create sub-user. Sub-users cannot create other users.');
       const data = await res.json();
       setSubUsers([...subUsers, data]);
@@ -229,6 +327,12 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({ is_active: !currentStatus })
       });
+      if (res.status === 401) {
+        localStorage.removeItem('storeToken');
+        window.dispatchEvent(new Event('storage'));
+        router.push('/login');
+        throw new Error('Session expired. Please log in again.');
+      }
       if (!res.ok) throw new Error('Failed to update sub-user');
       
       const updatedUser = await res.json();
@@ -249,6 +353,12 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({ purchasing_permission: newPermission })
       });
+      if (res.status === 401) {
+        localStorage.removeItem('storeToken');
+        window.dispatchEvent(new Event('storage'));
+        router.push('/login');
+        throw new Error('Session expired. Please log in again.');
+      }
       if (!res.ok) throw new Error('Failed to update permission');
       
       const updatedUser = await res.json();
@@ -269,6 +379,12 @@ export default function ProfilePage() {
         },
         body: JSON.stringify({ spending_limit: newLimit })
       });
+      if (res.status === 401) {
+        localStorage.removeItem('storeToken');
+        window.dispatchEvent(new Event('storage'));
+        router.push('/login');
+        throw new Error('Session expired. Please log in again.');
+      }
       if (!res.ok) throw new Error('Failed to update spending limit');
       
       const updatedUser = await res.json();
@@ -277,6 +393,70 @@ export default function ProfilePage() {
     } catch (err: any) {
       toast.error(err.message);
     }
+  };
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('storeToken');
+      const method = editingAddressId ? 'PUT' : 'POST';
+      const url = editingAddressId 
+        ? apiUrl(`/api/store/account/addresses/${editingAddressId}`)
+        : apiUrl('/api/store/account/addresses');
+  
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(addressForm),
+      });
+  
+      if (res.status === 401) {
+        localStorage.removeItem('storeToken');
+        window.dispatchEvent(new Event('storage'));
+        router.push('/login');
+        throw new Error('Session expired. Please log in again.');
+      }
+      if (!res.ok) throw new Error('Failed to save address');
+      
+      const refreshRes = await fetch(apiUrl('/api/store/account/addresses'), { 
+        headers: { 'Authorization': `Bearer ${token}` } 
+      });
+      if (refreshRes.ok) {
+        setAddresses(await refreshRes.json());
+      }
+      
+      toast.success('Address saved successfully!');
+      setShowAddressForm(false);
+      setAddressForm({});
+      setEditingAddressId(null);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this address?')) return;
+    try {
+      const token = localStorage.getItem('storeToken');
+      const res = await fetch(apiUrl(`/api/store/account/addresses/${id}`), {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete address');
+      setAddresses(addresses.filter(a => a.id !== id));
+      toast.success('Address deleted');
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleEditAddress = (addr: Address) => {
+    setAddressForm(addr);
+    setEditingAddressId(addr.id);
+    setShowAddressForm(true);
   };
 
   if (loading) {
@@ -309,41 +489,85 @@ export default function ProfilePage() {
         <div className={styles.tabs}>
           <button className={`${styles.tabBtn} ${activeTab === 'personal' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('personal')}>Personal Profile</button>
           <button className={`${styles.tabBtn} ${activeTab === 'company' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('company')}>Company Info</button>
+          <button className={`${styles.tabBtn} ${activeTab === 'addresses' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('addresses')}>Address Book</button>
           {profile?.level !== 1 && (
             <button className={`${styles.tabBtn} ${activeTab === 'subusers' ? styles.activeTabBtn : ''}`} onClick={() => setActiveTab('subusers')}>Team / Sub-Users</button>
           )}
         </div>
 
         {activeTab === 'personal' && (
-          <form onSubmit={handleSavePersonal} className={styles.form}>
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Personal Details</h2>
-              <div className={styles.row}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
-                  <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
+          <>
+            <form onSubmit={handleSavePersonal} className={styles.form}>
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Personal Details</h2>
+                <div className={styles.row}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>First Name <span className={styles.req}>*</span></label>
+                    <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Last Name <span className={styles.req}>*</span></label>
+                    <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
+                  </div>
                 </div>
                 <div className={styles.inputGroup}>
-                  <label className={styles.label}>Last Name <span className={styles.req}>*</span></label>
-                  <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
+                  <label className={styles.label}>Email</label>
+                  <input type="email" value={email} className={styles.inputReadonly} disabled />
+                  <span className={styles.hint}>Email cannot be changed. Contact support to update.</span>
+                </div>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>Mobile <span className={styles.req}>*</span></label>
+                  <input type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
                 </div>
               </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Email</label>
-                <input type="email" value={email} className={styles.inputReadonly} disabled />
-                <span className={styles.hint}>Email cannot be changed. Contact support to update.</span>
+              <div className={styles.actions} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowPasswordForm(!showPasswordForm)}
+                  style={{ background: 'none', border: 'none', color: '#d1a054', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontWeight: 600, fontSize: '1rem' }}
+                >
+                  {showPasswordForm ? 'Cancel Password Change' : 'Change Password'}
+                </button>
+                {profile?.level !== 1 && (
+                  <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+                )}
               </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Mobile <span className={styles.req}>*</span></label>
-                <input type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
-              </div>
-            </div>
-            {profile?.level !== 1 && (
-              <div className={styles.actions}>
-                <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
-              </div>
+            </form>
+
+            {showPasswordForm && (
+              <form onSubmit={handleChangePassword} className={styles.form} style={{ marginTop: '1rem' }}>
+                <div className={styles.section}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Current Password <span className={styles.req}>*</span></span>
+                      <button 
+                        type="button" 
+                        onClick={handleForgotPassword}
+                        disabled={sendingForgot}
+                        style={{ background: 'none', border: 'none', color: '#d1a054', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: '0.75rem', textTransform: 'none' }}
+                      >
+                        {sendingForgot ? 'Sending...' : 'Forgot Password?'}
+                      </button>
+                    </label>
+                    <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={styles.input} required />
+                  </div>
+                  <div className={styles.row}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>New Password <span className={styles.req}>*</span></label>
+                      <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={styles.input} required minLength={8} />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Confirm New Password <span className={styles.req}>*</span></label>
+                      <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className={styles.input} required minLength={8} />
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.actions}>
+                  <button type="submit" className={styles.saveBtn} disabled={savingPassword}>{savingPassword ? 'Updating...' : 'Update Password'}</button>
+                </div>
+              </form>
             )}
-          </form>
+          </>
         )}
 
         {activeTab === 'company' && (
@@ -516,6 +740,110 @@ export default function ProfilePage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'addresses' && (
+          <div className={styles.form}>
+            <div className={styles.section}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Address Book</h2>
+                {profile?.level !== 1 && !showAddressForm && (
+                  <button onClick={() => { setShowAddressForm(true); setEditingAddressId(null); setAddressForm({}); }} className={styles.btnSmall} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FiPlus /> Add New Address
+                  </button>
+                )}
+              </div>
+
+              {!showAddressForm ? (
+                addresses.length === 0 ? (
+                  <p className={styles.noDocText}>No addresses found.</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                    {addresses.map(addr => (
+                      <div key={addr.id} style={{ border: '1px solid #eee', padding: '1rem', borderRadius: '8px', backgroundColor: addr.is_default ? '#f9f9f9' : '#fff', position: 'relative' }}>
+                        {addr.is_default && <span style={{ position: 'absolute', top: '1rem', right: '1rem', fontSize: '0.75rem', backgroundColor: '#d1a054', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>Default {addr.type}</span>}
+                        <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', textTransform: 'capitalize' }}>{addr.type} Address</h3>
+                        <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>{addr.address_line1}</p>
+                        {addr.address_line2 && <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>{addr.address_line2}</p>}
+                        <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>{addr.city}, {addr.state} {addr.postal_code}</p>
+                        <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem' }}>{addr.country}</p>
+                        {addr.phone && <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: '#666' }}>Phone: {addr.phone}</p>}
+                        
+                        {profile?.level !== 1 && (
+                          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                            <button onClick={() => handleEditAddress(addr)} style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', backgroundColor: '#fff' }}>Edit</button>
+                            <button onClick={() => handleDeleteAddress(addr.id)} style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', border: '1px solid #ff4d4f', color: '#ff4d4f', borderRadius: '4px', cursor: 'pointer', backgroundColor: 'transparent' }}>Delete</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                <form onSubmit={handleSaveAddress} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', backgroundColor: '#f9f9f9', padding: '1.5rem', borderRadius: '8px' }}>
+                  <h3 style={{ margin: 0 }}>{editingAddressId ? 'Edit Address' : 'Add New Address'}</h3>
+                  <div className={styles.row}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Type</label>
+                      <select value={addressForm.type || 'shipping'} onChange={e => setAddressForm({...addressForm, type: e.target.value})} className={styles.input}>
+                        <option value="shipping">Shipping</option>
+                        <option value="billing">Billing</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div className={styles.inputGroup} style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.5rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: 'auto' }}>
+                        <input type="checkbox" checked={addressForm.is_default || false} onChange={e => setAddressForm({...addressForm, is_default: e.target.checked})} />
+                        Set as default for this type
+                      </label>
+                    </div>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Address Line 1 <span className={styles.req}>*</span></label>
+                    <input type="text" required value={addressForm.address_line1 || ''} onChange={e => setAddressForm({...addressForm, address_line1: e.target.value})} className={styles.input} />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Address Line 2</label>
+                    <input type="text" value={addressForm.address_line2 || ''} onChange={e => setAddressForm({...addressForm, address_line2: e.target.value})} className={styles.input} />
+                  </div>
+                  <div className={styles.row}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>City <span className={styles.req}>*</span></label>
+                      <input type="text" required value={addressForm.city || ''} onChange={e => setAddressForm({...addressForm, city: e.target.value})} className={styles.input} />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>State/Province <span className={styles.req}>*</span></label>
+                      <input type="text" required value={addressForm.state || ''} onChange={e => setAddressForm({...addressForm, state: e.target.value})} className={styles.input} />
+                    </div>
+                  </div>
+                  <div className={styles.row}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Zip/Postal Code <span className={styles.req}>*</span></label>
+                      <input type="text" required value={addressForm.postal_code || ''} onChange={e => setAddressForm({...addressForm, postal_code: e.target.value})} className={styles.input} />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Country <span className={styles.req}>*</span></label>
+                      <input type="text" required value={addressForm.country || ''} onChange={e => setAddressForm({...addressForm, country: e.target.value})} className={styles.input} />
+                    </div>
+                  </div>
+                  <div className={styles.row}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Phone</label>
+                      <input type="tel" value={addressForm.phone || ''} onChange={e => setAddressForm({...addressForm, phone: e.target.value})} className={styles.input} />
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.label}>Fax</label>
+                      <input type="text" value={addressForm.fax || ''} onChange={e => setAddressForm({...addressForm, fax: e.target.value})} className={styles.input} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <button type="submit" className={styles.saveBtn} disabled={saving}>{saving ? 'Saving...' : 'Save Address'}</button>
+                    <button type="button" onClick={() => { setShowAddressForm(false); setEditingAddressId(null); }} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', border: '1px solid #333', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         )}

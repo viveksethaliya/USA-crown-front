@@ -34,7 +34,18 @@ export interface CartApiResponse {
 }
 
 export function apiUrl(path: string) {
-  const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  let base = process.env.NEXT_PUBLIC_API_URL;
+  
+  // If on client and base is localhost, dynamically rewrite to actual hostname for LAN testing
+  if (typeof window !== 'undefined' && base && base.includes('localhost')) {
+    if (window.location.hostname !== 'localhost') {
+      base = base.replace('localhost', window.location.hostname);
+    }
+  }
+
+  if (!base) {
+    base = typeof window !== 'undefined' ? `http://${window.location.hostname}:5000` : 'http://localhost:5000';
+  }
   return `${base}${path}`;
 }
 

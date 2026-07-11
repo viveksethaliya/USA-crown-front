@@ -35,11 +35,11 @@ function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const res = await fetch(apiUrl('/api/reset-password'), {
+      const res = await fetch(apiUrl('/api/store/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, token, new_password: password })
+        body: JSON.stringify({ email, token, newPassword: password })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to reset password.");

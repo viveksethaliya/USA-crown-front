@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { FiMenu, FiX, FiSearch } from 'react-icons/fi';
+import { API_URL } from '@/lib/config';
 import styles from './products.module.css';
 
 interface Product {
@@ -122,7 +123,7 @@ function ProductsContent() {
       try {
         const token = localStorage.getItem('storeToken');
         if (!token) return;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/store/auth/me`, {
+        const res = await fetch(`${API_URL}/api/store/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (res.ok) {
@@ -143,7 +144,7 @@ function ProductsContent() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/categories`);
+        const res = await fetch(`${API_URL}/api/store/catalog/categories`);
         const data = await res.json();
         setCategories(data.categories || []);
       } catch (err) {
@@ -162,7 +163,7 @@ function ProductsContent() {
         const s = searchParams.get('search');
         if (s) queryParams.set('search', s);
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/filters?${queryParams.toString()}`);
+        const res = await fetch(`${API_URL}/api/store/catalog/filters?${queryParams.toString()}`);
         const data = await res.json();
         setFilters(data.filters || []);
       } catch (err) {
@@ -200,7 +201,7 @@ function ProductsContent() {
         if (Array.isArray(values) && values.length > 0) params.set(`attr_${slug}`, values.join(','));
       });
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/products?${params}`, { signal });
+      const res = await fetch(`${API_URL}/api/store/catalog/products?${params}`, { signal });
       const data = await res.json();
 
       if (signal?.aborted) return;
