@@ -99,60 +99,7 @@ export default function SettingsPage() {
 
       <form onSubmit={handleSubmit} className={styles.formContainer}>
         
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Global Metal Prices (Base Market Value)</h2>
-          <p className={styles.sectionDesc}>These values are used across the store to calculate custom sized items (e.g., chains by the inch).</p>
-          
-          <div className={styles.gridContainer}>
-            <div className={styles.inputGroup}>
-              <label>Gold 14k Price (per oz or unit)</label>
-              <div className={styles.inputWrapper}>
-                <span className={styles.inputPrefix}>$</span>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  name="metal_price_gold"
-                  value={formData.metal_price_gold}
-                  onChange={handleInputChange}
-                  className={styles.inputField}
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className={styles.inputGroup}>
-              <label>Silver .925 Price (per oz or unit)</label>
-              <div className={styles.inputWrapper}>
-                <span className={styles.inputPrefix}>$</span>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  name="metal_price_silver"
-                  value={formData.metal_price_silver}
-                  onChange={handleInputChange}
-                  className={styles.inputField}
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className={styles.inputGroup}>
-              <label>Platinum Price (per oz or unit)</label>
-              <div className={styles.inputWrapper}>
-                <span className={styles.inputPrefix}>$</span>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  name="metal_price_platinum"
-                  value={formData.metal_price_platinum}
-                  onChange={handleInputChange}
-                  className={styles.inputField}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Marketing Automations</h2>
