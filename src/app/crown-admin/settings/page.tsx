@@ -12,7 +12,8 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState({
     metal_price_gold: '',
     metal_price_silver: '',
-    metal_price_platinum: ''
+    metal_price_platinum: '',
+    abandoned_cart_reminder_days: ''
   });
 
   useEffect(() => {
@@ -31,7 +32,8 @@ export default function SettingsPage() {
         setFormData({
           metal_price_gold: data.metal_price_gold || '',
           metal_price_silver: data.metal_price_silver || '',
-          metal_price_platinum: data.metal_price_platinum || ''
+          metal_price_platinum: data.metal_price_platinum || '',
+          abandoned_cart_reminder_days: data.abandoned_cart_reminder_days || 10
         });
       }
     } catch (err) {
@@ -148,6 +150,32 @@ export default function SettingsPage() {
                   required
                 />
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Marketing Automations</h2>
+          <p className={styles.sectionDesc}>Configure automated emails sent to customers.</p>
+          
+          <div className={styles.gridContainer}>
+            <div className={styles.inputGroup}>
+              <label>Abandoned Cart Reminder (Days)</label>
+              <div className={styles.inputWrapper}>
+                <input 
+                  type="number" 
+                  min="0"
+                  step="1"
+                  name="abandoned_cart_reminder_days"
+                  value={formData.abandoned_cart_reminder_days}
+                  onChange={handleInputChange}
+                  className={styles.inputField}
+                  required
+                />
+              </div>
+              <p className="text-xs text-[#312f2c]/50 mt-1">
+                Number of days a cart must be inactive before sending a reminder. Set to 0 to disable.
+              </p>
             </div>
           </div>
         </div>
