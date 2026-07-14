@@ -12,6 +12,8 @@ export default function CustomersPage() {
   const [pagination, setPagination] = useState<Pagination>({ total: 0, page: 1, limit: 25, totalPages: 1 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
@@ -25,6 +27,8 @@ export default function CustomersPage() {
       const token = localStorage.getItem('adminToken');
       const params = new URLSearchParams({ page: String(page), limit: String(25) });
       if (debouncedSearch) params.set('search', debouncedSearch);
+      if (roleFilter) params.set('role', roleFilter);
+      if (yearFilter) params.set('year', yearFilter);
       const res = await fetch(`${API}/customers?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
       const json = await res.json();
       setCustomers(json.data || []);
@@ -34,7 +38,7 @@ export default function CustomersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearch]);
+  }, [debouncedSearch, roleFilter, yearFilter]);
 
   useEffect(() => { fetchCustomers(1); }, [fetchCustomers]);
 
@@ -80,17 +84,43 @@ export default function CustomersPage() {
           <h2 className="text-2xl font-bold text-[#312f2c]">Customers</h2>
           <p className="text-[#312f2c]/55 text-sm mt-1">{pagination.total} registered accounts</p>
         </div>
-        <div className="w-full sm:w-auto flex items-center gap-3">
-          <div className="flex items-center bg-white/60 p-2 border border-[#312f2c]/10 rounded-xl">
+        <div className="w-full sm:w-auto flex flex-wrap items-center gap-3">
+          <div className="flex items-center bg-white/60 p-2 border border-[#312f2c]/10 rounded-xl flex-grow sm:flex-grow-0">
             <Search className="w-5 h-5 text-[#312f2c]/35 ml-2" />
             <input
               type="text"
-              placeholder="Search by username or email..."
+              placeholder="Search by ID, Name, Email, Phone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent border-none focus:ring-0 text-[#312f2c] placeholder:text-[#312f2c]/35 px-4 py-1 w-64 outline-none text-sm"
             />
           </div>
+          
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="bg-white/60 border border-[#312f2c]/10 rounded-xl px-3 py-2.5 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none"
+          >
+            <option value="">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="customer">Customer</option>
+            <option value="wholesale">Wholesale</option>
+            <option value="b2b">B2B</option>
+            <option value="sub-user">Sub-User</option>
+          </select>
+
+          <select
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+            className="bg-white/60 border border-[#312f2c]/10 rounded-xl px-3 py-2.5 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none"
+          >
+            <option value="">All Years</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+          </select>
+
           <Link
             href="/crown-admin/customers/new"
             className="flex items-center gap-2 px-4 py-2.5 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-xl font-medium transition-colors shadow-sm"

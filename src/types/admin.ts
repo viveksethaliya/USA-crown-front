@@ -55,6 +55,7 @@ export interface Brand {
   logo_url?: string;
   description?: string;
   is_active?: boolean;
+  position?: number;
 }
 
 export interface Category {

@@ -13,7 +13,7 @@ export default function BrandsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '', position: 0 });
   const [search, setSearch] = useState('');
 
   const fetchBrands = async () => {
@@ -35,10 +35,10 @@ export default function BrandsPage() {
   const handleOpenForm = (brand: Brand | null = null) => {
     if (brand) {
       setEditingId(brand.id);
-      setFormData({ name: brand.name, slug: brand.slug });
+      setFormData({ name: brand.name, slug: brand.slug, position: brand.position || 0 });
     } else {
       setEditingId(null);
-      setFormData({ name: '', slug: '' });
+      setFormData({ name: '', slug: '', position: 0 });
     }
     setShowForm(true);
   };
@@ -46,7 +46,7 @@ export default function BrandsPage() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', slug: '' });
+    setFormData({ name: '', slug: '', position: 0 });
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -129,7 +129,7 @@ export default function BrandsPage() {
           <div className="absolute top-0 left-0 w-1 h-full bg-[#d1a054]"></div>
           <h3 className="text-lg font-medium text-[#312f2c] mb-4">{editingId ? 'Edit Collection' : 'Create New Collection'}</h3>
           <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Collection Name</label>
                 <input
@@ -147,6 +147,16 @@ export default function BrandsPage() {
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                   className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c]/60 focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Position (Order)</label>
+                <input
+                  type="number"
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
+                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
                   required
                 />
               </div>
@@ -191,6 +201,7 @@ export default function BrandsPage() {
             <tr className="bg-[#312f2c]/5 border-b border-[#312f2c]/10 text-xs uppercase tracking-wider text-[#312f2c]/40">
               <th className="p-4 font-medium">Collection Name</th>
               <th className="p-4 font-medium">Slug</th>
+              <th className="p-4 font-medium">Position</th>
               <th className="p-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
@@ -212,6 +223,7 @@ export default function BrandsPage() {
                     {brand.name}
                   </td>
                   <td className="p-4 text-[#312f2c]/50 font-mono text-sm">{brand.slug}</td>
+                  <td className="p-4 text-[#312f2c]/50 font-mono text-sm">{brand.position || 0}</td>
                   <td className="p-4 text-right space-x-2">
                     <Link
                       href={`/crown-admin/brands/${brand.id}`}

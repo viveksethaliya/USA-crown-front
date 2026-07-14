@@ -24,6 +24,7 @@ export default function CollectionProductsPage() {
   const [isSearching, setIsSearching] = useState(false);
   
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   const buildHierarchyName = (cat: any, allCats: any[]) => {
     let name = cat.name;
@@ -139,6 +140,32 @@ export default function CollectionProductsPage() {
         fetchData();
       } else {
         toast.error('Failed to remove product');
+      }
+    } catch {
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBulkRemove = async () => {
+    if (selectedProducts.length === 0) return;
+    if (!confirm(`Remove ${selectedProducts.length} selected products from this collection?`)) return;
+    setIsProcessing(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/brands/${id}/products/bulk`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ productIds: selectedProducts })
+      });
+      
+      if (res.ok) {
+        toast.success(`Removed ${selectedProducts.length} products`);
+        setSelectedProducts([]);
+        fetchData();
+      } else {
+        toast.error('Failed to remove products');
       }
     } catch {
       toast.error('An error occurred');
@@ -312,9 +339,21 @@ export default function CollectionProductsPage() {
           <div className="bg-white border border-[#312f2c]/10 rounded-xl overflow-hidden shadow-sm flex flex-col h-full min-h-[500px]">
             <div className="p-4 border-b border-[#312f2c]/10 bg-[#f8f7f5] flex justify-between items-center">
               <h3 className="font-medium text-[#312f2c]">Assigned Products</h3>
-              <span className="px-2.5 py-1 bg-[#312f2c]/5 text-[#312f2c]/60 rounded-lg text-xs font-semibold">
-                {products.length} {products.length === 1 ? 'item' : 'items'}
-              </span>
+              <div className="flex items-center gap-4">
+                {selectedProducts.length > 0 && (
+                  <button
+                    onClick={handleBulkRemove}
+                    disabled={isProcessing}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove Selected ({selectedProducts.length})
+                  </button>
+                )}
+                <span className="px-2.5 py-1 bg-[#312f2c]/5 text-[#312f2c]/60 rounded-lg text-xs font-semibold">
+                  {products.length} {products.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
             </div>
 
             <div className="flex-1 overflow-auto">
@@ -328,6 +367,14 @@ export default function CollectionProductsPage() {
                 <table className="w-full text-left">
                   <thead className="bg-white sticky top-0 border-b border-[#312f2c]/10 z-10">
                     <tr className="text-xs uppercase tracking-wider text-[#312f2c]/40">
+                      <th className="p-4 w-12">
+                        <input
+                          type="checkbox"
+                          checked={products.length > 0 && selectedProducts.length === products.length}
+                          onChange={(e) => setSelectedProducts(e.target.checked ? products.map(p => p.id) : [])}
+                          className="rounded border-[#312f2c]/20 text-[#d1a054] focus:ring-[#d1a054]"
+                        />
+                      </th>
                       <th className="p-4 font-medium">Product</th>
                       <th className="p-4 font-medium hidden sm:table-cell">SKU</th>
                       <th className="p-4 font-medium text-right">Actions</th>
@@ -336,6 +383,17 @@ export default function CollectionProductsPage() {
                   <tbody className="divide-y divide-[#312f2c]/5">
                     {products.map(product => (
                       <tr key={product.id} className="hover:bg-[#f8f7f5] transition-colors group">
+                        <td className="p-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.includes(product.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedProducts(prev => [...prev, product.id]);
+                              else setSelectedProducts(prev => prev.filter(id => id !== product.id));
+                            }}
+                            className="rounded border-[#312f2c]/20 text-[#d1a054] focus:ring-[#d1a054]"
+                          />
+                        </td>
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             {product.image_url?.[0]?.url ? (

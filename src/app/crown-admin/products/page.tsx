@@ -14,12 +14,41 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [publishFilter, setPublishFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [tags, setTags] = useState<any[]>([]);
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(timer);
   }, [search]);
+
+  useEffect(() => {
+    const fetchFilters = async () => {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+      try {
+        const [catRes, tagRes] = await Promise.all([
+          fetch(`${API}/categories`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API}/tags`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        if (catRes.ok) {
+          const catJson = await catRes.json();
+          setCategories(catJson.data || catJson || []);
+        }
+        if (tagRes.ok) {
+          const tagJson = await tagRes.json();
+          setTags(tagJson.data || tagJson || []);
+        }
+      } catch(err) {
+        console.error('Failed to load filters', err);
+      }
+    };
+    fetchFilters();
+  }, []);
 
   const fetchProducts = useCallback(async (page: number = 1) => {
     setIsLoading(true);
@@ -29,6 +58,9 @@ export default function ProductsPage() {
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (typeFilter) params.set('type', typeFilter);
       if (publishFilter !== '') params.set('is_published', publishFilter);
+      if (categoryFilter) params.set('category', categoryFilter);
+      if (tagFilter) params.set('tag', tagFilter);
+      if (stockFilter) params.set('stock_status', stockFilter);
 
       const res = await fetch(`${API}/products?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -41,7 +73,7 @@ export default function ProductsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearch, typeFilter, publishFilter]);
+  }, [debouncedSearch, typeFilter, publishFilter, categoryFilter, tagFilter, stockFilter]);
 
   useEffect(() => {
     fetchProducts(1);
@@ -89,8 +121,8 @@ export default function ProductsPage() {
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="flex-1 flex items-center bg-white/60 p-2 border border-[#312f2c]/10 rounded-xl">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center bg-white/60 p-2 border border-[#312f2c]/10 rounded-xl">
           <Search className="w-5 h-5 text-[#312f2c]/35 ml-2 flex-shrink-0" />
           <input
             type="text"
@@ -100,12 +132,28 @@ export default function ProductsPage() {
             className="bg-transparent border-none focus:ring-0 text-[#312f2c] placeholder:text-[#312f2c]/35 px-4 py-1 w-full outline-none text-sm"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-[#312f2c]/35" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="w-4 h-4 text-[#312f2c]/35 hidden md:block" />
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="bg-white/60 border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none flex-1 min-w-[120px]"
+          >
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select
+            value={tagFilter}
+            onChange={(e) => setTagFilter(e.target.value)}
+            className="bg-white/60 border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none flex-1 min-w-[120px]"
+          >
+            <option value="">All Tags</option>
+            {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-white/60 border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none"
+            className="bg-white/60 border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none flex-1 min-w-[120px]"
           >
             <option value="">All Types</option>
             <option value="simple">Simple</option>
@@ -113,11 +161,21 @@ export default function ProductsPage() {
             <option value="grouped">Grouped</option>
           </select>
           <select
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+            className="bg-white/60 border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none flex-1 min-w-[120px]"
+          >
+            <option value="">All Stock Status</option>
+            <option value="instock">In Stock</option>
+            <option value="outofstock">Out of Stock</option>
+            <option value="onbackorder">On Backorder</option>
+          </select>
+          <select
             value={publishFilter}
             onChange={(e) => setPublishFilter(e.target.value)}
-            className="bg-white/60 border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none"
+            className="bg-white/60 border border-[#312f2c]/10 rounded-lg px-3 py-2 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none flex-1 min-w-[120px]"
           >
-            <option value="">All Status</option>
+            <option value="">All Visibility</option>
             <option value="true">Published</option>
             <option value="false">Draft</option>
           </select>
