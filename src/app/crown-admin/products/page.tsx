@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, Package, Loader2, Search, Filter, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Loader2, Search, Filter, CheckCircle, XCircle, ChevronLeft, ChevronRight, Download, Upload, FileText } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Product, Pagination } from '@/types/admin';
 
 import { ADMIN_API as API } from '@/lib/config';
@@ -20,6 +21,10 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [tags, setTags] = useState<any[]>([]);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400);
@@ -93,6 +98,75 @@ export default function ProductsPage() {
     }
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/products/export`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products-export-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Products exported successfully!');
+    } catch (error) {
+      toast.error('Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API}/products/template`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'products-import-template.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    setImportResult(null);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API}/products/import`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setImportResult(json);
+        toast.success(json.message);
+        fetchProducts(1);
+      } else {
+        toast.error(json.error || 'Import failed.');
+      }
+    } catch (error) {
+      toast.error('Import failed. Please try again.');
+    } finally {
+      setIsImporting(false);
+      if (importInputRef.current) importInputRef.current.value = '';
+    }
+  };
+
   const stockBadge = (status?: string) => {
     if (status === 'instock') return 'bg-[#d1a054]/10 text-[#d1a054] border border-[#d1a054]/20';
     if (status === 'outofstock') return 'bg-[#312f2c]/8 text-[#312f2c]/60 border border-[#312f2c]/15';
@@ -111,14 +185,64 @@ export default function ProductsPage() {
           <h2 className="text-2xl font-bold text-[#312f2c]">Products</h2>
           <p className="text-[#312f2c]/55 text-sm mt-1">{pagination.total} products total</p>
         </div>
-        <Link
-          href="/crown-admin/products/new"
-          className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg shadow-sm transition-all font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Add Product
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Hidden file input */}
+          <input ref={importInputRef} type="file" accept=".csv" className="hidden" onChange={handleImportFile} />
+          <button
+            onClick={handleDownloadTemplate}
+            title="Download import template CSV"
+            className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/60 border border-[#312f2c]/10 rounded-lg text-sm transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            Template
+          </button>
+          <button
+            onClick={() => importInputRef.current?.click()}
+            disabled={isImporting}
+            className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/60 border border-[#312f2c]/10 rounded-lg text-sm transition-colors disabled:opacity-50"
+          >
+            {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            Import CSV
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/60 border border-[#312f2c]/10 rounded-lg text-sm transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Export CSV
+          </button>
+          <Link
+            href="/crown-admin/products/new"
+            className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg shadow-sm transition-all font-medium text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Add Product
+          </Link>
+        </div>
       </div>
+
+      {/* Import Result Banner */}
+      {importResult && (
+        <div className="bg-white border border-[#312f2c]/10 rounded-xl p-4 text-sm">
+          <div className="flex items-center justify-between">
+            <p className="font-medium text-[#312f2c]">{importResult.message}</p>
+            <button onClick={() => setImportResult(null)} className="text-[#312f2c]/40 hover:text-[#312f2c] ml-4">✕</button>
+          </div>
+          {importResult.errors?.length > 0 && (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-red-600 text-xs">{importResult.errors.length} errors — click to expand</summary>
+              <ul className="mt-1 space-y-1 max-h-48 overflow-y-auto">
+                {importResult.errors.map((e: any, i: number) => (
+                  <li key={i} className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">
+                    <strong>{e.name || 'Row'}:</strong> {e.error}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
 
       {/* Filters Row */}
       <div className="flex flex-col gap-3">

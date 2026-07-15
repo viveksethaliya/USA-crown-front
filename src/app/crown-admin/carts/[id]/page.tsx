@@ -43,7 +43,40 @@ export default function AdminCartDetailPage() {
       });
       if (!res.ok) throw new Error('Failed to fetch cart');
       const data = await res.json();
-      setCart(data.cart);
+      // Map backend cart_items to a clean items array the UI can use
+      const items = (data.cart_items || []).map((item: any) => {
+        const product = item.products;
+        const variation = item.product_variations;
+        const isVariable = !!item.variation_id;
+        const unitPrice = isVariable
+          ? (variation?.sale_price ?? variation?.regular_price ?? product?.sale_price ?? product?.regular_price ?? 0)
+          : (product?.sale_price ?? product?.regular_price ?? 0);
+        const measurementType = product?.measurement_type || 'none';
+        const customLength = parseFloat(item.custom_length) || 1;
+        const customWidth = parseFloat(item.custom_width) || 1;
+        let lineTotal = unitPrice * item.quantity;
+        if (measurementType === 'inch') lineTotal = unitPrice * item.quantity * customLength;
+        else if (measurementType === 'plate') lineTotal = unitPrice * item.quantity * customLength * customWidth;
+        const images = product?.product_images || [];
+        const sortedImages = [...images].sort((a: any, b: any) => (a.position ?? 99) - (b.position ?? 99));
+        return {
+          id: item.id,
+          productName: product?.name || 'Unknown Product',
+          sku: isVariable ? variation?.sku : product?.sku,
+          imageUrl: sortedImages[0]?.url || null,
+          quantity: item.quantity,
+          unitPrice,
+          measurementType,
+          customLength: item.custom_length,
+          customWidth: item.custom_width,
+          lineTotal,
+          finalLineTotal: lineTotal,
+          discountAmount: 0,
+          variationLabel: variation?.sku ? `Variation: ${variation.sku}` : null,
+        };
+      });
+      const subtotal = items.reduce((s: number, i: any) => s + i.lineTotal, 0);
+      setCart({ ...data, items, itemCount: items.length, subtotal, total: subtotal });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -141,11 +174,11 @@ export default function AdminCartDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
-          productId,
-          variationId,
+          product_id: productId,
+          variation_id: variationId,
           quantity,
-          customLength,
-          customWidth
+          custom_length: customLength,
+          custom_width: customWidth
         })
       });
       if (!res.ok) {
@@ -239,7 +272,7 @@ export default function AdminCartDetailPage() {
 
           {loading ? (
             <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#d1a054]" /></div>
-          ) : !cart || cart.items.length === 0 ? (
+          ) : !cart || !cart.items || cart.items.length === 0 ? (
             <div className="bg-white/40 p-6 rounded-xl border border-[#312f2c]/10 text-center">
               <p className="text-[#312f2c]/40 text-sm">Cart is empty.</p>
             </div>
