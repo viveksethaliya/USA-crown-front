@@ -51,11 +51,11 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
       const res = await fetch(`${API}/${attribute.id}/values`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ 
-          value: newValue.trim(), 
-          color_hex: attribute.type === 'color' ? newColorHex : null, 
+        body: JSON.stringify({
+          value: newValue.trim(),
+          color_hex: attribute.type === 'color' ? newColorHex : null,
           image_url: attribute.type === 'image' ? newImageUrl : null,
-          position: values.length 
+          position: values.length
         })
       });
       const data: any = await res.json();
@@ -152,10 +152,10 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
                     )}
                     {v.image_url && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img 
-                        src={v.image_url} 
-                        alt={v.value} 
-                        className="w-4 h-4 rounded-full border border-[#312f2c]/15 object-cover" 
+                      <img
+                        src={v.image_url}
+                        alt={v.value}
+                        className="w-4 h-4 rounded-full border border-[#312f2c]/15 object-cover"
                       />
                     )}
                     {v.value}
@@ -190,7 +190,7 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
           )}
           {attribute.type === 'image' && (
             <div className="relative">
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowImageUploader(!showImageUploader)}
                 className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-colors ${newImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
@@ -222,7 +222,7 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
             Add
           </button>
         </div>
-        
+
         {/* Render Image Uploader Dropdown if open */}
         {attribute.type === 'image' && showImageUploader && (
           <div className="mt-3 p-4 bg-white border border-[#312f2c]/10 rounded-xl shadow-sm">
@@ -232,12 +232,12 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <ImageUploader 
-              folder="attributes" 
+            <ImageUploader
+              folder="attributes"
               onUploaded={(url) => {
                 setNewImageUrl(url);
                 setShowImageUploader(false);
-              }} 
+              }}
             />
           </div>
         )}
@@ -362,71 +362,75 @@ export default function AttributesPage() {
         <strong className="text-[#d1a054]">Workflow:</strong> Create an attribute (e.g. <em>Metal Type</em>) → click to expand → add values (e.g. <em>14K Yellow Gold</em>, <em>Sterling Silver 925</em>) → then on a Variable product's Variations tab, those values become available.
       </div>
 
-      {/* Create/Edit Form */}
+      {/* Create/Edit Form Modal */}
       {showForm && (
-        <div className="bg-[#ece9e1] border border-[#312f2c]/10 p-6 rounded-xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-[#d1a054]"></div>
-          <h3 className="text-lg font-medium text-[#312f2c] mb-4">{editingId ? 'Edit Attribute' : 'Create New Attribute'}</h3>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Attribute Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={handleNameChange}
-                  placeholder="e.g. Metal Type, Ring Size, Stone"
-                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">URL Slug</label>
-                <input
-                  type="text"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c]/60 focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Display Type</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
-                >
-                  <option value="select">Dropdown Select</option>
-                  <option value="color">Color Swatch (shows color pickers)</option>
-                  <option value="image">Image Swatch</option>
-                  <option value="button">Button / Label (best for sizes)</option>
-                </select>
-              </div>
-              <div className="flex items-center mt-6">
-                <label className="flex items-center gap-2 text-sm font-medium text-[#312f2c]/65 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_global}
-                    onChange={(e) => setFormData({ ...formData, is_global: e.target.checked })}
-                    className="w-4 h-4 rounded border-[#312f2c]/20 accent-[#d1a054]"
-                  />
-                  Global (usable across all products)
-                </label>
-              </div>
+        <div className="fixed inset-0 bg-[#312f2c]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#ece9e1] rounded-xl shadow-xl w-full max-w-2xl overflow-hidden border border-[#312f2c]/10 relative">
+            <div className="absolute top-0 left-0 w-1 h-full"></div>
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-[#312f2c] mb-4">{editingId ? 'Edit Attribute' : 'Create New Attribute'}</h3>
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Attribute Name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={handleNameChange}
+                      placeholder="e.g. Metal Type, Ring Size, Stone"
+                      className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">URL Slug</label>
+                    <input
+                      type="text"
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c]/60 focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Display Type</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
+                    >
+                      <option value="select">Dropdown Select</option>
+                      <option value="color">Color Swatch (shows color pickers)</option>
+                      <option value="image">Image Swatch</option>
+                      <option value="button">Button / Label (best for sizes)</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center mt-6">
+                    <label className="flex items-center gap-2 text-sm font-medium text-[#312f2c]/65 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_global}
+                        onChange={(e) => setFormData({ ...formData, is_global: e.target.checked })}
+                        className="w-4 h-4 rounded border-[#312f2c]/20 accent-[#d1a054]"
+                      />
+                      Global (usable across all products)
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-[#312f2c]/10 mt-4">
+                  <button type="button" onClick={handleCloseForm}
+                    className="px-4 py-2 text-[#312f2c]/55 hover:text-[#312f2c] hover:bg-[#312f2c]/8 rounded-lg transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg transition-colors disabled:opacity-50">
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {editingId ? 'Update Attribute' : 'Save Attribute'}
+                  </button>
+                </div>
+              </form>
             </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={handleCloseForm}
-                className="px-4 py-2 text-[#312f2c]/55 hover:text-[#312f2c] hover:bg-[#312f2c]/8 rounded-lg transition-colors">
-                Cancel
-              </button>
-              <button type="submit" disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg transition-colors disabled:opacity-50">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {editingId ? 'Update Attribute' : 'Save Attribute'}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
 

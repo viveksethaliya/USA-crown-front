@@ -324,7 +324,28 @@ export default function CustomerDetailPage() {
                 <div><label className={labelCls}>Last Name</label><input type="text" name="last_name" value={formData.last_name} onChange={handleInputChange} disabled={!isEditing} className={inputCls} /></div>
                 <div><label className={labelCls}>Phone {isCreatingUser && '*'}</label><input type="text" name="phone" value={formData.phone} onChange={handleInputChange} disabled={!isEditing} className={inputCls} /></div>
                 {Number(formData.role_id) !== 5 && (
-                  <div><label className={labelCls}>How did you hear about us?</label><input type="text" name="how_did_you_hear_about_us" value={formData.how_did_you_hear_about_us} onChange={handleInputChange} disabled={!isEditing} className={inputCls} /></div>
+                  <div>
+                    <label className={labelCls}>How did you hear about us?</label>
+                    <select
+                      name="how_did_you_hear_about_us"
+                      value={formData.how_did_you_hear_about_us}
+                      onChange={handleInputChange as any}
+                      disabled={!isEditing}
+                      className={inputCls}
+                    >
+                      <option value="">Select an option...</option>
+                      <option value="google">Google Search</option>
+                      <option value="referral">Referral</option>
+                      <option value="tradeshow">Trade Show</option>
+                      <option value="social">Social Media</option>
+                      <option value="diamond-district">Diamond District Walk-in</option>
+                      <option value="other">Other</option>
+                      {formData.how_did_you_hear_about_us && 
+                       !["google", "referral", "tradeshow", "social", "diamond-district", "other", ""].includes(formData.how_did_you_hear_about_us) && (
+                        <option value={formData.how_did_you_hear_about_us}>{formData.how_did_you_hear_about_us} (Custom)</option>
+                      )}
+                    </select>
+                  </div>
                 )}
               </div>
             </div>

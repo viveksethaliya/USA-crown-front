@@ -95,7 +95,7 @@ export default function CustomersPage() {
               className="bg-transparent border-none focus:ring-0 text-[#312f2c] placeholder:text-[#312f2c]/35 px-4 py-1 w-64 outline-none text-sm"
             />
           </div>
-          
+
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -104,8 +104,6 @@ export default function CustomersPage() {
             <option value="">All Roles</option>
             <option value="admin">Admin</option>
             <option value="customer">Customer</option>
-            <option value="wholesale">Wholesale</option>
-            <option value="b2b">B2B</option>
             <option value="sub-user">Sub-User</option>
           </select>
 
@@ -115,10 +113,9 @@ export default function CustomersPage() {
             className="bg-white/60 border border-[#312f2c]/10 rounded-xl px-3 py-2.5 text-[#312f2c] text-sm focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none"
           >
             <option value="">All Years</option>
-            <option value="2026">2026</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
+            {Array.from({ length: new Date().getFullYear() - 2023 + 1 }, (_, i) => new Date().getFullYear() - i).map(year => (
+              <option key={year} value={year.toString()}>{year}</option>
+            ))}
           </select>
 
           <Link

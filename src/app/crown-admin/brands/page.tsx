@@ -123,62 +123,66 @@ export default function BrandsPage() {
         </button>
       </div>
 
-      {/* Form Panel */}
+      {/* Form Modal */}
       {showForm && (
-        <div className="bg-[#ece9e1] border border-[#312f2c]/10 p-6 rounded-xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-[#d1a054]"></div>
-          <h3 className="text-lg font-medium text-[#312f2c] mb-4">{editingId ? 'Edit Collection' : 'Create New Collection'}</h3>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Collection Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={handleNameChange}
-                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">URL Slug</label>
-                <input
-                  type="text"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c]/60 focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Position (Order)</label>
-                <input
-                  type="number"
-                  value={formData.position}
-                  onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
-                  className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
-                  required
-                />
-              </div>
+        <div className="fixed inset-0 bg-[#312f2c]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#ece9e1] rounded-xl shadow-xl w-full max-w-3xl overflow-hidden border border-[#312f2c]/10 relative">
+            <div className="absolute top-0 left-0 w-1 h-full"></div>
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-[#312f2c] mb-4">{editingId ? 'Edit Collection' : 'Create New Collection'}</h3>
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Collection Name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={handleNameChange}
+                      className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">URL Slug</label>
+                    <input
+                      type="text"
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c]/60 focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Position (Sort Order)</label>
+                    <input
+                      type="number"
+                      value={formData.position}
+                      onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-[#312f2c]/10 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
+                    className="px-4 py-2 text-[#312f2c]/55 hover:text-[#312f2c] hover:bg-[#312f2c]/8 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {editingId ? 'Update Collection' : 'Save Collection'}
+                  </button>
+                </div>
+              </form>
             </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={handleCloseForm}
-                className="px-4 py-2 text-[#312f2c]/55 hover:text-[#312f2c] hover:bg-[#312f2c]/8 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg transition-colors disabled:opacity-50"
-              >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {editingId ? 'Update Collection' : 'Save Collection'}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
 
