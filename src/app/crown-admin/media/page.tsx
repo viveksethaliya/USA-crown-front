@@ -115,6 +115,10 @@ export default function MediaLibraryPage() {
     return matchesSearch && matchesFolder;
   });
 
+  const totalUsedBytes = files.reduce((acc, f) => acc + (f.metadata?.size || 0), 0);
+  const quotaLimitBytes = 1 * 1024 * 1024 * 1024; // 1 GB (Supabase Free Tier)
+  const usedPercentage = quotaLimitBytes > 0 ? Math.min((totalUsedBytes / quotaLimitBytes) * 100, 100) : 0;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -133,6 +137,29 @@ export default function MediaLibraryPage() {
             {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
             {isUploading ? 'Uploading...' : 'Upload File'}
           </button>
+        </div>
+      </div>
+
+      {/* Storage Quota Card */}
+      <div className="bg-[#ece9e1] border border-[#312f2c]/10 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex-1 w-full">
+          <div className="flex justify-between text-sm font-semibold text-[#312f2c] mb-2">
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#d1a054] animate-pulse" />
+              Supabase Storage Usage
+            </span>
+            <span>{formatBytes(totalUsedBytes)} of {formatBytes(quotaLimitBytes)} ({usedPercentage.toFixed(1)}%)</span>
+          </div>
+          <div className="w-full h-3 bg-white/65 border border-[#312f2c]/8 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-[#d1a054] to-[#a87f3b] rounded-full transition-all duration-500 ease-out" 
+              style={{ width: `${usedPercentage}%` }}
+            />
+          </div>
+        </div>
+        <div className="text-xs text-[#312f2c]/50 text-right shrink-0">
+          <p>Total Files: {files.length}</p>
+          <p className="mt-1">Free Tier Limit: 1 GB</p>
         </div>
       </div>
 
