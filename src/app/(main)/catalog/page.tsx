@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./catalog.module.css";
 import { FiBookOpen, FiDownload, FiSearch, FiLayers } from "react-icons/fi";
+import ScrollReveal from "@/components/animations/ScrollReveal";
 
 export const metadata = {
   title: "Catalog 2025 | Crown Findings",
@@ -14,20 +15,22 @@ export default function CatalogPage() {
     <div className={styles.catalogContainer}>
       {/* Hero Section */}
       <section className={styles.hero}>
-        <h1 className={styles.title}>The 2025 Master Catalog</h1>
-        <p className={styles.subtitle}>
-          Discover thousands of premium findings, mountings, chains, and loose stones. 
-          Browse our interactive flipbook below or open it in a full-screen view for the best experience.
-        </p>
-        <a 
-          href={catalogUrl} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={styles.ctaButton}
-        >
-          <FiBookOpen className={styles.icon} />
-          Open Fullscreen Catalog
-        </a>
+        <ScrollReveal animation="fade-up">
+          <h1 className={styles.title}>The 2025 Master Catalog</h1>
+          <p className={styles.subtitle}>
+            Discover thousands of premium findings, mountings, chains, and loose stones. 
+            Browse our interactive flipbook below or open it in a full-screen view for the best experience.
+          </p>
+          <a 
+            href={catalogUrl} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={styles.ctaButton}
+          >
+            <FiBookOpen className={styles.icon} />
+            Open Fullscreen Catalog
+          </a>
+        </ScrollReveal>
       </section>
 
       {/* Embedded Flipbook */}
@@ -44,7 +47,7 @@ export default function CatalogPage() {
 
       {/* Features/Highlights */}
       <section className={styles.features}>
-        <div className={styles.featureCard}>
+        <ScrollReveal animation="fade-up" delay={0} className={styles.featureCard}>
           <div className={styles.featureIcon}>
             <FiSearch />
           </div>
@@ -52,8 +55,8 @@ export default function CatalogPage() {
           <p className={styles.featureText}>
             Quickly find exact SKUs and product names using the built-in search tool within the flipbook viewer.
           </p>
-        </div>
-        <div className={styles.featureCard}>
+        </ScrollReveal>
+        <ScrollReveal animation="fade-up" delay={200} className={styles.featureCard}>
           <div className={styles.featureIcon}>
             <FiLayers />
           </div>
@@ -61,8 +64,8 @@ export default function CatalogPage() {
           <p className={styles.featureText}>
             From classic gold mountings to modern platinum settings, our entire inventory is at your fingertips.
           </p>
-        </div>
-        <div className={styles.featureCard}>
+        </ScrollReveal>
+        <ScrollReveal animation="fade-up" delay={400} className={styles.featureCard}>
           <div className={styles.featureIcon}>
             <FiDownload />
           </div>
@@ -70,7 +73,7 @@ export default function CatalogPage() {
           <p className={styles.featureText}>
             Save the catalog locally as a PDF or print specific pages directly from the online viewer tool.
           </p>
-        </div>
+        </ScrollReveal>
       </section>
     </div>
   );

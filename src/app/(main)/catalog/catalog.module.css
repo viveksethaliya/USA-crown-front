@@ -19,7 +19,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(circle at center, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(250, 149, 49, 0.15) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -55,13 +55,13 @@
   border-radius: 4px;
   text-decoration: none;
   transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 10px 25px rgba(250, 149, 49, 0.2);
   animation: fadeInUp 0.8s ease-out 0.4s both;
 }
 
 .ctaButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 15px 35px rgba(250, 149, 49, 0.3);
   background: linear-gradient(135deg, #e5c158 0%, #c6a338 100%);
 }
 
@@ -126,7 +126,7 @@
 .featureIcon {
   width: 60px;
   height: 60px;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(250, 149, 49, 0.1);
   color: #d4af37;
   border-radius: 50%;
   display: flex;

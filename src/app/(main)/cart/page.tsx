@@ -127,7 +127,7 @@ export default function CartPage() {
         <p className="text-[#666666] mb-8">
           Looks like you haven't added any items to your order yet. Browse our catalog to find what you need.
         </p>
-        <Link href="/products" className="flex items-center gap-2 px-8 py-3 bg-[#d4af37] text-white font-medium hover:bg-[#c5a017] transition-colors rounded-none">
+        <Link href="/products" className="flex items-center gap-2 px-8 py-3 bg-[#fa9531] text-[#001f3f] font-bold hover:bg-[#e0852b] transition-colors rounded-[4px]">
           <Search className="w-4 h-4" />
           Shop Products
         </Link>
@@ -299,7 +299,7 @@ export default function CartPage() {
 
             <Link
               href="/checkout"
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#001f3f] text-white font-semibold uppercase tracking-wider hover:bg-[#00152b] transition-colors group rounded-none"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#fa9531] text-[#001f3f] font-bold uppercase tracking-wider hover:bg-[#e0852b] transition-colors group rounded-[4px]"
             >
               Proceed to Checkout
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

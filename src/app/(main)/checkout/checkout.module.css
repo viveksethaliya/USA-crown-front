@@ -23,14 +23,14 @@
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  
 }
 
 .title {
   color: var(--color-inkblue);
   font-size: 2rem;
   line-height: 1.2;
-  text-transform: uppercase;
+  
 }
 
 .secondaryLink {
@@ -38,7 +38,7 @@
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: underline;
-  text-transform: uppercase;
+  
 }
 
 .checkoutGrid {
@@ -67,7 +67,7 @@
   color: var(--color-inkblue);
   font-size: 1rem;
   margin-bottom: 1rem;
-  text-transform: uppercase;
+  
 }
 
 .sectionHeader {
@@ -205,7 +205,7 @@
   font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  
 }
 
 .primaryButton:hover {
@@ -254,7 +254,7 @@
   color: var(--color-inkblue);
   font-size: 2rem;
   margin-bottom: 0.75rem;
-  text-transform: uppercase;
+  
 }
 
 .confirmation p {

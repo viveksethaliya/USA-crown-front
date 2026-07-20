@@ -1,13 +1,15 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import ProductDetailClient from './ProductDetailClient';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online';
+
 type Props = {
   params: Promise<{ id: string }>
 }
 
 async function getProduct(id: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/products/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${BACKEND_URL}/api/store/catalog/products/${id}`, { cache: 'no-store' });
     if (!res.ok) return null;
     const data = await res.json();
     return data.product || null;

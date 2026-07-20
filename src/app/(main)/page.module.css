@@ -14,6 +14,7 @@
   display: flex;
   min-height: 600px;
   background-color: var(--color-inkblue);
+  padding: 0 !important;
 }
 
 .heroTextSide {
@@ -22,24 +23,28 @@
   align-items: center;
   justify-content: center;
   padding: 4rem;
+  position: relative;
+  z-index: 2;
 }
 
 .heroTextContent {
   max-width: 600px;
 }
 
-.heroTitle {
-  font-size: 3.5rem;
-  font-weight: 800;
+.heroTitleMain {
+  font-family: var(--font-playfair), serif;
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-weight: 600;
   color: var(--color-gold);
-  line-height: 1.2;
+  line-height: 1.1;
   margin-bottom: 1.5rem;
-  text-transform: uppercase;
 }
 
-.heroText {
-  font-size: 1.2rem;
-  color: var(--color-white);
+.heroTextMain {
+  font-family: var(--font-playfair), serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.6;
   margin-bottom: 2.5rem;
 }
@@ -84,17 +89,33 @@
 
 .heroImageSide {
   flex: 1;
-  background-color: #111;
-  /* Dark background for image area */
+  background-color: var(--color-inkblue);
   position: relative;
-  border-left: 4px solid var(--color-gold);
   display: flex;
+}
+
+.heroImageWrapper {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .heroImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.heroImageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-inkblue) 0%, rgba(24, 41, 85, 0.5) 40%, transparent 100%);
+  pointer-events: none;
 }
 
 /* --- About Section --- */
@@ -248,9 +269,11 @@
   text-align: center;
   max-width: 800px;
   margin: 0 auto 3rem;
+  font-family: var(--font-playfair), serif;
+  font-style: italic;
+  font-size: 1.2rem;
   color: var(--color-text-main);
-  font-size: 1.1rem;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .categoryGrid {
@@ -423,7 +446,7 @@
 /* --- Bottom Banner --- */
 .bottomBanner {
   padding: 2.5rem 0;
-  background: linear-gradient(rgba(212, 175, 55, 0.95), rgba(212, 175, 55, 0.95)), url('/web-phts/btmbnr.jpg.jpeg');
+  background: linear-gradient(rgba(250, 149, 49, 0.95), rgba(250, 149, 49, 0.95)), url('/web-phts/btmbnr.jpg.jpeg');
   background-size: cover;
   background-position: center;
   text-align: center;
@@ -772,4 +795,80 @@
   .featureTitle {
     font-size: 1.2rem;
   }
+}
+/* --- Best Sellers Showcase --- */
+.bestSellersSection {
+  padding: 6rem 0;
+  background-color: var(--color-white);
+  position: relative;
+  overflow: hidden;
+}
+
+.bestSellersTitle {
+  font-size: 3rem;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.bestSellersTitle::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background-color: var(--color-accent2);
+  margin: 1.5rem auto 2.5rem;
+}
+
+.bestSellersDescription {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 4rem;
+  color: var(--color-primary);
+  font-family: var(--font-playfair), serif;
+  font-style: italic;
+  font-size: 1.25rem;
+  line-height: 1.7;
+}
+
+.bestSellersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2.5rem;
+  margin-bottom: 4rem;
+}
+
+.bestSellersCardWrapper {
+  background: var(--color-white);
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+}
+
+.bestSellersCardWrapper:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-accent2);
+}
+
+.goldOutlineBtn {
+  display: inline-block;
+  padding: 1rem 3rem;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 1.5px;
+  text-decoration: none;
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  transition: all 0.3s ease;
+}
+
+.goldOutlineBtn:hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
 }

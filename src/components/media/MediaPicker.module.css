@@ -105,7 +105,7 @@
 
 .searchInput:focus {
   border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+  box-shadow: 0 0 0 3px rgba(250, 149, 49, 0.15);
 }
 
 .searchIcon {
@@ -184,7 +184,7 @@
 
 .thumbSelected {
   border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 0 3px rgba(250, 149, 49, 0.25);
 }
 
 .thumbSelected::after {

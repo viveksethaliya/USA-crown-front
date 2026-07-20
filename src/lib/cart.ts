@@ -36,23 +36,12 @@ export interface CartApiResponse {
 const BACKEND_URL = 'https://api.utilixo.online';
 
 export function apiUrl(path: string) {
-  const base = process.env.NEXT_PUBLIC_API_URL;
+  // Client-side: use relative path so Next.js rewrites proxy it — avoids CORS crash
+  if (typeof window !== 'undefined') return path;
 
-  if (base) {
-    // If on client and base is localhost, dynamically rewrite to actual hostname for LAN testing
-    if (typeof window !== 'undefined' && base.includes('localhost')) {
-      if (window.location.hostname !== 'localhost') {
-        return `${base.replace('localhost', window.location.hostname)}${path}`;
-      }
-    }
-    return `${base}${path}`;
-  }
-
-  // Server-side (SSR): must use absolute URL — relative paths are not valid in Node.js fetch()
-  if (typeof window === 'undefined') return `${BACKEND_URL}${path}`;
-
-  // Client-side: use relative path so Next.js rewrites proxy it (avoids CORS)
-  return path;
+  // Server-side (SSR): use full URL from env or fallback constant
+  const base = process.env.NEXT_PUBLIC_API_URL || BACKEND_URL;
+  return `${base}${path}`;
 }
 
 export function cartFetch(path: string, options: RequestInit = {}) {
@@ -74,4 +63,14 @@ export function formatMoney(value: number | null | undefined) {
     style: 'currency',
     currency: 'USD'
   }).format(value);
+}
+
+export function getGuestCartId(): string {
+  if (typeof window === 'undefined') return '';
+  let guestId = localStorage.getItem('guestCartId');
+  if (!guestId) {
+    guestId = 'guest_' + Math.random().toString(36).substring(2, 11) + Date.now();
+    localStorage.setItem('guestCartId', guestId);
+  }
+  return guestId;
 }

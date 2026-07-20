@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import styles from '../blog.module.css';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online';
+
 // Fallback mock data for when API is unavailable
 const fallbackData: Record<string, { title: string; date: string; image: string; content: string }> = {
   'the-essential-guide-to-jewelry-findings': {
@@ -46,7 +48,7 @@ interface RelatedData {
 
 async function getBlogPost(slug: string): Promise<BlogDetail | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${slug}`, {
+    const res = await fetch(`${BACKEND_URL}/api/blogs/${slug}`, {
       cache: 'no-store'
     });
     if (!res.ok) return null;
@@ -59,7 +61,7 @@ async function getBlogPost(slug: string): Promise<BlogDetail | null> {
 
 async function getRelatedPosts(slug: string): Promise<RelatedData | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${slug}/related`, {
+    const res = await fetch(`${BACKEND_URL}/api/blogs/${slug}/related`, {
       cache: 'no-store'
     });
     if (!res.ok) return null;

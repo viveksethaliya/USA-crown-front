@@ -1,11 +1,104 @@
 @import "tailwindcss";
 
-/* 
-  Global palette — everything else is done via Tailwind arbitrary values in components.
-  Sand Dune: #f0ede5 | Jet: #312f2c | Royal Gold: #d1a054
-*/
+@theme {
+  --color-primary: #182955;
+  --color-secondary: #ffffff;
+  --color-accent1: #FF9E1B;
+  --color-accent2: #FF9E1B;
+  --color-cta: #FF9E1B;
+  --color-info: #182955;
+
+  --font-heading: var(--font-montserrat);
+  --font-body: var(--font-montserrat);
+
+  /* Restore legacy theme mappings */
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border-main: var(--border-color);
+}
+
+:root {
+  --color-primary: #182955;
+  /* Ink Blue */
+  --color-secondary: #ffffff;
+  /* Pearl Beige */
+  --color-accent1: #FF9E1B;
+  /* Warm Taupe */
+  --color-accent2: #FF9E1B;
+  /* Bronze */
+  --color-cta: #FF9E1B;
+  /* Rust */
+  --color-info: #182955;
+  /* Slate Blue */
+  --color-white: #ffffff;
+
+  /* Legacy layout variables (prevents components from going transparent) */
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f5f5f5;
+  --text-main: #444444;
+  --text-muted: #777777;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --selection-bg: rgba(255, 158, 27, 0.2);
+  --selection-text: #182955;
+}
+
 body {
-  background-color: #f0ede5;
-  color: #312f2c;
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-secondary);
+  color: #444444;
+  font-family: var(--font-montserrat), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-black/5 shadow-xl;
+  }
+
+  .glass-panel-hover {
+    @apply hover:bg-white hover:border-primary/30 hover:shadow-primary/10 transition-all duration-500;
+  }
+
+  .primary-btn {
+    @apply inline-flex items-center justify-center px-8 py-3 bg-primary text-white font-bold uppercase tracking-widest rounded transition-all duration-300 border border-primary hover:bg-white hover:text-primary hover:-translate-y-1 shadow-lg hover:shadow-xl;
+  }
+
+  .secondary-btn {
+    @apply inline-flex items-center justify-center px-8 py-3 bg-transparent border border-primary text-primary font-bold uppercase tracking-widest rounded transition-all duration-300 hover:bg-primary hover:text-white hover:-translate-y-1 shadow-sm hover:shadow-lg;
+  }
+
+  /* Bento card rich backgrounds */
+  .bento-rings {
+    @apply bg-gradient-to-br from-[#f5eee6] to-[#ebe1d3];
+  }
+
+  .bento-earrings {
+    @apply bg-gradient-to-br from-[#eef2f5] to-[#e1e6eb];
+  }
+
+  .bento-clasps {
+    @apply bg-gradient-to-br from-[#f5eff7] to-[#ebe1f0];
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
 }

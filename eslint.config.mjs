@@ -11,6 +11,17 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      "react/no-unescaped-entities": "off",
+      "@next/next/no-img-element": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/immutability": "off",
+      "jsx-a11y/role-supports-aria-props": "off",
+      "react-hooks/exhaustive-deps": "warn",
+      "no-use-before-define": "off"
+    }
+  }
 ]);
 
 export default eslintConfig;

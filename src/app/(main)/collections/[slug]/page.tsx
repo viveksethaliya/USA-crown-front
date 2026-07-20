@@ -2,6 +2,8 @@ import React from "react";
 import ProductCard from "@/components/products/ProductCard";
 import { Metadata } from "next";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online';
+
 type Props = {
   params: Promise<{ slug: string }>;
 };
@@ -10,7 +12,7 @@ export async function generateMetadata(
   { params }: Props
 ): Promise<Metadata> {
   const { slug } = await params;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/collections/${slug}`, { next: { revalidate: 60 } });
+  const res = await fetch(`${BACKEND_URL}/api/store/catalog/collections/${slug}`, { next: { revalidate: 60 } });
   
   if (!res.ok) {
     return { title: 'Collection Not Found' };
@@ -35,9 +37,9 @@ export default async function CollectionPage({ params }: Props) {
   const { slug } = await params;
 
   const [colRes, prodRes, filtersRes] = await Promise.all([
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/collections/${slug}`, { next: { revalidate: 60 } }),
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/collections/${slug}/products`, { next: { revalidate: 60 } }),
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/store/catalog/filters`, { next: { revalidate: 3600 } })
+    fetch(`${BACKEND_URL}/api/store/catalog/collections/${slug}`, { next: { revalidate: 60 } }),
+    fetch(`${BACKEND_URL}/api/store/catalog/collections/${slug}/products`, { next: { revalidate: 60 } }),
+    fetch(`${BACKEND_URL}/api/store/catalog/filters`, { next: { revalidate: 3600 } })
   ]);
 
   if (!colRes.ok) {
@@ -91,7 +93,7 @@ export default async function CollectionPage({ params }: Props) {
           }}>
             {products.map((product: Record<string, unknown>) => (
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              <ProductCard key={product.id as number} product={product as any} filters={filters} />
+              <ProductCard key={product.id as number} product={product as any} />
             ))}
           </div>
         )}

@@ -38,7 +38,7 @@
 }
 
 .searchButton:hover {
-  background-color: #0b223d;
+  background-color: #ffaf45;
 }
 
 /* =============================================
@@ -189,7 +189,7 @@
 
 .dropdownSectionTitle {
   font-size: 0.72rem;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   color: #999;
   letter-spacing: 1px;
   margin-bottom: 0.8rem;
@@ -360,7 +360,7 @@
   font-size: 0.7rem;
   color: var(--color-gold);
   font-weight: 600;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   letter-spacing: 0.5px;
   background: rgba(202, 163, 30, 0.1);
   padding: 1px 5px;
@@ -385,7 +385,7 @@
   padding: 2px 6px;
   border-radius: 10px;
   letter-spacing: 0.3px;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 /* =============================================

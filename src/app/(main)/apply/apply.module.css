@@ -47,7 +47,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
+  
   letter-spacing: 0.5px;
   white-space: nowrap;
   transition: color 0.3s;
@@ -97,7 +97,7 @@
   color: var(--color-inkblue);
   font-size: 1.8rem;
   font-weight: 800;
-  text-transform: uppercase;
+  
   margin-bottom: 0.5rem;
 }
 
@@ -128,7 +128,7 @@
   font-weight: 700;
   font-size: 0.85rem;
   color: var(--color-inkblue);
-  text-transform: uppercase;
+  
   letter-spacing: 0.5px;
 }
 
@@ -241,7 +241,7 @@
   color: var(--color-white);
   font-weight: 700;
   font-size: 0.9rem;
-  text-transform: uppercase;
+  
   letter-spacing: 1px;
   text-decoration: none;
   border: 2px solid var(--color-inkblue);
@@ -360,7 +360,7 @@
   color: var(--color-white);
   font-weight: 700;
   font-size: 0.9rem;
-  text-transform: uppercase;
+  
   letter-spacing: 1px;
   border: 2px solid var(--color-inkblue);
   cursor: pointer;
@@ -380,7 +380,7 @@
   color: var(--color-inkblue);
   font-weight: 700;
   font-size: 0.9rem;
-  text-transform: uppercase;
+  
   letter-spacing: 1px;
   border: 2px solid var(--color-border);
   cursor: pointer;

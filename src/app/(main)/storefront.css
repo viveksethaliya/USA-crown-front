@@ -1,26 +1,57 @@
 .storefront-root {
-  --color-inkblue: #001F3F;
-  --color-inkblue-hover: #00152B;
-  --color-gold: #D4AF37;
-  --color-gold-hover: #C5A017;
+  /* Refined Luxury Jewelry Palette */
+  --color-inkblue: #182955; /* Deep Navy (Original Color 1) */
+  --color-inkblue-hover: #121e3d;
+  
+  /* Upgraded Gold: #776353 was too brown/muddy. Replaced with Champagne Gold for a premium feel */
+  --color-gold: #fa9531; 
+  --color-gold-hover: #e0852b;
+  
+  /* Secondary Accents */
+  --color-rust: #fa9531; /* Color 5 - use sparingly for badges/alerts */
+  --color-muted-blue: #182955; /* Color 6 - subtle links */
+  
+  /* Crisp, clean backgrounds to make jewelry photography pop */
   --color-white: #FFFFFF;
-  --color-bg-light: #F8F9FA;
-  --color-text-main: #333333;
-  --color-text-muted: #666666;
-  --color-border: #E0E0E0;
+  --color-bg-light: #f8f9fa; /* Pearl White for pristine backgrounds */
+  --color-bg-alt: #ffffff; /* Soft Warm White for alternating sections */
+  
+  /* High contrast text */
+  --color-text-main: #444444; /* Rich charcoal for maximum readability */
+  --color-text-muted: #666666; /* Elegant warm grey */
+  --color-border: #E8E5DF; /* Very subtle warm border */
 
-  background-color: var(--color-bg-light);
+  background-color: var(--color-bg-alt);
   color: var(--color-text-main);
-  line-height: 1.6;
+  line-height: 1.7;
+  font-family: var(--font-montserrat), Arial, sans-serif;
 }
 
-:where(.storefront-root) *, :where(.storefront-root) *::before, :where(.storefront-root) *::after {
-  border-radius: 0 !important;
+/* Headings use the new elegant serif font */
+:where(.storefront-root) h1, 
+:where(.storefront-root) h2, 
+:where(.storefront-root) h3, 
+:where(.storefront-root) h4, 
+:where(.storefront-root) h5, 
+:where(.storefront-root) h6,
+:where(.storefront-root) .heroTitle,
+:where(.storefront-root) .sectionTitle,
+:where(.storefront-root) .exploreTitle,
+:where(.storefront-root) .aboutTitle,
+:where(.storefront-root) .ctaTitle {
+  font-family: var(--font-playfair), serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 :where(.storefront-root) a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.2s ease;
+}
+
+:where(.storefront-root) a:hover {
+  color: var(--color-gold);
 }
 
 :where(.storefront-root) ul, :where(.storefront-root) ol {
@@ -31,12 +62,111 @@
 :where(.storefront-root) input, 
 :where(.storefront-root) select, 
 :where(.storefront-root) textarea {
-  border-radius: 0;
-  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  border: 1px solid rgba(151, 146, 131, 0.4);
+  font-family: inherit;
+  outline: none;
+}
+
+:where(.storefront-root) input:focus, 
+:where(.storefront-root) select:focus, 
+:where(.storefront-root) textarea:focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(119, 99, 83, 0.1);
 }
 
 :where(.storefront-root) button {
   cursor: pointer;
   background: none;
   border: none;
+  transition: all 0.3s ease;
+}
+
+/* Enhance shadows across the site */
+:where(.storefront-root) .categoryCard,
+:where(.storefront-root) .featureCard {
+  border-radius: 12px !important;
+  border: 1px solid rgba(151, 146, 131, 0.2) !important;
+  box-shadow: 0 8px 24px rgba(28, 33, 53, 0.04) !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+  background-color: var(--color-white);
+}
+
+:where(.storefront-root) .categoryCard:hover,
+:where(.storefront-root) .featureCard:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 16px 40px rgba(28, 33, 53, 0.08) !important;
+  border-color: var(--color-gold) !important;
+}
+
+/* Override rigid hard drop shadows on images with soft elegant shadows */
+:where(.storefront-root) .aboutImage,
+:where(.storefront-root) .commentsImageSide {
+  box-shadow: 0 24px 48px rgba(28, 33, 53, 0.12) !important;
+  border-radius: 16px !important;
+  border: none !important;
+}
+
+/* Overrides for Buttons */
+:where(.storefront-root) .primaryBtn,
+:where(.storefront-root) .ctaButton,
+:where(.storefront-root) .bannerBtn {
+  border-radius: 30px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+}
+
+:where(.storefront-root) .secondaryBtn {
+  border-radius: 30px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Sections spacing */
+:where(.storefront-root) section {
+  padding: 6rem 0; /* Add more breathing room globally */
+}
+
+
+/* Global Loader */
+.global-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  color: var(--color-inkblue);
+  min-height: 400px;
+}
+
+.global-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(25, 42, 86, 0.1);
+  border-left-color: var(--color-inkblue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+.global-loader-text {
+  font-family: var(--font-outfit), sans-serif;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  color: var(--color-inkblue);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }

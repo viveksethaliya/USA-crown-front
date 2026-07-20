@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { apiUrl, cartFetch } from '../../../../lib/cart';
+import { apiUrl, cartFetch, getGuestCartId, CartItem } from '../../../../lib/cart';
 import styles from './detail.module.css';
 import { toast } from 'react-hot-toast';
+import ScrollReveal from "@/components/animations/ScrollReveal";
 
 interface ProductVariation {
   id: number;
@@ -80,6 +81,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userPermission, setUserPermission] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   // Custom Measurements
   const [customLength, setCustomLength] = useState<number | ''>('');
@@ -137,6 +139,31 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       } catch { }
     }
     checkSession();
+  }, []);
+
+  useEffect(() => {
+    async function loadCartItems() {
+      try {
+        const res = await cartFetch(`/api/store/cart`);
+        if (res.ok) {
+          const data = await res.json();
+          setCartItems(data.cart?.items || []);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    loadCartItems();
+
+    const handleCartUpdated = (e: any) => {
+      if (e.detail?.items) {
+        setCartItems(e.detail.items);
+      } else {
+        loadCartItems();
+      }
+    };
+    window.addEventListener('cart-updated', handleCartUpdated);
+    return () => window.removeEventListener('cart-updated', handleCartUpdated);
   }, []);
 
   useEffect(() => {
@@ -275,6 +302,16 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         throw new Error(data.error || 'Failed to add to cart');
       }
       toast.success("Added to cart successfully!");
+      
+      // Optimistic UI update to instantly swap the button state
+      setCartItems(prev => [
+        ...prev, 
+        { 
+          productId: product.id, 
+          variationId: currentVariation ? currentVariation.id : null 
+        } as any
+      ]);
+
       if (typeof window !== 'undefined') window.dispatchEvent(new Event('cart-updated'));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : String(err));
@@ -371,8 +408,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   if (loading) {
     return (
       <div className={styles.page}>
-        <div className={styles.container}>
-          <p style={{ padding: '3rem', textAlign: 'center', color: '#888' }}>Loading product...</p>
+        <div className="global-loader-container">
+          <div className="global-spinner"></div>
+          <div className="global-loader-text">Loading Details</div>
         </div>
       </div>
     );
@@ -435,7 +473,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         <div className={styles.productTop}>
 
           {/* Left: Images */}
-          <div className={styles.imageSide}>
+          <ScrollReveal animation="slide-right" duration={700} className={styles.imageSide}>
             <div className={styles.mainImage}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -458,10 +496,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 ))}
               </div>
             )}
-          </div>
+          </ScrollReveal>
 
           {/* Right: Details */}
-          <div className={styles.detailSide}>
+          <ScrollReveal animation="slide-left" duration={700} className={styles.detailSide}>
 
             <p className={styles.customizeLabel}>Customize your Product</p>
 
@@ -724,106 +762,154 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               </div>
             )}
 
-            {/* Pricing Display */}
-            <div style={{ marginTop: '2rem', marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
-              {isAuthenticated && userPermission !== 'view_only' ? (
-                <>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-gold)' }}>
-                    {basePrice !== null && calculatedPrice !== null && basePrice > calculatedPrice && (
-                      <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '8px', fontSize: '1.4rem' }}>
-                        ${basePrice.toFixed(2)}
-                      </span>
-                    )}
-                    ${calculatedPrice !== null ? calculatedPrice.toFixed(2) : (basePrice ? basePrice.toFixed(2) : '0.00')}
-                    <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}> / each</span>
-                  </div>
-                  {appliedDiscountAmount > 0 && (
-                    <div style={{ marginTop: '0.5rem', color: 'green', fontWeight: 700, fontSize: '0.95rem' }}>
-                      {appliedDiscountPct}% discount applied - you save ${appliedDiscountAmount.toFixed(2)} per unit
-                    </div>
-                  )}
-                  {discounts.length > 0 && (
-                    <div style={{ marginTop: '1rem' }}>
-                      <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--color-inkblue)' }}>Bulk Order Discounts:</p>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
-                            <th style={{ padding: '0.3rem 0' }}>Quantity</th>
-                            <th style={{ padding: '0.3rem 0' }}>Discount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {discounts.map(d => (
-                            <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
-                              <td style={{ padding: '0.4rem 0' }}>
-                                {d.max_quantity ? `${d.min_quantity} - ${d.max_quantity}` : `${d.min_quantity}+`}
-                                {d.measurement_type ? ` ${d.measurement_type === 'plate' ? 'sq. in.' : 'in.'}` : ''}
-                              </td>
-                              <td style={{ padding: '0.4rem 0', color: 'green', fontWeight: 600 }}>
-                                {d.type === 'percentage' ? `${d.amount}% off` : `$${d.amount} off`}
-                                <span style={{ color: '#777', fontWeight: 400 }}> ({d.scope})</span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </>
-              ) : isAuthenticated && userPermission === 'view_only' ? (
-                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                  Pricing Restricted
-                </div>
-              ) : (
-                <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                  Please login to view wholesale pricing and bulk discounts.
-                </div>
-              )}
-            </div>
-
-            {/* Quantity + Add to Cart */}
-            <div className={styles.orderRow}>
-              <div className={styles.quantityBox}>
-                <button
-                  className={styles.qtyBtn}
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className={styles.qtyInput}
-                />
-                <button
-                  className={styles.qtyBtn}
-                  onClick={() => setQuantity(quantity + 1)}
-                >
-                  +
-                </button>
+            {product.type === 'variable' && !currentVariation ? (
+              <div style={{ marginTop: '2rem', marginBottom: '1rem', padding: '2rem', backgroundColor: '#fdfdfd', border: '1px dashed #ccc', textAlign: 'center', borderRadius: '8px' }}>
+                <p style={{ color: '#555', fontSize: '1.05rem', margin: 0, fontWeight: 500 }}>Please select all product options to view pricing and purchase.</p>
               </div>
+            ) : (
+              <>
+                {/* Pricing Display */}
+                <div style={{ marginTop: '2rem', marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', border: '1px solid #eee' }}>
+                  {isAuthenticated && userPermission !== 'view_only' ? (
+                    <>
+                      <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-gold)' }}>
+                        {basePrice !== null && calculatedPrice !== null && basePrice > calculatedPrice && (
+                          <span style={{ textDecoration: 'line-through', color: '#888', marginRight: '8px', fontSize: '1.4rem' }}>
+                            ${basePrice.toFixed(2)}
+                          </span>
+                        )}
+                        ${calculatedPrice !== null ? calculatedPrice.toFixed(2) : (basePrice ? basePrice.toFixed(2) : '0.00')}
+                        <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}> / each</span>
+                      </div>
+                      {appliedDiscountAmount > 0 && (
+                        <div style={{ marginTop: '0.5rem', color: 'green', fontWeight: 700, fontSize: '0.95rem' }}>
+                          {appliedDiscountPct}% discount applied - you save ${appliedDiscountAmount.toFixed(2)} per unit
+                        </div>
+                      )}
+                      {discounts.length > 0 && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--color-inkblue)' }}>Bulk Order Discounts:</p>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
+                                <th style={{ padding: '0.3rem 0' }}>Quantity</th>
+                                <th style={{ padding: '0.3rem 0' }}>Discount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {discounts.map(d => (
+                                <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
+                                  <td style={{ padding: '0.4rem 0' }}>
+                                    {d.max_quantity ? `${d.min_quantity} - ${d.max_quantity}` : `${d.min_quantity}+`}
+                                    {d.measurement_type ? ` ${d.measurement_type === 'plate' ? 'sq. in.' : 'in.'}` : ''}
+                                  </td>
+                                  <td style={{ padding: '0.4rem 0', color: 'green', fontWeight: 600 }}>
+                                    {d.type === 'percentage' ? `${d.amount}% off` : `$${d.amount} off`}
+                                    <span style={{ color: '#777', fontWeight: 400 }}> ({d.scope})</span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </>
+                  ) : isAuthenticated && userPermission === 'view_only' ? (
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                      Pricing Restricted
+                    </div>
+                  ) : (
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                      Please login to view wholesale pricing and bulk discounts.
+                    </div>
+                  )}
+                </div>
 
-              {isAuthenticated ? (
-                <button
-                  onClick={handleAddToCart}
-                  disabled={addingToCart}
-                  className={styles.priceBtn}
-                  style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-inkblue)' }}
-                >
-                  {addingToCart ? 'Adding...' : 'Add to Cart'}
-                </button>
-              ) : (
-                <Link href="/login" className={styles.priceBtn}>
-                  Login to See Price
-                </Link>
-              )}
+                {/* Quantity + Add to Cart */}
+                <div className={styles.orderRow}>
+                  <div className={styles.quantityBox}>
+                    <button
+                      className={styles.qtyBtn}
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className={styles.qtyInput}
+                    />
+                    <button
+                      className={styles.qtyBtn}
+                      onClick={() => setQuantity(quantity + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
 
-            </div>
+                  {(() => {
+                    const isItemInCart = product ? cartItems.some(item => {
+                      if (String(item.productId) !== String(product.id)) return false;
+                      const activeVarId = currentVariation ? currentVariation.id : null;
+                      return String(item.variationId || '') === String(activeVarId || '');
+                    }) : false;
+
+                    const renderAddingContent = (text: string) => (
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <div className="global-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px', marginBottom: 0, borderLeftColor: 'var(--color-inkblue)', borderColor: 'rgba(25, 42, 86, 0.2)' }}></div>
+                        {text}
+                      </span>
+                    );
+
+                    if (!isAuthenticated) {
+                      return (
+                        <Link href="/login" className={styles.priceBtn}>
+                          Login to See Price
+                        </Link>
+                      );
+                    }
+
+                    if (isItemInCart) {
+                      return (
+                        <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '280px', flexWrap: 'nowrap' }}>
+                          <button
+                            onClick={handleAddToCart}
+                            disabled={addingToCart}
+                            className={styles.priceBtn}
+                            style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-inkblue)', width: '100%', flex: 1 }}
+                          >
+                            {addingToCart ? renderAddingContent('Adding...') : 'Add Another'}
+                          </button>
+                          <Link 
+                            href="/cart" 
+                            className={styles.priceBtn} 
+                            style={{ backgroundColor: 'var(--color-inkblue)', color: 'white', width: '100%', flex: 1 }}
+                          >
+                            View in Cart
+                          </Link>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <button
+                        onClick={handleAddToCart}
+                        disabled={addingToCart}
+                        className={styles.priceBtn}
+                        style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-inkblue)', flex: 1 }}
+                      >
+                        {addingToCart ? renderAddingContent('Adding...') : 'Add to Cart'}
+                      </button>
+                    );
+                  })()}
+                </div>
+              </>
+            )}
 
 
-          </div>
+          </ScrollReveal>
         </div>
 
         {/* Full Description */}

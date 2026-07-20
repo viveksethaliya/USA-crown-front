@@ -6,6 +6,9 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { FiMenu, FiX, FiSearch } from 'react-icons/fi';
 import { API_URL } from '@/lib/config';
 import styles from './products.module.css';
+import ProductCard from '@/components/products/ProductCard';
+import { useSessionStatus } from '@/lib/auth';
+import ScrollReveal from '@/components/animations/ScrollReveal';
 
 interface Product {
   id: number;
@@ -78,6 +81,7 @@ function ProductsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const { isAuthenticated, userPermission } = useSessionStatus();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [filters, setFilters] = useState<DynamicFilter[]>([]);
@@ -114,31 +118,7 @@ function ProductsContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userPermission, setUserPermission] = useState<string | null>(null);
 
-  // Check user session on mount
-  useEffect(() => {
-    async function checkSession() {
-      try {
-        const token = localStorage.getItem('storeToken');
-        if (!token) return;
-        const res = await fetch(`${API_URL}/api/store/auth/me`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated) {
-            setIsAuthenticated(true);
-            setUserPermission(data.user?.purchasing_permission || 'can_place_orders');
-          }
-        }
-      } catch {
-        // silently fail
-      }
-    }
-    checkSession();
-  }, []);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -489,72 +469,20 @@ function ProductsContent() {
 
           {/* Product Grid */}
           {loading ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#888' }}>
-              Loading products...
+            <div className="global-loader-container">
+              <div className="global-spinner"></div>
+              <div className="global-loader-text">Loading Products</div>
             </div>
           ) : (
             <div className={styles.productGrid}>
-              {products.map(product => (
-                <div key={product.id} className={styles.productCard}>
-                  <div className={styles.productImageWrap}>
-                    {product.tags && product.tags.length > 0 && (
-                      <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                        {product.tags.map((t) => (
-                          <span key={t.id} style={{ background: '#111', color: '#fff', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', borderRadius: 4 }}>
-                            {t.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={product.image || '/web-phts/a-17.jpg'}
-                      alt={product.name}
-                      className={styles.productImage}
-                    />
-                  </div>
-                  <div className={styles.productInfo}>
-                    <h3 className={styles.productName}>{product.name}</h3>
-                    {product.swatchAttributes && product.swatchAttributes.length > 0 && (
-                      <div className={styles.metalRow}>
-                        <span className={styles.metalLabel}>Options:</span>
-                        <div className={styles.metalDots}>
-                          {product.swatchAttributes.map(swatch => (
-                            <span
-                              key={swatch.value}
-                              className={styles.metalDot}
-                              style={
-                                swatch.type === 'color' && swatch.color_hex
-                                  ? { backgroundColor: swatch.color_hex, border: '1px solid rgba(0,0,0,0.1)' }
-                                  : swatch.type === 'image' && swatch.image_url
-                                    ? { backgroundImage: `url(${swatch.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(0,0,0,0.1)' }
-                                    : { background: '#f4f6f8', border: '1px solid #d0d5dd', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#555', fontWeight: 600, letterSpacing: '-0.5px' }
-                              }
-                              title={swatch.value}
-                            >
-                              {(!swatch.color_hex && !swatch.image_url) ? swatch.value.substring(0, 3).toUpperCase() : ''}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {product.sizeRanges && product.sizeRanges.map((sz, i) => (
-                      <div key={i} className={styles.metalRow}>
-                        <span className={styles.metalLabel}>{sz.name}:</span>
-                        <span className={styles.metalValue}>{sz.range}</span>
-                      </div>
-                    ))}
-                    {isAuthenticated && userPermission !== 'view_only' && product.priceRange && (
-                      <div className={styles.metalRow}>
-                        <span className={styles.metalLabel}>Price:</span>
-                        <span className={styles.priceValue}>{product.priceRange}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Link href={`/products/${product.id}`} className={styles.viewBtn}>
-                    View Details
-                  </Link>
-                </div>
+              {products.map((product, index) => (
+                <ScrollReveal key={product.id} animation="fade-up" delay={(index % 4) * 100 as 0|100|200|300} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <ProductCard 
+                    product={product} 
+                    isAuthenticated={isAuthenticated} 
+                    userPermission={userPermission} 
+                  />
+                </ScrollReveal>
               ))}
             </div>
           )}

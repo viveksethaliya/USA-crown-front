@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { API_URL } from "@/lib/config";
+import { useSessionStatus } from "@/lib/auth";
 import styles from "./SmartSearchBar.module.css";
 
 interface ProductPreview {
@@ -87,6 +88,8 @@ export default function SmartSearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  
+  const { isAuthenticated } = useSessionStatus();
 
   const [products, setProducts] = useState<ProductPreview[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -493,7 +496,7 @@ Rules:
                                   <span className={styles.productCategory}>{p.category}</span>
                                 )}
                               </span>
-                              {p.price && (
+                              {isAuthenticated && p.price && (
                                 <span className={styles.productPrice}>{p.price}</span>
                               )}
                             </div>

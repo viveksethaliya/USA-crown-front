@@ -1,13 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'https://api.utilixo.online/api/:path*',
-      },
-    ];
-  },
+  /* config options here */
 };
 
 export default nextConfig;
+
