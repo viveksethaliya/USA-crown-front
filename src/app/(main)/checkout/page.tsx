@@ -18,11 +18,26 @@ interface CheckoutAddress {
   companyName: string;
   email: string;
   phone: string;
-  addressLine: string;
+  address_line1: string;
+  address_line2: string;
   city: string;
-  stateProvince: string;
-  zipCode: string;
+  state: string;
+  postal_code: string;
   country: string;
+}
+
+interface SavedAddress {
+  id: number;
+  type: string;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  phone: string | null;
+  fax: string | null;
+  is_default: boolean;
 }
 
 interface ProfileResponse {
@@ -59,10 +74,11 @@ const emptyAddress: CheckoutAddress = {
   companyName: '',
   email: '',
   phone: '',
-  addressLine: '',
+  address_line1: '',
+  address_line2: '',
   city: '',
-  stateProvince: '',
-  zipCode: '',
+  state: '',
+  postal_code: '',
   country: 'United States'
 };
 
@@ -72,10 +88,11 @@ const fromProfile = (profile: ProfileResponse['user']): CheckoutAddress => ({
   companyName: profile?.company_name || '',
   email: profile?.email || '',
   phone: profile?.phone || '',
-  addressLine: profile?.address_line || '',
+  address_line1: profile?.address_line || '',
+  address_line2: '',
   city: profile?.city || '',
-  stateProvince: profile?.state_province || '',
-  zipCode: profile?.zip_code || '',
+  state: profile?.state_province || '',
+  postal_code: profile?.zip_code || '',
   country: profile?.country || 'United States'
 });
 
@@ -97,6 +114,7 @@ export default function CheckoutPage() {
   }
   const [error, setError] = useState<string | null>(null);
   const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
 
   const loadCheckout = async () => {
     setError('');
@@ -120,12 +138,20 @@ export default function CheckoutPage() {
 
       if (cartData.cart?.id) {
         const profileResponse = await cartFetch('/api/user/profile');
+        const addressesResponse = await cartFetch('/api/store/account/addresses');
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json() as ProfileResponse;
           const address = fromProfile(profileData.user);
           setBillingAddress(address);
           setShippingAddress(address);
+        }
+
+        if (addressesResponse.ok) {
+          const addressesData = await addressesResponse.json();
+          if (Array.isArray(addressesData)) {
+            setSavedAddresses(addressesData);
+          }
         }
       }
     } catch (err) {
@@ -190,10 +216,11 @@ export default function CheckoutPage() {
     { key: 'companyName', label: 'Company' },
     { key: 'email', label: 'Email', type: 'email', required: true },
     { key: 'phone', label: 'Phone', type: 'tel', required: true },
-    { key: 'addressLine', label: 'Address', required: true },
+    { key: 'address_line1', label: 'Address Line 1', required: true },
+    { key: 'address_line2', label: 'Address Line 2' },
     { key: 'city', label: 'City', required: true },
-    { key: 'stateProvince', label: 'State / Province', required: true },
-    { key: 'zipCode', label: 'Zip code', required: true },
+    { key: 'state', label: 'State / Province', required: true },
+    { key: 'postal_code', label: 'Zip / Postal Code', required: true },
     { key: 'country', label: 'Country', required: true }
   ];
 
@@ -284,6 +311,39 @@ export default function CheckoutPage() {
                     Same as billing
                   </label>
                 </div>
+
+                {!sameAsBilling && savedAddresses.length > 0 && (
+                  <div className={styles.savedAddressSelector}>
+                    <p>Or choose a saved address:</p>
+                    <select 
+                      className={styles.savedAddressSelect}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        if (!selectedId) return;
+                        const addr = savedAddresses.find(a => a.id.toString() === selectedId);
+                        if (addr) {
+                          setShippingAddress(prev => ({
+                            ...prev,
+                            address_line1: addr.address_line1 || '',
+                            address_line2: addr.address_line2 || '',
+                            city: addr.city || '',
+                            state: addr.state || '',
+                            postal_code: addr.postal_code || '',
+                            country: addr.country || 'United States',
+                            phone: addr.phone || prev.phone || ''
+                          }));
+                        }
+                      }}
+                    >
+                      <option value="">-- Select a saved address --</option>
+                      {savedAddresses.map(addr => (
+                        <option key={addr.id} value={addr.id}>
+                          {addr.address_line1}{addr.address_line2 ? `, ${addr.address_line2}` : ''}, {addr.city}, {addr.state} {addr.postal_code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {!sameAsBilling && (
                   <div className={styles.fieldGrid}>

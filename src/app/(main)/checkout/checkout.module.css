@@ -300,4 +300,42 @@
   .title {
     font-size: 1.5rem;
   }
+
+  .summaryRow {
+    font-size: 0.95rem;
+  }
+}
+
+.savedAddressSelector {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(230, 141, 24, 0.05);
+  border: 1px solid var(--color-gold);
+  border-radius: 6px;
+}
+
+.savedAddressSelector p {
+  font-weight: 600;
+  color: var(--color-inkblue);
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.savedAddressSelect {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #333;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.savedAddressSelect:focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(230, 141, 24, 0.2);
 }
