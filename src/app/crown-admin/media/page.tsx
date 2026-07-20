@@ -151,8 +151,8 @@ export default function MediaLibraryPage() {
             <span>{formatBytes(totalUsedBytes)} of {formatBytes(quotaLimitBytes)} ({usedPercentage.toFixed(1)}%)</span>
           </div>
           <div className="w-full h-3 bg-white/65 border border-[#312f2c]/8 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-[#d1a054] to-[#a87f3b] rounded-full transition-all duration-500 ease-out" 
+            <div
+              className="h-full bg-gradient-to-r from-[#d1a054] to-[#a87f3b] rounded-full transition-all duration-500 ease-out"
               style={{ width: `${usedPercentage}%` }}
             />
           </div>

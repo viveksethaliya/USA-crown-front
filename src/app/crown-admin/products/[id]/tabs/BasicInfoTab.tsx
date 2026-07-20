@@ -39,9 +39,9 @@ export default function BasicInfoTab({ product, onChange, brands }: { product: a
             <input type="text" value={product.sku} onChange={(e) => onChange('sku', e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>Brand</label>
+            <label className={labelCls}>Collection</label>
             <select value={product.brand_id} onChange={(e) => onChange('brand_id', e.target.value ? parseInt(e.target.value) : null)} className={inputCls}>
-              <option value="">No Brand</option>
+              <option value="">No Collection</option>
               {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>

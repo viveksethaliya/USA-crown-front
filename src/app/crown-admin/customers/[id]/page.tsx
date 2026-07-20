@@ -30,13 +30,15 @@ export default function CustomerDetailPage() {
     how_did_you_hear_about_us: '', role_id: 4, status: 'pending',
     company_name: '', company_website: '', resale_tax_id_number: '', additional_company_details: '',
     fax: '', wants_credit_application: false, credit_application_status: 'not_applicable',
-    parent_user_id: '', purchasing_permission: 'can_place_orders', spending_limit: ''
+    parent_user_id: '', purchasing_permission: 'can_place_orders', spending_limit: '',
+    customer_group_id: ''
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(isCreatingUser);
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [allCustomers, setAllCustomers] = useState<any[]>([]);
+  const [customerGroups, setCustomerGroups] = useState<any[]>([]);
 
   // Address Management
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -45,15 +47,20 @@ export default function CustomerDetailPage() {
   const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   useEffect(() => {
-    const fetchAllCustomers = async () => {
+    const fetchDependencies = async () => {
       try {
         const token = localStorage.getItem('adminToken');
-        const res = await fetch(`${API}/customers?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const json = await res.json();
-        setAllCustomers(json.data || []);
+        const [customersRes, groupsRes] = await Promise.all([
+          fetch(`${API}/customers?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API}/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        const customersJson = await customersRes.json();
+        const groupsJson = await groupsRes.json();
+        setAllCustomers(customersJson.data || []);
+        setCustomerGroups(groupsJson.data || []);
       } catch (err) { console.error(err); }
     };
-    fetchAllCustomers();
+    fetchDependencies();
   }, []);
 
   const fetchAddresses = async () => {
@@ -98,7 +105,8 @@ export default function CustomerDetailPage() {
       credit_application_status: company?.credit_application_status || 'not_applicable',
       parent_user_id: user.parent_user_id || '',
       purchasing_permission: user.purchasing_permission || 'can_place_orders',
-      spending_limit: user.spending_limit || ''
+      spending_limit: user.spending_limit || '',
+      customer_group_id: (user.customer_group_members && user.customer_group_members.length > 0) ? user.customer_group_members[0].group_id : ''
     });
   };
 
@@ -281,6 +289,17 @@ export default function CustomerDetailPage() {
                     <option value="suspended">Suspended</option>
                   </select>
                 </div>
+                {Number(formData.role_id) !== 5 && Number(formData.role_id) !== 1 && (
+                  <div>
+                    <label className={labelCls}>Discount & Pricing Group</label>
+                    <select name="customer_group_id" value={formData.customer_group_id} onChange={handleInputChange} disabled={!isEditing} className={inputCls}>
+                      <option value="">No Group</option>
+                      {customerGroups.map(g => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {Number(formData.role_id) === 5 && (
                   <div className="md:col-span-2">
                     <label className={labelCls}>Parent User {isCreatingUser && '*'}</label>

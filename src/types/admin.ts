@@ -99,4 +99,5 @@ export interface Product {
   is_published?: boolean;
   brands?: { id: string; name: string };
   product_tags?: any[];
+  product_images?: { url: string; position?: number }[];
 }

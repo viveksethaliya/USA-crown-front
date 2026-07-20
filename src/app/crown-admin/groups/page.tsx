@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { UsersRound, Search, Trash2, Loader2, Edit2, Tag } from 'lucide-react';
+import { UsersRound, Search, Trash2, Loader2, Edit2, Tag, HelpCircle, X, Percent, Target, Settings2, Info } from 'lucide-react';
 import Link from 'next/link';
 import { apiUrl } from '@/lib/cart';
 
@@ -23,6 +24,7 @@ export default function GroupsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', discount_pct: '', is_active: true });
   const [error, setError] = useState('');
 
@@ -94,8 +96,93 @@ export default function GroupsPage() {
 
   const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(debouncedSearch));
 
+// ============================================================
+// Help Modal
+// ============================================================
+function HelpModal({ onClose }: { onClose: () => void }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="sticky top-0 bg-white rounded-t-3xl border-b border-[#312f2c]/8 px-7 py-5 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#d1a054]/15 flex items-center justify-center">
+              <UsersRound className="w-5 h-5 text-[#d1a054]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[#312f2c]">How Customer Groups Work</h2>
+              <p className="text-xs text-[#312f2c]/50">A guide to assigning customers and group-specific pricing</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#312f2c]/5 text-[#312f2c]/40 hover:text-[#312f2c] transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="px-7 py-6 space-y-7">
+          <section>
+            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
+              <UsersRound className="w-4 h-4 text-[#d1a054]" /> What are Groups?
+            </h3>
+            <p className="text-sm text-[#312f2c]/70 leading-relaxed">
+              Groups allow you to categorize your B2B customers into different tiers (e.g., Retail, Wholesale A, VIP). 
+              Once a customer is approved and assigned to a group, their pricing across the entire store changes based on two things:
+            </p>
+            <div className="mt-4 space-y-3">
+              <div className="flex gap-4 p-4 border border-[#312f2c]/8 rounded-2xl items-start">
+                <div className="mt-0.5"><Percent className="w-6 h-6 text-[#d1a054]" /></div>
+                <div>
+                  <div className="text-sm font-bold text-[#312f2c] mb-1">1. The Base Discount %</div>
+                  <p className="text-sm text-[#312f2c]/65 leading-relaxed">
+                    When you create a group, you give it a "Discount %" (e.g. 5%). This acts as a fallback. If a user from this group adds any item to their cart, they get 5% off automatically.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-4 p-4 border border-[#312f2c]/8 rounded-2xl items-start">
+                <div className="mt-0.5"><Target className="w-6 h-6 text-emerald-500" /></div>
+                <div>
+                  <div className="text-sm font-bold text-[#312f2c] mb-1">2. Specific Discount Rules (Overrides)</div>
+                  <p className="text-sm text-[#312f2c]/65 leading-relaxed">
+                    By clicking <strong>Manage Discounts</strong> on a group, you can create specific rules that beat the base discount.
+                    For example, you can say: "Wholesale A gets 5% off everything (base), but they get 15% off Gold Chains specifically."
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <hr className="border-[#312f2c]/8" />
+
+          <section>
+            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Settings2 className="w-4 h-4 text-[#d1a054]" /> How to assign customers
+            </h3>
+            <div className="bg-[#f0ede5]/60 rounded-2xl p-4">
+              <p className="text-sm text-[#312f2c]/70 leading-relaxed mb-3">
+                You do <strong>not</strong> assign customers here. This page is just for creating the group definitions.
+              </p>
+              <ul className="text-sm text-[#312f2c]/70 list-disc list-inside space-y-2 ml-1">
+                <li>To assign a new registration, go to <strong>Approvals</strong> in the sidebar. When approving them, pick their tier.</li>
+                <li>To change an existing customer's group, go to <strong>Customers</strong> in the sidebar, open their profile, and change their group there.</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
   return (
     <div className="space-y-6">
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -113,6 +200,14 @@ export default function GroupsPage() {
               className="bg-transparent border-none focus:ring-0 text-[#312f2c] placeholder:text-[#312f2c]/35 px-4 py-1 w-64 outline-none text-sm"
             />
           </div>
+          <button
+            onClick={() => setShowHelp(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-[#312f2c]/60 hover:text-[#312f2c] border border-[#312f2c]/15 hover:border-[#312f2c]/30 hover:bg-white/60 transition-all"
+            title="How do groups work?"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Guide
+          </button>
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-xl font-medium transition-colors shadow-sm"

@@ -103,21 +103,19 @@ export default function AdminCartsPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#312f2c] tracking-wide">Active Carts</h1>
-          <p className="text-sm text-[#312f2c]/60 mt-1">Manage active shopping carts for customers.</p>
-        </div>
+    <div className="flex flex-col h-full gap-6 -m-4 sm:m-0">
+      <div className="shrink-0 px-4 sm:px-0">
+        <h1 className="text-2xl font-bold text-[#312f2c] tracking-wide">Active Carts</h1>
+        <p className="text-sm text-[#312f2c]/60 mt-1">Manage active shopping carts for customers.</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-[#312f2c]/10 overflow-hidden">
-        <div className="p-4 border-b border-[#312f2c]/10 bg-[#f8f7f5] flex justify-between items-center">
-          <div className="flex items-center gap-2">
+      <div className="flex-1 bg-white/40 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-sm flex flex-col overflow-hidden p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
             <select
               value={searchField}
               onChange={(e) => setSearchField(e.target.value)}
-              className="bg-white border border-[#312f2c]/12 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#d1a054] text-[#312f2c]"
+              className="bg-white/60 border border-white/80 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all w-full sm:w-auto outline-none"
             >
               <option value="all">All Fields</option>
               <option value="id">User ID</option>
@@ -125,35 +123,35 @@ export default function AdminCartsPage() {
               <option value="email">Email</option>
               <option value="phone">Phone</option>
             </select>
-            <div className="relative w-72">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#312f2c]/40" />
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#312f2c]/40" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search carts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-[#312f2c]/12 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#d1a054] text-[#312f2c]"
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white/60 border border-white/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm placeholder:text-[#312f2c]/40 transition-all outline-none"
               />
             </div>
           </div>
-          <div className="text-sm text-[#312f2c]/60">
-            Total Active: <strong className="text-[#312f2c]">{filteredCarts.length}</strong>
+          <div className="text-sm font-bold text-[#312f2c]/60 bg-white/50 px-4 py-2 rounded-xl border border-white/60 shadow-[0_2px_8px_rgba(0,0,0,0.04)] whitespace-nowrap">
+            Total Active: <strong className="text-[#312f2c] text-lg ml-1">{filteredCarts.length}</strong>
           </div>
         </div>
 
-        {loading ? (
-          <div className="p-12 flex justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-[#d1a054]" />
-          </div>
-        ) : filteredCarts.length === 0 ? (
-          <div className="p-12 text-center text-[#312f2c]/50">
-            <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-[#312f2c]/20" />
-            <p>No active carts found.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
+        <div className="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar bg-white/50 border border-white/60 rounded-2xl shadow-inner">
+          {loading ? (
+            <div className="p-12 flex justify-center items-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-[#d1a054]" />
+            </div>
+          ) : filteredCarts.length === 0 ? (
+            <div className="p-12 flex flex-col items-center justify-center h-full text-[#312f2c]/40">
+              <ShoppingCart className="w-12 h-12 mb-4 opacity-20" />
+              <p className="font-medium">No active carts found.</p>
+            </div>
+          ) : (
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-white text-[#312f2c]/50 border-b border-[#312f2c]/10 text-xs uppercase font-semibold">
+              <thead className="sticky top-0 bg-[#f8f7f5]/90 backdrop-blur-md text-[#312f2c]/50 border-b border-[#312f2c]/10 text-xs uppercase font-bold z-10 shadow-sm">
                 <tr>
                   <th className="px-6 py-4 cursor-pointer hover:bg-[#312f2c]/5 transition-colors" onClick={() => handleSort('customer')}>
                     <div className="flex items-center gap-1">Customer {sortField === 'customer' && <span className="text-[#d1a054]">{sortOrder === 'asc' ? '↑' : '↓'}</span>}</div>
@@ -176,55 +174,56 @@ export default function AdminCartsPage() {
                 {sortedCarts.map(cart => {
                   const untouched = isUntouched(cart.updatedAt);
                   return (
-                  <tr key={cart.id} className="hover:bg-[#f8f7f5] transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-[#312f2c]">
-                        {cart.customer?.firstName} {cart.customer?.lastName}
-                      </div>
-                      <div className="text-xs text-[#312f2c]/50 mt-0.5">{cart.customer?.email}</div>
-                      <div className="text-[10px] text-[#312f2c]/40 mt-1 uppercase tracking-wider font-mono">ID: {cart.customer?.id}</div>
-                    </td>
-                    <td className="px-6 py-4 text-[#312f2c]/70">
-                      {cart.customer?.companyName || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="px-2.5 py-1 bg-[#312f2c]/5 text-[#312f2c] rounded font-medium">
-                        {cart.itemCount}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center text-[#312f2c]/70">
-                      {cart.uniqueItemCount}
-                    </td>
-                    <td className="px-6 py-4 text-right font-medium text-[#312f2c]">
-                      {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cart.subtotal || 0)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[#312f2c]/60">
-                      {new Date(cart.updatedAt).toLocaleDateString()} at {new Date(cart.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-4">
-                      <button
-                        onClick={() => handleSendReminder(cart.userId)}
-                        disabled={sendingReminder === cart.userId}
-                        className={`inline-flex items-center gap-1 text-sm font-medium transition-colors disabled:opacity-50 ${untouched ? 'text-red-500 hover:text-red-600 animate-pulse hover:animate-none' : 'text-[#312f2c]/60 hover:text-[#d1a054]'}`}
-                        title={untouched ? 'Cart untouched for >10 days! Send a reminder.' : 'Send reminder email'}
-                      >
-                        {sendingReminder === cart.userId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                        Remind
-                      </button>
-                      <Link 
-                        href={`/crown-admin/carts/${cart.userId}`}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-[#d1a054] hover:text-[#b08544] transition-colors"
-                      >
-                        Manage Cart
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                )})}
+                    <tr key={cart.id} className="hover:bg-white/80 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-[#312f2c]">
+                          {cart.customer?.firstName} {cart.customer?.lastName}
+                        </div>
+                        <div className="text-xs text-[#312f2c]/60 mt-0.5 font-medium">{cart.customer?.email}</div>
+                        <div className="text-[10px] text-[#312f2c]/40 mt-1 uppercase tracking-wider font-bold">ID: {cart.customer?.id}</div>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-[#312f2c]/80">
+                        {cart.customer?.companyName || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="px-3 py-1 bg-white border border-white shadow-sm text-[#312f2c] rounded-lg font-bold">
+                          {cart.itemCount}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center font-bold text-[#312f2c]/70">
+                        {cart.uniqueItemCount}
+                      </td>
+                      <td className="px-6 py-4 text-right font-bold text-[#312f2c]">
+                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cart.subtotal || 0)}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-[#312f2c]/60">
+                        {new Date(cart.updatedAt).toLocaleDateString()} at {new Date(cart.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-4">
+                        <button
+                          onClick={() => handleSendReminder(cart.userId)}
+                          disabled={sendingReminder === cart.userId}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm disabled:opacity-50 ${untouched ? 'bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white border border-red-500/20' : 'bg-white/60 text-[#312f2c]/60 hover:text-[#312f2c] hover:bg-white border border-white/80'}`}
+                          title={untouched ? 'Cart untouched for >10 days! Send a reminder.' : 'Send reminder email'}
+                        >
+                          {sendingReminder === cart.userId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                          Remind
+                        </button>
+                        <Link
+                          href={`/crown-admin/carts/${cart.userId}`}
+                          className="inline-flex items-center gap-1 text-sm font-bold text-[#d1a054] hover:text-[#b08544] transition-colors"
+                        >
+                          Manage Cart
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
