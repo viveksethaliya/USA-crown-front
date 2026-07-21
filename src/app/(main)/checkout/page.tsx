@@ -279,6 +279,41 @@ export default function CheckoutPage() {
             <div className={styles.formSections}>
               <section className={styles.section}>
                 <h2>Billing Address</h2>
+                {savedAddresses.length > 0 && (
+                  <div className={styles.savedAddressSelector}>
+                    <p>Choose a saved address:</p>
+                    <select
+                      className={styles.savedAddressSelect}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        if (!selectedId) return;
+                        const addr = savedAddresses.find(a => a.id.toString() === selectedId);
+                        if (addr) {
+                          setBillingAddress(prev => ({
+                            ...prev,
+                            address_line1: addr.address_line1 || '',
+                            address_line2: addr.address_line2 || '',
+                            city: addr.city || '',
+                            state: addr.state || '',
+                            postal_code: addr.postal_code || '',
+                            country: addr.country || '',
+                            phone: addr.phone || '',
+                            fax: addr.fax || ''
+                          }));
+                          // If sameAsBilling is checked, shipping updates automatically via useEffect or similar? 
+                          // Actually, shipping is updated on form submit if sameAsBilling is true.
+                        }
+                      }}
+                    >
+                      <option value="">-- Select a saved address --</option>
+                      {savedAddresses.map(addr => (
+                        <option key={addr.id} value={addr.id}>
+                          {addr.address_line1}{addr.address_line2 ? `, ${addr.address_line2}` : ''}, {addr.city}, {addr.state} {addr.postal_code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className={styles.fieldGrid}>
                   {addressFields.map((field) => (
                     <label key={field.key} className={styles.field}>

@@ -50,7 +50,7 @@
   transition: color 0.2s ease;
 }
 
-:where(.storefront-root) a:hover {
+:where(.storefront-root) a:not([class*="bg-" i]):not([class*="btn" i]):not([class*="button" i]):hover {
   color: var(--color-gold);
 }
 

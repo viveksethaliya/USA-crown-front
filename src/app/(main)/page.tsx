@@ -197,7 +197,7 @@ export default async function Home() {
           </div>
           
           <div className="mt-14 text-center">
-            <Link href="/products" className="inline-flex items-center justify-center border border-[#182955] text-[#182955] px-8 py-3 text-sm font-bold tracking-widest uppercase hover:bg-[#182955] hover:text-white transition-colors duration-300">
+            <Link href="/products" className="inline-flex items-center justify-center border border-[#182955] text-[#182955] px-8 py-3 text-sm font-bold tracking-widest uppercase hover:bg-[#182955] hover:!text-white transition-colors duration-300 group">
               VIEW ENTIRE CATALOG <span className="ml-2 group-hover:translate-x-1 transition-transform inline-block">→</span>
             </Link>
           </div>
@@ -293,7 +293,7 @@ export default async function Home() {
               </ScrollReveal>
             </div>
             <div className={styles.exploreVideoSide} style={{ border: 'none', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-              <ScrollReveal animation="scale-up" duration={700}>
+              <ScrollReveal animation="scale-up" duration={700} style={{ width: '100%', height: '100%' }}>
                 <iframe
                   className={styles.exploreVideo}
                   src="https://www.youtube.com/embed/i5y6E2C0ULI"
