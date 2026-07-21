@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { FiMenu, FiX, FiSearch } from 'react-icons/fi';
@@ -101,7 +101,7 @@ function ProductsContent() {
   const [sortBy, setSortBy] = useState('name');
   const searchParamVal = searchParams.get('search') || '';
 
-  const [expandedFilters, setExpandedFilters] = useState<string[]>([]);
+  const [expandedFilters, setExpandedFilters] = useState<string[]>(['categories']);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   const toggleFilterExpand = (filterKey: string) => {
@@ -117,8 +117,19 @@ function ProductsContent() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-
+  useEffect(() => {
+    if (!loadMoreRef.current || loading || page >= totalPages) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setLoading(true);
+        setPage(p => p + 1);
+      }
+    }, { rootMargin: '400px' });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [loading, page, totalPages]);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -146,6 +157,12 @@ function ProductsContent() {
         const res = await fetch(`${API_URL}/api/store/catalog/filters?${queryParams.toString()}`);
         const data = await res.json();
         setFilters(data.filters || []);
+        
+        // Also expand metal filters by default
+        const metalFilters = (data.filters || [])
+          .filter((f: any) => f.name.toLowerCase().includes('metal'))
+          .map((f: any) => f.slug);
+        setExpandedFilters(prev => Array.from(new Set([...prev, 'categories', ...metalFilters])));
       } catch (err) {
         console.error('Failed to fetch product filters', err);
       }
@@ -186,7 +203,16 @@ function ProductsContent() {
 
       if (signal?.aborted) return;
 
-      setProducts(data.products || []);
+      if (p === 1) {
+        setProducts(data.products || []);
+      } else {
+        setProducts(prev => {
+          // Avoid appending duplicates if React double-fires
+          const existingIds = new Set(prev.map(prod => prod.id));
+          const newProducts = (data.products || []).filter((prod: any) => !existingIds.has(prod.id));
+          return [...prev, ...newProducts];
+        });
+      }
       setTotalPages(data.totalPages || 1);
       setTotal(data.total || 0);
     } catch (err) {
@@ -468,7 +494,7 @@ function ProductsContent() {
           </div>
 
           {/* Product Grid */}
-          {loading ? (
+          {loading && page === 1 ? (
             <div className="global-loader-container">
               <div className="global-spinner"></div>
               <div className="global-loader-text">Loading Products</div>
@@ -488,25 +514,27 @@ function ProductsContent() {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', padding: '2rem 0', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => { setLoading(true); setPage(p => Math.max(1, p - 1)); }}
-                disabled={page <= 1}
-                style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: page <= 1 ? '#f4f6f8' : '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
-              >
-                ← Previous
-              </button>
-              <span style={{ padding: '0.5rem 1rem', color: '#666', fontSize: '0.9rem' }}>
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => { setLoading(true); setPage(p => Math.min(totalPages, p + 1)); }}
-                disabled={page >= totalPages}
-                style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: page >= totalPages ? '#f4f6f8' : '#fff', cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
-              >
-                Next →
-              </button>
+          {/* Infinite Scroll Trigger */}
+          {page < totalPages && (
+            <div ref={loadMoreRef} style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+              {loading && page > 1 ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#666' }}>
+                  <div className="global-spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></div>
+                  <span>Loading more...</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setLoading(true); setPage(p => p + 1); }}
+                  style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Load More
+                </button>
+              )}
+            </div>
+          )}
+          {page >= totalPages && products.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#888', fontSize: '0.9rem' }}>
+              You have reached the end of the catalog.
             </div>
           )}
         </main>

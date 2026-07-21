@@ -36,6 +36,7 @@ const NAV: NavElement[] = [
   {
     group: 'Management',
     items: [
+      { label: 'Orders', href: '/crown-admin/orders', icon: Package },
       { label: 'Approvals', href: '/crown-admin/b2b', icon: Building2 },
       { label: 'Settings', href: '/crown-admin/settings', icon: Settings },
       { label: 'Active Carts', href: '/crown-admin/carts', icon: ShoppingCart },

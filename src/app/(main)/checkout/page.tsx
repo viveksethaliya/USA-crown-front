@@ -182,10 +182,8 @@ export default function CheckoutPage() {
     setPlacingOrder(true);
 
     try {
-      const response = await fetch(apiUrl('/api/checkout'), {
+      const response = await cartFetch('/api/checkout', {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           billingAddress,
           shippingAddress: sameAsBilling ? billingAddress : shippingAddress,
@@ -315,7 +313,7 @@ export default function CheckoutPage() {
                 {!sameAsBilling && savedAddresses.length > 0 && (
                   <div className={styles.savedAddressSelector}>
                     <p>Or choose a saved address:</p>
-                    <select 
+                    <select
                       className={styles.savedAddressSelect}
                       onChange={(e) => {
                         const selectedId = e.target.value;
@@ -442,7 +440,7 @@ export default function CheckoutPage() {
                 <strong>{formatMoney(cart.total)}</strong>
               </div>
               <button type="submit" className={styles.primaryButton} disabled={placingOrder}>
-                {placingOrder ? 'Placing Order...' : 'Place Pending Order'}
+                {placingOrder ? 'Placing Order...' : 'Place Order'}
               </button>
             </aside>
           </form>

@@ -53,8 +53,8 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ 
           value: newValue.trim(), 
-          color_hex: attribute.type === 'color' ? newColorHex : null, 
-          image_url: attribute.type === 'image' ? newImageUrl : null,
+          color_hex: newColorHex !== '#d1a054' ? newColorHex : null, 
+          image_url: newImageUrl || null,
           position: values.length 
         })
       });
@@ -81,11 +81,20 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
       const res = await fetch(`${API}/values/${valueId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ value: editText })
+        body: JSON.stringify({ 
+          value: editText,
+          color_hex: editColorHex !== '#d1a054' ? editColorHex : null,
+          image_url: editImageUrl || null
+        })
       });
       const data = await res.json();
       if (res.ok) {
-        setValues(prev => prev.map(v => v.id === valueId ? { ...v, value: editText } : v));
+        setValues(prev => prev.map(v => v.id === valueId ? { 
+          ...v, 
+          value: editText,
+          color_hex: editColorHex !== '#d1a054' ? editColorHex : null,
+          image_url: editImageUrl || null
+        } : v));
         setEditingValueId(null);
         toast.success('Value updated');
       } else {
@@ -110,6 +119,10 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
     } catch { toast.error('An error occurred'); }
   };
 
+  const [editColorHex, setEditColorHex] = useState<string>('#d1a054');
+  const [editImageUrl, setEditImageUrl] = useState<string>('');
+  const [showEditImageUploader, setShowEditImageUploader] = useState(false);
+
   return (
     <div className="px-4 pb-4 border-t border-[#312f2c]/8 mt-0 bg-[#312f2c]/3">
       <div className="pt-4 space-y-2">
@@ -124,23 +137,68 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
             {values.sort((a, b) => a.position - b.position).map(v => (
               <div key={v.id} className="flex items-center gap-1 group">
                 {editingValueId === v.id ? (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="text"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleUpdateValue(v.id)}
-                      autoFocus
-                      className="bg-white border border-[#d1a054]/40 rounded-lg px-3 py-1 text-[#312f2c] text-sm w-36 focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40"
-                    />
-                    <button
-                      onClick={() => handleUpdateValue(v.id)}
-                      className="px-2 py-1 bg-[#d1a054] text-[#f0ede5] rounded text-xs font-medium"
-                    >✓</button>
-                    <button
-                      onClick={() => setEditingValueId(null)}
-                      className="px-2 py-1 bg-[#312f2c]/8 text-[#312f2c]/60 rounded text-xs"
-                    >✕</button>
+                  <div className="flex flex-col gap-2 p-2 bg-white border border-[#312f2c]/10 rounded-lg shadow-sm w-full">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="color"
+                          value={editColorHex || '#d1a054'}
+                          onChange={(e) => setEditColorHex(e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-[#312f2c]/12 bg-white p-0.5"
+                          title="Pick color"
+                        />
+                      </div>
+                      <div className="relative flex items-center gap-1">
+                        <button 
+                          type="button"
+                          onClick={() => setShowEditImageUploader(!showEditImageUploader)}
+                          className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${editImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
+                          title={editImageUrl ? 'Image selected' : 'Upload image'}
+                        >
+                          {editImageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={editImageUrl} alt="Swatch" className="w-full h-full rounded-md object-cover p-0.5" />
+                          ) : (
+                            <ImageIcon className="w-3 h-3" />
+                          )}
+                        </button>
+                        {editImageUrl && (
+                          <button 
+                            type="button"
+                            onClick={() => setEditImageUrl('')} 
+                            className="absolute -top-1 -right-1 bg-white rounded-full text-red-500 shadow-sm border"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateValue(v.id)}
+                        autoFocus
+                        className="bg-white border border-[#d1a054]/40 rounded-lg px-2 py-1 text-[#312f2c] text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40"
+                      />
+                      <button
+                        onClick={() => handleUpdateValue(v.id)}
+                        className="px-2 py-1 bg-[#d1a054] text-[#f0ede5] rounded text-xs font-medium"
+                      >✓</button>
+                      <button
+                        onClick={() => setEditingValueId(null)}
+                        className="px-2 py-1 bg-[#312f2c]/8 text-[#312f2c]/60 rounded text-xs"
+                      >✕</button>
+                    </div>
+                    {showEditImageUploader && (
+                      <div className="mt-2">
+                        <ImageUploader
+                          onUpload={(url) => {
+                            setEditImageUrl(url);
+                            setShowEditImageUploader(false);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#312f2c]/10 rounded-lg text-sm text-[#312f2c]">
@@ -160,7 +218,13 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
                     )}
                     {v.value}
                     <button
-                      onClick={() => { setEditingValueId(v.id); setEditText(v.value); }}
+                      onClick={() => { 
+                        setEditingValueId(v.id); 
+                        setEditText(v.value);
+                        setEditColorHex(v.color_hex || '#d1a054');
+                        setEditImageUrl(v.image_url || '');
+                        setShowEditImageUploader(false);
+                      }}
                       className="ml-1 opacity-0 group-hover:opacity-100 text-[#312f2c]/35 hover:text-[#d1a054] transition-opacity"
                     >
                       <Pencil className="w-3 h-3" />
@@ -179,7 +243,8 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
         )}
 
         <div className="flex items-center gap-2 pt-2 border-t border-[#312f2c]/8">
-          {attribute.type === 'color' && (
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-[#312f2c]/50">Color:</span>
             <input
               type="color"
               value={newColorHex}
@@ -187,24 +252,32 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
               className="w-9 h-9 rounded-lg cursor-pointer border border-[#312f2c]/12 bg-white p-0.5"
               title="Pick color"
             />
-          )}
-          {attribute.type === 'image' && (
-            <div className="relative">
+          </div>
+          <div className="relative flex items-center gap-1">
+            <span className="text-xs text-[#312f2c]/50">Image:</span>
+            <button 
+              type="button"
+              onClick={() => setShowImageUploader(!showImageUploader)}
+              className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-colors ${newImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
+              title={newImageUrl ? 'Image selected' : 'Upload image'}
+            >
+              {newImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={newImageUrl} alt="Swatch" className="w-full h-full rounded-md object-cover p-0.5" />
+              ) : (
+                <ImageIcon className="w-4 h-4" />
+              )}
+            </button>
+            {newImageUrl && (
               <button 
                 type="button"
-                onClick={() => setShowImageUploader(!showImageUploader)}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-colors ${newImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
-                title={newImageUrl ? 'Image selected' : 'Upload image'}
+                onClick={() => setNewImageUrl('')} 
+                className="absolute -top-1 -right-1 bg-white rounded-full text-red-500 shadow-sm border"
               >
-                {newImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={newImageUrl} alt="Swatch" className="w-full h-full rounded-md object-cover p-0.5" />
-                ) : (
-                  <ImageIcon className="w-4 h-4" />
-                )}
+                <X className="w-3 h-3" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
           <input
             type="text"
             value={newValue}
@@ -224,7 +297,7 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
         </div>
         
         {/* Render Image Uploader Dropdown if open */}
-        {attribute.type === 'image' && showImageUploader && (
+        {showImageUploader && (
           <div className="mt-3 p-4 bg-white border border-[#312f2c]/10 rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs font-semibold text-[#312f2c]/50">Upload Swatch Image</span>

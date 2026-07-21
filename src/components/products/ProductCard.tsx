@@ -1,4 +1,5 @@
-import React from 'react';
+"use client";
+import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from '@/app/(main)/products/products.module.css';
 
@@ -22,6 +23,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, isAuthenticated = true, userPermission = 'can_place_orders' }: ProductCardProps) {
+  const [selectedMetal, setSelectedMetal] = useState<string | null>(product.swatchAttributes?.[0]?.value || null);
+
   const isSaleActive = (salePrice?: number | string | null, start?: string, end?: string) => {
     if (salePrice === null || salePrice === undefined) return false;
     const now = new Date();
@@ -57,24 +60,54 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
         </Link>
         {product.swatchAttributes && product.swatchAttributes.length > 0 && (
           <div className={styles.metalRow}>
-            <span className={styles.metalLabel}>Options:</span>
+            <span className={styles.metalLabel}>
+              Metal Type:
+            </span>
             <div className={styles.metalDots}>
-              {product.swatchAttributes.map(swatch => (
-                <span
-                  key={swatch.value}
-                  className={styles.metalDot}
-                  style={
-                    swatch.type === 'color' && swatch.color_hex
-                      ? { backgroundColor: swatch.color_hex, border: '1px solid rgba(0,0,0,0.1)' }
-                      : swatch.type === 'image' && swatch.image_url
-                        ? { backgroundImage: `url(${swatch.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(0,0,0,0.1)' }
-                        : { background: '#f4f6f8', border: '1px solid #d0d5dd', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#555', fontWeight: 600, letterSpacing: '-0.5px' }
-                  }
-                  title={swatch.value}
-                >
-                  {(!swatch.color_hex && !swatch.image_url) ? swatch.value.substring(0, 3).toUpperCase() : ''}
-                </span>
-              ))}
+              {product.swatchAttributes.map(swatch => {
+                const isSelected = selectedMetal === swatch.value;
+                const hasColorOrImage = !!(swatch.color_hex || swatch.image_url);
+                const baseStyle = swatch.image_url
+                  ? { backgroundImage: `url(${swatch.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                  : swatch.color_hex
+                    ? { backgroundColor: swatch.color_hex }
+                    : { background: '#f4f6f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#333', fontWeight: 600, padding: '0 6px', minWidth: '32px' };
+                
+                return (
+                  <Link
+                    key={swatch.value}
+                    href={`/products/${product.id}?metal=${encodeURIComponent(swatch.value)}`}
+                    onClick={(e) => {
+                      // We don't prevent default, we want the link to work
+                      setSelectedMetal(swatch.value);
+                    }}
+                    style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+                    title={swatch.value}
+                  >
+                    <span
+                      className={styles.metalDot}
+                      style={{
+                        ...baseStyle,
+                        border: isSelected ? '2px solid #1a202c' : '1px solid rgba(0,0,0,0.15)',
+                        outline: isSelected ? '1px solid #1a202c' : 'none',
+                        outlineOffset: '1px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        width: hasColorOrImage ? '24px' : 'auto',
+                        height: '24px',
+                        borderRadius: '2px' // make it square-ish like the image
+                      }}
+                    >
+                      {!hasColorOrImage ? swatch.value : ''}
+                    </span>
+                    {hasColorOrImage && (
+                      <span style={{ fontSize: '10px', color: '#555', fontWeight: isSelected ? 600 : 400 }}>
+                        {swatch.value}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

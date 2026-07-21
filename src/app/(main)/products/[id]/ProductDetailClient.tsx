@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { apiUrl, cartFetch, getGuestCartId, CartItem } from '../../../../lib/cart';
 import styles from './detail.module.css';
 import { toast } from 'react-hot-toast';
@@ -77,6 +77,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+
+  const searchParams = useSearchParams();
+  const [hasInitializedParams, setHasInitializedParams] = useState(false);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userPermission, setUserPermission] = useState<string | null>(null);
@@ -192,6 +195,23 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
     fetchProduct();
   }, [productId, initialProduct]);
+
+  useEffect(() => {
+    if (product && !hasInitializedParams) {
+      const metal = searchParams.get('metal');
+      if (metal && product.variations && variationAttributes.length > 0) {
+        // Try to find the matching option for metal
+        const metalAttr = variationAttributes.find(a => a.name.toLowerCase().includes('metal') || a.slug.includes('metal'));
+        if (metalAttr) {
+          const isValidValue = metalAttr.values.some(v => v.value === metal);
+          if (isValidValue) {
+            handleOptionSelect(variationAttributes.indexOf(metalAttr), metalAttr.slug, metal);
+          }
+        }
+      }
+      setHasInitializedParams(true);
+    }
+  }, [product, searchParams, hasInitializedParams]); // Note: handleOptionSelect is missing from deps but it's safe since it's just a setter wrapper
 
   // --- Variation Logic ---
 
@@ -554,46 +574,45 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
               const attrType = attr.type || 'select';
 
-              if (attrType === 'color' || attrType === 'image') {
+              const isMetal = attr.name.toLowerCase().includes('metal') || attr.slug.includes('metal');
+              const hasSwatches = allOptions.some(opt => opt.color_hex || opt.image_url);
+
+              if (attrType === 'color' || attrType === 'image' || attrType === 'button' || isMetal || hasSwatches) {
                 return (
                   <div key={attr.slug} className={styles.metalSection}>
                     <h4 className={styles.sectionLabel}>{attr.name}</h4>
                     <div className={styles.metalOptions}>
                       {allOptions.map((opt) => {
                         const valid = isOptionValid(attrIdx, attr.slug, opt.value);
-
+                        const hasColorOrImage = !!(opt.color_hex || opt.image_url);
+                        
                         let swatchElement = null;
                         
-                        if (attrType === 'color') {
+                        if (opt.image_url) {
+                          swatchElement = (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={opt.image_url} alt={opt.value} className={styles.metalImg} />
+                          );
+                        } else if (opt.color_hex) {
                           swatchElement = (
                             <div 
                               className={styles.colorSwatch} 
-                              style={{ backgroundColor: opt.color_hex || '#ccc' }} 
+                              style={{ backgroundColor: opt.color_hex }} 
                             />
                           );
-                        } else if (attrType === 'image') {
-                          let btnImg = opt.image_url;
-                          // Fallback to variation image if swatch image isn't set
-                          if (!btnImg) {
-                            const varForImage = product.variations.find(v =>
-                              v.attributes.some(a => a.slug === attr.slug && a.value === opt.value) &&
-                              v.images && v.images.length > 0
-                            );
-                            btnImg = varForImage ? varForImage.images[0].url : images[0];
-                          }
-                          swatchElement = btnImg ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={btnImg} alt={opt.value} className={styles.metalImg} />
-                          ) : (
+                        } else {
+                          // Fallback to text box
+                          swatchElement = (
                             <div 
                               className={styles.colorSwatch}
                               style={{ 
                                 background: '#f4f6f8', border: '1px solid #d0d5dd', 
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                fontSize: '10px', color: '#555', fontWeight: 600, letterSpacing: '-0.5px' 
+                                fontSize: '12px', color: '#333', fontWeight: 600, padding: '0 6px',
+                                minWidth: '36px', height: '100%', borderRadius: '4px'
                               }}
                             >
-                              {opt.value.substring(0, 3).toUpperCase()}
+                              {opt.value}
                             </div>
                           );
                         }
@@ -605,10 +624,29 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                             title={opt.value}
                             className={`${styles.metalOption} ${selectedOptions[attr.slug] === opt.value ? styles.metalSelected : ''}`}
                             onClick={() => handleOptionSelect(attrIdx, attr.slug, opt.value)}
-                            style={{ opacity: valid ? 1 : 0.3, cursor: valid ? 'pointer' : 'not-allowed' }}
+                            style={{ 
+                              opacity: valid ? 1 : 0.3, 
+                              cursor: valid ? 'pointer' : 'not-allowed',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'transparent',
+                              border: 'none',
+                              padding: 0
+                            }}
                           >
-                            {swatchElement}
-                            {attrType === 'image' && <span className={styles.metalCode}>{opt.value}</span>}
+                            <div style={{
+                              padding: '2px',
+                              border: selectedOptions[attr.slug] === opt.value ? '2px solid #1a202c' : '2px solid transparent',
+                              borderRadius: opt.image_url || opt.color_hex ? '4px' : '6px',
+                              display: 'flex',
+                              height: '40px',
+                              minWidth: '40px'
+                            }}>
+                              {swatchElement}
+                            </div>
+                            {hasColorOrImage && <span className={styles.metalCode} style={{ fontSize: '11px' }}>{opt.value}</span>}
                           </button>
                         );
                       })}
