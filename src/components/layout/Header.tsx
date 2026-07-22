@@ -137,7 +137,7 @@ export default function Header() {
     async function fetchProducts() {
       setLoadingProducts(true);
       try {
-        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=3`));
+        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=5`));
         if (res.ok) {
           const data = await res.json();
           setRecommendedCache(prev => ({
@@ -487,7 +487,9 @@ export default function Header() {
             </div>
 
             {/* Global Search */}
-            <SmartSearchBar />
+            <div className={styles.searchWrapper}>
+              <SmartSearchBar />
+            </div>
 
             {/* Live Metal Prices */}
             <div className={styles.metalPrices}>

@@ -353,7 +353,8 @@ Rules:
           aria-expanded={isOpen}
         />
         <button type="submit" className={styles.searchButton} aria-label="Submit search">
-          SEARCH
+          <span className={styles.searchBtnText}>SEARCH</span>
+          <span className={styles.searchBtnIcon}>🔍</span>
         </button>
       </form>
 

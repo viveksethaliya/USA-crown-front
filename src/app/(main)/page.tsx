@@ -6,6 +6,8 @@ import HeroBannerDynamic from "@/components/layout/HeroBannerDynamic";
 import HeroActionsClient from "@/components/layout/HeroActionsClient";
 import ProductCard from "@/components/products/ProductCard";
 import ScrollReveal from "@/components/animations/ScrollReveal";
+import MobileCategoryScroll from "@/components/home/MobileCategoryScroll";
+import MobileBestSellerScroll from "@/components/home/MobileBestSellerScroll";
 import { apiUrl } from "@/lib/cart";
 
 async function fetchFeaturedCategories() {
@@ -16,6 +18,36 @@ async function fetchFeaturedCategories() {
     return data.categories || [];
   } catch (error) {
     console.error("Failed to fetch featured categories:", error);
+    return [];
+  }
+}
+
+async function fetchAllCategories() {
+  try {
+    const res = await fetch(apiUrl('/api/store/catalog/categories'), { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const categories = data.categories || [];
+
+    // For each category without an image, fetch its first product
+    await Promise.all(categories.map(async (cat: any) => {
+      if (!cat.image_url) {
+        try {
+          const prodRes = await fetch(apiUrl(`/api/store/catalog/products?category=${cat.slug}&limit=1`), { next: { revalidate: 3600 } });
+          if (prodRes.ok) {
+            const prodData = await prodRes.json();
+            if (prodData.products && prodData.products.length > 0 && prodData.products[0].image) {
+              cat.image_url = prodData.products[0].image;
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }));
+    return categories;
+  } catch (error) {
+    console.error("Failed to fetch all categories:", error);
     return [];
   }
 }
@@ -34,21 +66,31 @@ async function fetchFeaturedProducts() {
 
 export default async function Home() {
   const featuredCategories = await fetchFeaturedCategories();
-  
+  const allCategories = await fetchAllCategories();
+
   // Feature flag check
   const isFeaturedEnabled = process.env.ENABLE_FEATURED_PRODUCTS === 'true';
   const featuredProducts = isFeaturedEnabled ? await fetchFeaturedProducts() : [];
-  
+
   return (
     <div className={styles.page}>
       <Script src="//code.tidio.co/hutysrzpj6mhyrdxotho54hskhb4hgq5.js" strategy="lazyOnload" />
       {/* Dynamic Promotional Banner */}
       <HeroBannerDynamic />
 
-      {/* 50/50 Split Hero Section */}
-      <section className={styles.heroSplit}>
-        <div className={styles.heroTextSide}>
-          <ScrollReveal animation="slide-right" duration={1000} className={styles.heroTextContent}>
+      {/* Immersive Hero Section */}
+      <section className={styles.heroImmersive}>
+        <div className={styles.heroImmersiveBackground}>
+          <img
+            src="/web-phts/pexels-castorly-stock-3641056.jpg"
+            alt="Jeweler Working"
+            className={styles.heroImmersiveImage}
+          />
+          <div className={styles.heroImmersiveOverlay}></div>
+        </div>
+
+        <div className={styles.heroImmersiveContent}>
+          <ScrollReveal animation="fade-up" duration={1000} className={styles.heroTextContent}>
             <h1 className={styles.heroTitleMain}>
               Premium Wholesale<br />Jewelry <span style={{ fontFamily: '"Times New Roman", Times, serif' }}>&amp;</span> Findings
             </h1>
@@ -60,16 +102,6 @@ export default async function Home() {
               <HeroActionsClient />
             </div>
           </ScrollReveal>
-        </div>
-        <div className={styles.heroImageSide}>
-          <div className={styles.heroImageWrapper}>
-            <img
-              src="/web-phts/Jeweler-Image-Placeholder.jpg"
-              alt="Jeweler Working"
-              className={styles.heroImage}
-            />
-            <div className={styles.heroImageOverlay}></div>
-          </div>
         </div>
       </section>
 
@@ -83,12 +115,30 @@ export default async function Home() {
                 Handcrafted excellence in 14K Gold and Platinum. Explore our top-selling findings that master jewelers trust to bring their visions to life.
               </p>
             </ScrollReveal>
-            <div className={styles.bestSellersGrid}>
-              {featuredProducts.map((prod: any, index: number) => (
-                <ScrollReveal key={prod.id} animation="fade-up" delay={(index % 4) * 100 as 0|100|200|300} className={styles.bestSellersCardWrapper}>
-                  <ProductCard product={prod} />
-                </ScrollReveal>
-              ))}
+            <MobileBestSellerScroll products={featuredProducts} />
+            <div className={`${styles.bestSellersGrid} hidden sm:grid`}>
+              {featuredProducts.map((prod: any, index: number) => {
+                // For an asymmetrical layout, make the first item larger
+                const isLarge = index === 0;
+                return (
+                  <ScrollReveal key={prod.id} animation="fade-up" delay={(index % 4) * 100 as 0 | 100 | 200 | 300} className={`${styles.bestSellerItem} ${isLarge ? styles.bestSellerItemLarge : ''}`}>
+                    <Link href={`/products/${prod.slug || prod.id}`} className={styles.bestSellerLink}>
+                      <div className={styles.bestSellerImageWrapper}>
+                        <img
+                          src={prod.image || '/web-phts/a-17.jpg'}
+                          alt={prod.name}
+                          className={styles.bestSellerImage}
+                        />
+                      </div>
+                      <div className={styles.bestSellerInfo}>
+                        <h3 className={styles.bestSellerName}>{prod.name.toLowerCase()}</h3>
+                        <p className={styles.bestSellerPrice}>{prod.base_price?.toFixed(2)}</p>
+                        <span className={styles.bestSellerAction}>View Details</span>
+                      </div>
+                    </Link>
+                  </ScrollReveal>
+                );
+              })}
             </div>
             <ScrollReveal animation="fade-up" delay={200}>
               <div style={{ textAlign: 'center' }}>
@@ -195,11 +245,53 @@ export default async function Home() {
               </div>
             </Link>
           </div>
-          
+
           <div className="mt-14 text-center">
             <Link href="/products" className="inline-flex items-center justify-center border border-[#182955] text-[#182955] px-8 py-3 text-sm font-bold tracking-widest uppercase hover:bg-[#182955] hover:!text-white transition-colors duration-300 group">
               VIEW ENTIRE CATALOG <span className="ml-2 group-hover:translate-x-1 transition-transform inline-block">→</span>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Categories Section (Other Categories) */}
+      <section className="py-20 bg-white">
+        <div className="max-w-[1600px] mx-auto px-8 md:px-16">
+          <ScrollReveal animation="fade-up" className="mb-12 text-center">
+            <h2 className="sectionTitle" style={{ color: 'var(--color-primary)', fontSize: '2.8rem', textAlign: 'center' }}>Other Categories</h2>
+            <div style={{ width: '60px', height: '3px', backgroundColor: 'var(--color-accent2)', margin: '1rem auto 2.5rem auto' }}></div>
+          </ScrollReveal>
+
+          <MobileCategoryScroll categories={allCategories.filter((cat: any) => !['rings', 'chains', 'earrings', 'clasps'].includes(cat.slug.toLowerCase()))} />
+
+          <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+            {allCategories.length > 0 ? (
+              allCategories.filter((cat: any) => !['rings', 'chains', 'earrings', 'clasps'].includes(cat.slug.toLowerCase())).map((cat: any, i: number) => {
+                let fallbackImg = '/web-phts/a-17.jpg';
+
+                return (
+                  <ScrollReveal key={cat.id} animation="fade-up" delay={((i % 8) * 50) as any} className="flex flex-col items-center group">
+                    <Link href={`/products?category=${cat.slug}`} className="flex flex-col items-center text-center w-full decoration-transparent">
+                      <div className="w-full aspect-square rounded-2xl bg-[#fffbfb] border border-pink-50/50 shadow-sm flex items-center justify-center p-4 mb-3 transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
+                        <img
+                          src={cat.image_url || fallbackImg}
+                          alt={cat.name}
+                          className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                          style={{ mixBlendMode: 'multiply' }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium text-gray-500 group-hover:text-[#182955] transition-colors duration-300 capitalize">
+                        {cat.name.toLowerCase()}
+                      </span>
+                    </Link>
+                  </ScrollReveal>
+                );
+              })
+            ) : (
+              <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#666' }}>
+                No categories found.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -232,33 +324,6 @@ export default async function Home() {
                 </Link>
               </ScrollReveal>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Product Categories Section */}
-      <section className={styles.categoriesSection} style={{ backgroundColor: 'var(--color-white)' }}>
-        <div className={styles.container}>
-          <h2 className="sectionTitle" style={{ color: 'var(--color-primary)', fontSize: '2.8rem', textAlign: 'center' }}>Wholesale Supplies</h2>
-          <div style={{ width: '60px', height: '3px', backgroundColor: 'var(--color-accent2)', margin: '1rem auto 2.5rem auto' }}></div>
-          <div className={styles.categoryGrid}>
-            {featuredCategories.length > 0 ? (
-              featuredCategories.map((cat: any) => (
-                <Link href={`/products?category=${cat.slug}`} key={cat.id} className={styles.categoryCard}>
-                  <img src={cat.image_url} alt={cat.name} className={styles.categoryImage} style={{ borderBottom: 'none' }} />
-                  <div className={styles.categoryContent}>
-                    <h3 className="categoryTitle" style={{ fontSize: '1.4rem', color: 'var(--color-primary)' }}>{cat.name}</h3>
-                    <p className={styles.categoryDesc}>
-                      Explore our {cat.name.toLowerCase()} range for unique and custom jewelry creations.
-                    </p>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#666' }}>
-                No featured categories found.
-              </p>
-            )}
           </div>
         </div>
       </section>

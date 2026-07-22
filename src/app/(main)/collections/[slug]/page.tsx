@@ -1,6 +1,7 @@
 import React from "react";
 import ProductCard from "@/components/products/ProductCard";
 import { Metadata } from "next";
+import styles from "@/app/(main)/products/products.module.css";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online';
 
@@ -36,10 +37,9 @@ export async function generateMetadata(
 export default async function CollectionPage({ params }: Props) {
   const { slug } = await params;
 
-  const [colRes, prodRes, filtersRes] = await Promise.all([
+  const [colRes, prodRes] = await Promise.all([
     fetch(`${BACKEND_URL}/api/store/catalog/collections/${slug}`, { next: { revalidate: 60 } }),
     fetch(`${BACKEND_URL}/api/store/catalog/collections/${slug}/products`, { next: { revalidate: 60 } }),
-    fetch(`${BACKEND_URL}/api/store/catalog/filters`, { next: { revalidate: 3600 } })
   ]);
 
   if (!colRes.ok) {
@@ -55,42 +55,34 @@ export default async function CollectionPage({ params }: Props) {
 
   const prodData = prodRes.ok ? await prodRes.json() : { products: [] };
   const products = prodData.products || [];
-  
-  const filtersData = filtersRes.ok ? await filtersRes.json() : { filters: [] };
-  const filters = filtersData.filters || [];
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1rem' }}>
-      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        {collection.hero_image && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img 
-            src={collection.hero_image} 
-            alt={collection.name} 
-            style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '8px', marginBottom: '2rem' }} 
-          />
-        )}
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#1a1a2e' }}>{collection.name}</h1>
-        {collection.description && (
-          <p style={{ color: '#475569', maxWidth: '800px', margin: '0 auto', lineHeight: '1.6' }}>
-            {collection.description}
-          </p>
-        )}
-      </div>
+    <div className={styles.page}>
+      <div style={{ maxWidth: '1800px', margin: '0 auto', padding: '0 4rem' }}>
 
-      <div>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '0.5rem' }}>
-          Collection Products ({products.length})
-        </h2>
-        
+        {/* Collection Header */}
+        <div style={{ textAlign: 'center', marginBottom: '3rem', paddingTop: '2rem' }}>
+          {collection.hero_image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={collection.hero_image}
+              alt={collection.name}
+              style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '12px', marginBottom: '2rem' }}
+            />
+          )}
+          <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--color-inkblue)' }}>{collection.name}</h1>
+          {collection.description && (
+            <p style={{ color: '#475569', maxWidth: '800px', margin: '0 auto', lineHeight: '1.6' }}>
+              {collection.description}
+            </p>
+          )}
+        </div>
+
+        {/* Products */}
         {products.length === 0 ? (
-          <p style={{ color: '#64748b' }}>No products available in this collection.</p>
+          <p style={{ color: '#64748b', textAlign: 'center', padding: '4rem 0' }}>No products available in this collection.</p>
         ) : (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
-            gap: '2rem' 
-          }}>
+          <div className={styles.productGrid}>
             {products.map((product: Record<string, unknown>) => (
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               <ProductCard key={product.id as number} product={product as any} />

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { API_URL } from '@/lib/config';
 
 export default function AdminLogin() {
@@ -19,10 +20,18 @@ export default function AdminLogin() {
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!recaptchaValue) {
+      setError('Please complete the reCAPTCHA');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -116,9 +125,17 @@ export default function AdminLogin() {
                 />
               </div>
 
+              <div className="flex justify-center my-4">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'}
+                  onChange={(value) => setRecaptchaValue(value)}
+                />
+              </div>
+
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !recaptchaValue}
                 className="w-full py-3 px-4 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (

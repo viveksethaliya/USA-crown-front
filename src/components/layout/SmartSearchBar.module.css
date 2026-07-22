@@ -1,6 +1,6 @@
 .searchContainer {
-  flex: 1;
-  max-width: 600px;
+  flex: 2;
+  max-width: 900px;
   position: relative;
 }
 
@@ -39,6 +39,17 @@
 
 .searchButton:hover {
   background-color: #ffaf45;
+}
+
+/* Desktop: show text, hide icon */
+.searchBtnText {
+  display: inline;
+}
+
+.searchBtnIcon {
+  display: none;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 /* =============================================
@@ -433,5 +444,28 @@
   .dropdownContent {
     max-height: 70dvh;
     overflow-y: auto;
+  }
+
+  /* Mobile search bar: smaller height, icon only button */
+  .searchForm {
+    height: 36px;
+  }
+
+  .searchInput {
+    font-size: 0.85rem;
+    padding: 0 0.75rem;
+  }
+
+  .searchButton {
+    padding: 0 0.9rem;
+  }
+
+  /* Swap text → icon on mobile */
+  .searchBtnText {
+    display: none;
+  }
+
+  .searchBtnIcon {
+    display: inline;
   }
 }

@@ -38,7 +38,7 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
   };
   return (
     <div className={styles.productCard} style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100%' }}>
-      <Link href={`/products/${product.id}`} className={styles.productImageWrap} style={{ textDecoration: 'none' }}>
+      <div className={styles.productImageWrap}>
         {product.sale_price && isSaleActive(product.sale_price, product.date_sale_starts, product.date_sale_ends) && (
           <div className={styles.saleBadge}>
             SALE
@@ -53,9 +53,9 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
           />
         </div>
-      </Link>
+      </div>
       <div className={styles.productInfo} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link href={`/products/${product.id}`} className={styles.productNameLink} style={{ textDecoration: 'none', color: 'inherit' }}>
           <h3 className={styles.productName} style={{ cursor: 'pointer', textTransform: 'capitalize' }}>{product.name.toLowerCase()}</h3>
         </Link>
         {product.swatchAttributes && product.swatchAttributes.length > 0 && (
@@ -137,13 +137,6 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
             <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic' }}>Login for pricing</span>
           </div>
         )}
-        <div style={{ marginTop: 'auto', paddingTop: '1rem', position: 'relative', zIndex: 5 }}>
-          <Link href={`/products/${product.id}`} style={{ textDecoration: 'none' }}>
-            <span className={styles.viewBtn}>
-              View Details
-            </span>
-          </Link>
-        </div>
       </div>
     </div>
   );

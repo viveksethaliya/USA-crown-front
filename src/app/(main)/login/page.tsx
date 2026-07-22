@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import ReCAPTCHA from 'react-google-recaptcha';
 import styles from './login.module.css';
 import { toast } from 'react-hot-toast';
 import { apiUrl } from '@/lib/cart';
@@ -13,6 +14,8 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState('');
@@ -23,6 +26,12 @@ export default function LoginPage() {
 
   const handleSubmit = async (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
     if (e) e.preventDefault();
+    
+    if (!recaptchaValue) {
+      toast.error('Please complete the reCAPTCHA');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -260,7 +269,15 @@ export default function LoginPage() {
                     </label>
                   </div>
 
-                  <button type="button" onClick={(e) => submitForm(e)} className={styles.loginBtn} disabled={isLoading}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'}
+                      onChange={(value) => setRecaptchaValue(value)}
+                    />
+                  </div>
+
+                  <button type="button" onClick={(e) => submitForm(e)} className={styles.loginBtn} disabled={isLoading || !recaptchaValue}>
                     {isLoading ? 'Signing in...' : 'Log in'}
                   </button>
 
