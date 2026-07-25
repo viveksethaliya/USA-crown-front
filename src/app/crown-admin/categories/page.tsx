@@ -12,7 +12,8 @@ export default function CategoriesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', slug: '', parent_id: '', position: 0 });
+  const [formData, setFormData] = useState({ name: '', slug: '', parent_id: '', position: 0, seo_title: '', seo_description: '', seo_og_image: '' });
+  const [showSeoSection, setShowSeoSection] = useState(false);
   const [search, setSearch] = useState('');
 
   const fetchCategories = async () => {
@@ -34,18 +35,20 @@ export default function CategoriesPage() {
   const handleOpenForm = (cat: Category | null = null) => {
     if (cat) {
       setEditingId(cat.id);
-      setFormData({ name: cat.name, slug: cat.slug, parent_id: cat.parent_id || '', position: cat.position || 0 });
+      setFormData({ name: cat.name, slug: cat.slug, parent_id: cat.parent_id || '', position: cat.position || 0, seo_title: (cat as any).seo_title || '', seo_description: (cat as any).seo_description || '', seo_og_image: (cat as any).seo_og_image || '' });
     } else {
       setEditingId(null);
-      setFormData({ name: '', slug: '', parent_id: '', position: 0 });
+      setFormData({ name: '', slug: '', parent_id: '', position: 0, seo_title: '', seo_description: '', seo_og_image: '' });
     }
+    setShowSeoSection(false);
     setShowForm(true);
   };
 
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', slug: '', parent_id: '', position: 0 });
+    setFormData({ name: '', slug: '', parent_id: '', position: 0, seo_title: '', seo_description: '', seo_og_image: '' });
+    setShowSeoSection(false);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -194,6 +197,35 @@ export default function CategoriesPage() {
                     />
                   </div>
                 </div>
+
+                {/* SEO Collapsible */}
+                <div className="border border-[#312f2c]/10 rounded-lg overflow-hidden mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowSeoSection(s => !s)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-[#312f2c]/4 hover:bg-[#312f2c]/8 text-sm font-medium text-[#312f2c]/65 transition-colors"
+                  >
+                    <span>SEO Settings (optional)</span>
+                    <span className="text-xs">{showSeoSection ? '▲ Hide' : '▼ Show'}</span>
+                  </button>
+                  {showSeoSection && (
+                    <div className="p-4 space-y-3 bg-white/40">
+                      <div>
+                        <label className="block text-xs font-medium text-[#312f2c]/55 mb-1">SEO Title</label>
+                        <input type="text" value={formData.seo_title} onChange={e => setFormData(p => ({...p, seo_title: e.target.value}))} placeholder="Leave blank to use category name" className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-3 py-2 text-sm text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[#312f2c]/55 mb-1">Meta Description</label>
+                        <textarea value={formData.seo_description} onChange={e => setFormData(p => ({...p, seo_description: e.target.value}))} rows={2} placeholder="Leave blank to use site default" className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-3 py-2 text-sm text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none resize-none" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[#312f2c]/55 mb-1">OG Image URL</label>
+                        <input type="text" value={formData.seo_og_image} onChange={e => setFormData(p => ({...p, seo_og_image: e.target.value}))} placeholder="https://... (paste URL from media library)" className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-3 py-2 text-sm text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-end gap-3 pt-4 border-t border-[#312f2c]/10 mt-4">
                   <button
                     type="button"

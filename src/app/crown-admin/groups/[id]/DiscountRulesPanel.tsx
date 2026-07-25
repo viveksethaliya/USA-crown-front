@@ -123,11 +123,11 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
     return depth;
   }, [categories]);
 
-  const hierarchicalCategories = useCallback((cats: any[], parentId: any = null, depth = 0): any[] => {
+  const hierarchicalCategories = useCallback(function buildHierarchy(cats: any[], parentId: any = null, depth = 0): any[] {
     let result: any[] = [];
     cats.filter(c => c.parent_id === parentId).forEach(c => {
       result.push({ ...c, depth });
-      result = result.concat(hierarchicalCategories(cats, c.id, depth + 1));
+      result = result.concat(buildHierarchy(cats, c.id, depth + 1));
     });
     return result;
   }, []);
@@ -278,107 +278,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
   const isProductScope = addTierFor ? addTierFor.scope === 'product' : form.scope === 'product';
   const currentScope = addTierFor ? addTierFor.tiers[0].scope : form.scope;
 
-// ============================================================
-// Help Modal
-// ============================================================
-function HelpModal({ onClose }: { onClose: () => void }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-white rounded-t-3xl border-b border-[#312f2c]/8 px-7 py-5 flex items-center justify-between z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#d1a054]/15 flex items-center justify-center">
-              <Users className="w-5 h-5 text-[#d1a054]" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-[#312f2c]">How Group Pricing Works</h2>
-              <p className="text-xs text-[#312f2c]/50">A guide to priority, measurements, and tiers</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#312f2c]/5 text-[#312f2c]/40 hover:text-[#312f2c] transition-colors">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="px-7 py-6 space-y-7">
-          <section>
-            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#d1a054]" /> The Priority Ladder
-            </h3>
-            <p className="text-sm text-[#312f2c]/70 leading-relaxed mb-3">
-              When a customer adds an item to their cart, the system checks these rules in a specific order. The <strong>most specific rule always wins</strong>.
-            </p>
-            <div className="bg-[#f0ede5]/60 rounded-2xl p-4 space-y-2 text-sm text-[#312f2c]/70">
-              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">1</span> <span><strong>Variation</strong> — Specific variation (e.g. 20g Gold Wire). Most specific.</span></div>
-              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">2</span> <span><strong>Product</strong> — All variations of a single product.</span></div>
-              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-[#d1a054]/15 text-[#c19044] flex items-center justify-center font-bold">3</span> <span><strong>Category</strong> — Any product inside a category.</span></div>
-              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-blue-100 text-blue-700 flex items-center justify-center font-bold">4</span> <span><strong>Measurement</strong> — Based on total inches or sq.inches.</span></div>
-              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-[#312f2c]/10 text-[#312f2c] flex items-center justify-center font-bold">5</span> <span><strong>Global</strong> — Any product in the store.</span></div>
-              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-gray-100 text-gray-500 flex items-center justify-center font-bold">6</span> <span><strong>Base Group %</strong> — The flat discount set on the Customer Groups page.</span></div>
-            </div>
-            <p className="text-xs text-[#312f2c]/50 mt-3 italic">Example: If a product is in a Category with 10% off, but also has a Product rule for 15% off, the customer gets 15%.</p>
-          </section>
-
-          <hr className="border-[#312f2c]/8" />
-
-          <section>
-            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#d1a054]" /> Quantity Tiers (Ladders)
-            </h3>
-            <p className="text-sm text-[#312f2c]/70 leading-relaxed">
-              You can create multiple breakpoints for the same product to reward bulk buying. Click the <strong>Add Tier</strong> button on any existing rule to add a higher threshold.
-            </p>
-            <div className="mt-3 flex gap-4 p-4 border border-[#312f2c]/8 rounded-2xl items-start">
-              <div className="mt-0.5"><BarChart2 className="w-6 h-6 text-emerald-500" /></div>
-              <div>
-                <p className="text-sm font-bold text-[#312f2c] mb-1">How it works</p>
-                <ul className="text-sm text-[#312f2c]/65 list-disc list-inside space-y-1">
-                  <li>Buy 1 to 11 units → 5% off (Min Qty: 1)</li>
-                  <li>Buy 12 to 47 units → 10% off (Min Qty: 12)</li>
-                  <li>Buy 48+ units → 15% off (Min Qty: 48)</li>
-                </ul>
-                <p className="text-xs text-[#312f2c]/45 mt-2">The system automatically sorts these and applies the highest tier the cart qualifies for.</p>
-              </div>
-            </div>
-          </section>
-
-          <hr className="border-[#312f2c]/8" />
-
-          <section>
-            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Ruler className="w-4 h-4 text-[#d1a054]" /> Measurement Pricing (Wire & Plate)
-            </h3>
-            <p className="text-sm text-[#312f2c]/70 leading-relaxed">
-              Standard products use simple Quantity (e.g. 5 units). But Wire and Plate products use <strong>total measurements</strong>.
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
-                <div className="text-sm font-bold text-blue-800 mb-1">Inch (Wire / Chain)</div>
-                <div className="text-xs text-blue-700/80 leading-snug mb-2">Total = Quantity × Chosen Length</div>
-                <div className="text-[11px] text-blue-700/60 font-mono bg-white/50 p-2 rounded">Buy 5 pieces of 10" wire<br/>= 50 total inches.</div>
-                <p className="text-xs text-blue-800 mt-2 font-medium">Set your Min/Max rule values in total inches.</p>
-              </div>
-              <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4">
-                <div className="text-sm font-bold text-purple-800 mb-1">Plate (Sheet Metal)</div>
-                <div className="text-xs text-purple-700/80 leading-snug mb-2">Total = Qty × Length × Width</div>
-                <div className="text-[11px] text-purple-700/60 font-mono bg-white/50 p-2 rounded">Buy 2 pieces of 5x5 plate<br/>= 50 total sq. inches.</div>
-                <p className="text-xs text-purple-800 mt-2 font-medium">Set your Min/Max rule values in sq. inches.</p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
 
   return (
     <div className="space-y-6">
@@ -702,5 +602,107 @@ function HelpModal({ onClose }: { onClose: () => void }) {
         </div>
       )}
     </div>
+  );
+}
+
+// ============================================================
+// Help Modal
+// ============================================================
+function HelpModal({ onClose }: { onClose: () => void }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="sticky top-0 bg-white rounded-t-3xl border-b border-[#312f2c]/8 px-7 py-5 flex items-center justify-between z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#d1a054]/15 flex items-center justify-center">
+              <Users className="w-5 h-5 text-[#d1a054]" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[#312f2c]">How Group Pricing Works</h2>
+              <p className="text-xs text-[#312f2c]/50">A guide to priority, measurements, and tiers</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[#312f2c]/5 text-[#312f2c]/40 hover:text-[#312f2c] transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="px-7 py-6 space-y-7">
+          <section>
+            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#d1a054]" /> The Priority Ladder
+            </h3>
+            <p className="text-sm text-[#312f2c]/70 leading-relaxed mb-3">
+              When a customer adds an item to their cart, the system checks these rules in a specific order. The <strong>most specific rule always wins</strong>.
+            </p>
+            <div className="bg-[#f0ede5]/60 rounded-2xl p-4 space-y-2 text-sm text-[#312f2c]/70">
+              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">1</span> <span><strong>Variation</strong> — Specific variation (e.g. 20g Gold Wire). Most specific.</span></div>
+              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">2</span> <span><strong>Product</strong> — All variations of a single product.</span></div>
+              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-[#d1a054]/15 text-[#c19044] flex items-center justify-center font-bold">3</span> <span><strong>Category</strong> — Any product inside a category.</span></div>
+              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-blue-100 text-blue-700 flex items-center justify-center font-bold">4</span> <span><strong>Measurement</strong> — Based on total inches or sq.inches.</span></div>
+              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-[#312f2c]/10 text-[#312f2c] flex items-center justify-center font-bold">5</span> <span><strong>Global</strong> — Any product in the store.</span></div>
+              <div className="flex items-center gap-3"><span className="w-6 h-6 rounded bg-gray-100 text-gray-500 flex items-center justify-center font-bold">6</span> <span><strong>Base Group %</strong> — The flat discount set on the Customer Groups page.</span></div>
+            </div>
+            <p className="text-xs text-[#312f2c]/50 mt-3 italic">Example: If a product is in a Category with 10% off, but also has a Product rule for 15% off, the customer gets 15%.</p>
+          </section>
+
+          <hr className="border-[#312f2c]/8" />
+
+          <section>
+            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#d1a054]" /> Quantity Tiers (Ladders)
+            </h3>
+            <p className="text-sm text-[#312f2c]/70 leading-relaxed">
+              You can create multiple breakpoints for the same product to reward bulk buying. Click the <strong>Add Tier</strong> button on any existing rule to add a higher threshold.
+            </p>
+            <div className="mt-3 flex gap-4 p-4 border border-[#312f2c]/8 rounded-2xl items-start">
+              <div className="mt-0.5"><BarChart2 className="w-6 h-6 text-emerald-500" /></div>
+              <div>
+                <p className="text-sm font-bold text-[#312f2c] mb-1">How it works</p>
+                <ul className="text-sm text-[#312f2c]/65 list-disc list-inside space-y-1">
+                  <li>Buy 1 to 11 units → 5% off (Min Qty: 1)</li>
+                  <li>Buy 12 to 47 units → 10% off (Min Qty: 12)</li>
+                  <li>Buy 48+ units → 15% off (Min Qty: 48)</li>
+                </ul>
+                <p className="text-xs text-[#312f2c]/45 mt-2">The system automatically sorts these and applies the highest tier the cart qualifies for.</p>
+              </div>
+            </div>
+          </section>
+
+          <hr className="border-[#312f2c]/8" />
+
+          <section>
+            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Ruler className="w-4 h-4 text-[#d1a054]" /> Measurement Pricing (Wire & Plate)
+            </h3>
+            <p className="text-sm text-[#312f2c]/70 leading-relaxed">
+              Standard products use simple Quantity (e.g. 5 units). But Wire and Plate products use <strong>total measurements</strong>.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                <div className="text-sm font-bold text-blue-800 mb-1">Inch (Wire / Chain)</div>
+                <div className="text-xs text-blue-700/80 leading-snug mb-2">Total = Quantity × Chosen Length</div>
+                <div className="text-[11px] text-blue-700/60 font-mono bg-white/50 p-2 rounded">Buy 5 pieces of 10" wire<br/>= 50 total inches.</div>
+                <p className="text-xs text-blue-800 mt-2 font-medium">Set your Min/Max rule values in total inches.</p>
+              </div>
+              <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4">
+                <div className="text-sm font-bold text-purple-800 mb-1">Plate (Sheet Metal)</div>
+                <div className="text-xs text-purple-700/80 leading-snug mb-2">Total = Qty × Length × Width</div>
+                <div className="text-[11px] text-purple-700/60 font-mono bg-white/50 p-2 rounded">Buy 2 pieces of 5x5 plate<br/>= 50 total sq. inches.</div>
+                <p className="text-xs text-purple-800 mt-2 font-medium">Set your Min/Max rule values in sq. inches.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

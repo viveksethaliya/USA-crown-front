@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, Package, Loader2, Search, Filter, CheckCircle, XCircle, ChevronLeft, ChevronRight, Download, Upload, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Loader2, Search, Filter, CheckCircle, XCircle, ChevronLeft, ChevronRight, Download, Upload, FileText, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Product, Pagination } from '@/types/admin';
 
@@ -120,6 +120,30 @@ export default function ProductsPage() {
       fetchProducts(pagination.page);
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleTogglePublish = async (id: string, currentValue: boolean) => {
+    const newValue = !currentValue;
+    // Optimistic update
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_published: newValue } : p));
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/products/${id}/publish`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ is_published: newValue })
+      });
+      if (!res.ok) {
+        // Revert on failure
+        setProducts(prev => prev.map(p => p.id === id ? { ...p, is_published: currentValue } : p));
+        toast.error('Failed to update product visibility');
+      } else {
+        toast.success(newValue ? 'Product published' : 'Product hidden');
+      }
+    } catch {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, is_published: currentValue } : p));
+      toast.error('Failed to update product visibility');
     }
   };
 
@@ -457,11 +481,24 @@ export default function ProductsPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          {product.is_published ? (
-                            <CheckCircle className="w-5 h-5 text-green-500" />
-                          ) : (
-                            <XCircle className="w-5 h-5 text-[#312f2c]/30" />
-                          )}
+                          <button
+                            onClick={() => handleTogglePublish(product.id, product.is_published ?? true)}
+                            title={product.is_published ? 'Click to hide product' : 'Click to publish product'}
+                            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d1a054] ${
+                              product.is_published ? 'bg-emerald-500' : 'bg-[#312f2c]/20'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ${
+                                product.is_published ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                          <span className={`block text-[10px] font-bold mt-1 uppercase tracking-wide ${
+                            product.is_published ? 'text-emerald-600' : 'text-[#312f2c]/35'
+                          }`}>
+                            {product.is_published ? 'Live' : 'Hidden'}
+                          </span>
                         </td>
                         <td className="p-4 pr-6 text-right">
                           <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

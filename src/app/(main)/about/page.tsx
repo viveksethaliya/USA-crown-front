@@ -18,7 +18,7 @@ export default function AboutPage() {
                     </div>
                     <h1 className={styles.heroTitle}>About Us</h1>
                     <p className={styles.heroText}>
-                        Explore Crown Findings' comprehensive wholesale jewelry findings catalog, designed to meet the diverse needs of jewelers and crafters. Our extensive collection features premium-quality components, including discs, clasps, chains, jump rings, and more. Crafted with precision and available in a variety of metals such as gold, silver, brass, and stainless steel, each item in our catalog is built to support your creative vision.
+                        Explore Crown Findings&apos; comprehensive wholesale jewelry findings catalog, designed to meet the diverse needs of jewelers and crafters. Our extensive collection features premium-quality components, including discs, clasps, chains, jump rings, and more. Crafted with precision and available in a variety of metals such as gold, silver, brass, and stainless steel, each item in our catalog is built to support your creative vision.
                     </p>
                 </div>
             </section>
@@ -34,7 +34,7 @@ export default function AboutPage() {
                     <p className={styles.whoWeAreText}>
                         Crown Findings Co., Inc. was established November 8, 1983 and has since flourished to become a leading wholesale jewelry findings business. Located in Manhattan’s iconic Diamond District, Crown Findings has been serving jewelers on the block, across the country, and around the world throughout its lifetime. Since its birth, Crown has provided the jewelry industry with competitive pricing, quality items, and unmatched service and integrity.
 
-                        With decades of experience as a diamond setter and businessman, President Berc Gokberk has established a reliable and unique professional space where business thrives. His dedication, honesty, and drive are unparalleled, making him one of the most well-respected businessmen in the area. Through his efforts, Crown has evolved into a trusted company that takes pride in its role as a family business, as Berc’s brother has been working tirelessly by his side for decades and more recently, his daughter and son-in-law.
+                        With decades of experience as a diamond setter and businessman, President Berc Gokberk has established a reliable and unique professional space where business thrives. His dedication, honesty, and drive are unparalleled, making him one of the most well-respected businessmen in the area. Through his efforts, Crown has evolved into a trusted company that takes pride in its role as a family business, as Berc&apos;s brother has been working tirelessly by his side for decades and more recently, his daughter and son-in-law.
                         The decades old company has thousands of loyal customers who have been supporting the business since its beginning.
 
                         <b>“One of the best parts about being a business owner is having the opportunity to meet new people from different backgrounds,” Berc explains. “I still keep in touch with people I met through Crown 35 years ago.”</b>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, Package, Search, Plus, Trash2, FolderPlus, FolderMinus } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, Search, Plus, Trash2, FolderPlus, FolderMinus, Eraser, AlertOctagon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
@@ -166,6 +166,56 @@ export default function CollectionProductsPage() {
         fetchData();
       } else {
         toast.error('Failed to remove products');
+      }
+    } catch {
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleClearCollection = async () => {
+    if (!confirm('Are you sure you want to remove ALL products from this collection? This will not delete the products themselves.')) return;
+    setIsProcessing(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/brands/${id}/products/clear`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('Collection cleared successfully');
+        setSelectedProducts([]);
+        fetchData();
+      } else {
+        toast.error('Failed to clear collection');
+      }
+    } catch {
+      toast.error('An error occurred');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteAllProducts = async () => {
+    if (!confirm('WARNING: Are you absolutely sure you want to PERMANENTLY DELETE ALL products in this collection from the database? This action cannot be undone!')) return;
+    
+    // Double confirmation for destructive action
+    if (!confirm('FINAL WARNING: This will destroy the actual products, variations, and images. Type OK to continue.')) return;
+
+    setIsProcessing(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/brands/${id}/products/delete-all`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('All products permanently deleted');
+        setSelectedProducts([]);
+        fetchData();
+      } else {
+        toast.error('Failed to delete products. They may have related orders or constraints.');
       }
     } catch {
       toast.error('An error occurred');
@@ -350,6 +400,30 @@ export default function CollectionProductsPage() {
                     Remove Selected ({selectedProducts.length})
                   </button>
                 )}
+                
+                {products.length > 0 && selectedProducts.length === 0 && (
+                  <>
+                    <button
+                      onClick={handleClearCollection}
+                      disabled={isProcessing}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                      title="Removes all items from this collection"
+                    >
+                      <Eraser className="w-3.5 h-3.5" />
+                      Clear Collection
+                    </button>
+                    <button
+                      onClick={handleDeleteAllProducts}
+                      disabled={isProcessing}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                      title="Permanently deletes these products from the database"
+                    >
+                      <AlertOctagon className="w-3.5 h-3.5" />
+                      Delete All Products
+                    </button>
+                  </>
+                )}
+                
                 <span className="px-2.5 py-1 bg-[#312f2c]/5 text-[#312f2c]/60 rounded-lg text-xs font-semibold">
                   {products.length} {products.length === 1 ? 'item' : 'items'}
                 </span>

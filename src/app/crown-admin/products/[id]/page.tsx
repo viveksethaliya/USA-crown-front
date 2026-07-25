@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Loader2, Package, Tag, Image, Link2, Layers } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Package, Tag, Image, Link2, Layers, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import OrganizationTab from './tabs/OrganizationTab';
 import ImagesTab from './tabs/ImagesTab';
 import VariationsTab from './tabs/VariationsTab';
 import LinkedProductsTab from './tabs/LinkedProductsTab';
+import SeoFormBlock from '@/components/SeoFormBlock';
 
 import { ADMIN_API as API } from '@/lib/config';
 const TABS = [
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'images', label: 'Images', icon: Image },
   { id: 'variations', label: 'Variations', icon: Layers },
   { id: 'links', label: 'Linked Products', icon: Link2 },
+  { id: 'seo', label: 'SEO', icon: Search },
 ];
 
 const emptyProduct = {
@@ -30,6 +32,7 @@ const emptyProduct = {
   weight_g: '', length_in: '', width_in: '', height_in: '',
   is_published: true, is_featured: false, visibility: 'visible', allow_reviews: true,
   position: 0, category_ids: [], tag_ids: [],
+  seo_title: '', seo_description: '', seo_og_image: '',
 };
 
 export default function ProductEditorPage() {
@@ -97,6 +100,9 @@ export default function ProductEditorPage() {
           position: data.position || 0,
           category_ids: (data.product_categories || []).map((pc: any) => pc.category_id),
           tag_ids: (data.product_tags || []).map((pt: any) => pt.tag_id),
+          seo_title: data.seo_title || '',
+          seo_description: data.seo_description || '',
+          seo_og_image: data.seo_og_image || '',
         });
         setImages(data.product_images || []);
         setVariations(data.product_variations || []);
@@ -224,6 +230,17 @@ export default function ProductEditorPage() {
         )}
         {activeTab === 'links' && !isNew && (
           <LinkedProductsTab productId={idStr as string} productRelations={productRelations} setProductRelations={setProductRelations} />
+        )}
+        {activeTab === 'seo' && (
+          <div className="py-4">
+            <SeoFormBlock
+              seoTitle={product.seo_title || ''}
+              seoDescription={product.seo_description || ''}
+              seoOgImage={product.seo_og_image || ''}
+              onChange={(field, value) => handleChange(field, value)}
+              titlePlaceholder={`Leave blank to use: "${product.name || 'Product Name'}"`}
+            />
+          </div>
         )}
       </div>
     </div>

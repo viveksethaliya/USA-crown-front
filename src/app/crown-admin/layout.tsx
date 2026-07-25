@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Image, Package, Tag, Tags, SlidersHorizontal, Shapes,
-  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList
+  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, Undo2, FileText, FormInput
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
@@ -38,7 +38,9 @@ const NAV: NavElement[] = [
     items: [
       { label: 'Approvals', href: '/crown-admin/b2b', icon: Building2 },
       { label: 'Orders', href: '/crown-admin/orders', icon: ClipboardList },
+      { label: 'Returns', href: '/crown-admin/returns', icon: Undo2 },
       { label: 'Active Carts', href: '/crown-admin/carts', icon: ShoppingCart },
+      { label: 'Checkout Fields', href: '/crown-admin/checkout-fields', icon: FormInput },
       { label: 'Settings', href: '/crown-admin/settings', icon: Settings },
     ]
   },
@@ -46,6 +48,8 @@ const NAV: NavElement[] = [
     group: 'Pricing & Discounts',
     items: [
       { label: 'Group Pricing', href: '/crown-admin/groups', icon: UsersRound },
+      { label: 'Price Lists', href: '/crown-admin/price-lists', icon: ListOrdered },
+      { label: 'Campaigns', href: '/crown-admin/campaigns', icon: Megaphone },
       { label: 'Promotions', href: '/crown-admin/discounts', icon: Zap },
       { label: 'Coupon Codes', href: '/crown-admin/coupons', icon: Ticket },
     ]
@@ -58,6 +62,7 @@ const NAV: NavElement[] = [
       { label: 'Tags', href: '/crown-admin/tags', icon: Tags },
       { label: 'Collections', href: '/crown-admin/brands', icon: Tag },
       { label: 'Attributes', href: '/crown-admin/attributes', icon: SlidersHorizontal },
+      { label: 'Pages & Blog', href: '/crown-admin/pages', icon: FileText },
     ]
   },
   {

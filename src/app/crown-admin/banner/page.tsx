@@ -23,10 +23,6 @@ export default function BannerPage() {
     banner_background_image: '/web-phts/a-17.jpg'
   });
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
   const fetchSettings = async () => {
     try {
       const bannerRes = await fetch(apiUrl('/api/admin/settings/hero-banner'), {

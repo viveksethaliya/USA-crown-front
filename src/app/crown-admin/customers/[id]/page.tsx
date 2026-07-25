@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Loader2, Save, Edit2, Trash2, Building2, Users, FileText, Eye, ChevronLeft, MapPin, Plus } from 'lucide-react';
+import { Loader2, Save, Edit2, Trash2, Building2, Users, FileText, Eye, ChevronLeft, MapPin, Plus, Shield, Network, Activity, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -40,6 +40,11 @@ export default function CustomerDetailPage() {
   const [allCustomers, setAllCustomers] = useState<any[]>([]);
   const [customerGroups, setCustomerGroups] = useState<any[]>([]);
 
+  // Permissions Management
+  const [allPermissions, setAllPermissions] = useState<any[]>([]);
+  const [userPermissions, setUserPermissions] = useState<number[]>([]);
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+
   // Address Management
   const [addresses, setAddresses] = useState<any[]>([]);
   const [addressForm, setAddressForm] = useState<any>({});
@@ -50,14 +55,17 @@ export default function CustomerDetailPage() {
     const fetchDependencies = async () => {
       try {
         const token = localStorage.getItem('adminToken');
-        const [customersRes, groupsRes] = await Promise.all([
+        const [customersRes, groupsRes, permsRes] = await Promise.all([
           fetch(`${API}/customers?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API}/groups`, { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API}/groups`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API}/permissions`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         const customersJson = await customersRes.json();
         const groupsJson = await groupsRes.json();
+        const permsJson = await permsRes.json();
         setAllCustomers(customersJson.data || []);
         setCustomerGroups(groupsJson.data || []);
+        setAllPermissions(permsJson || []);
       } catch (err) { console.error(err); }
     };
     fetchDependencies();
@@ -73,22 +81,16 @@ export default function CustomerDetailPage() {
     } catch (e) { console.error(e); }
   };
 
-  const fetchUser = async () => {
+  const fetchPermissions = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (!res.ok) throw new Error('User not found');
-      handleSetUser(await res.json());
-      await fetchAddresses();
-    } catch (error: any) {
-      toast.error(error.message);
-      router.push('/crown-admin/customers');
-    } finally {
-      setIsLoading(false);
-    }
+      const res = await fetch(`${API}/customers/${id}/permissions`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setUserPermissions(data.map((p: any) => p.permission_id));
+      }
+    } catch (e) { console.error(e); }
   };
-
-  useEffect(() => { if (!isCreatingUser) fetchUser(); }, [id]);
 
   const handleSetUser = (user: any) => {
     setSelectedUser(user);
@@ -109,6 +111,23 @@ export default function CustomerDetailPage() {
       customer_group_id: (user.customer_group_members && user.customer_group_members.length > 0) ? user.customer_group_members[0].group_id : ''
     });
   };
+
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/customers/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error('User not found');
+      handleSetUser(await res.json());
+      await Promise.all([fetchAddresses(), fetchPermissions()]);
+    } catch (error: any) {
+      toast.error(error.message);
+      router.push('/crown-admin/customers');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { if (!isCreatingUser) fetchUser(); }, [id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -211,6 +230,48 @@ export default function CustomerDetailPage() {
       await fetchAddresses();
     } catch { toast.error("Error deleting address"); }
   };
+
+  const handleSavePermissions = async () => {
+    setIsSavingPermissions(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API}/customers/${id}/permissions`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ permissionIds: userPermissions })
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || 'Failed to update permissions');
+      }
+      toast.success('Permissions updated successfully');
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsSavingPermissions(false);
+    }
+  };
+
+  const renderAddressCard = (addr: any) => (
+    <div key={addr.id} className="bg-white/60 p-4 rounded-xl border border-[#312f2c]/10 relative group">
+      {addr.is_default && <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider bg-[#d1a054]/10 text-[#d1a054] px-2 py-0.5 rounded-full">Default {addr.type}</span>}
+      <div className="text-sm text-[#312f2c]/70 leading-relaxed mb-4 pr-16">
+        <p>{addr.address_line1}</p>
+        {addr.address_line2 && <p>{addr.address_line2}</p>}
+        <p>{addr.city}, {addr.state} {addr.postal_code}</p>
+        <p>{addr.country}</p>
+        {addr.phone && <p className="mt-1">Phone: {addr.phone}</p>}
+      </div>
+      <div className="flex gap-2">
+        <button type="button" onClick={() => { setAddressForm(addr); setIsEditingAddress(addr.id); }} className="p-2 bg-[#d1a054]/10 text-[#d1a054] rounded-lg hover:bg-[#d1a054]/20 transition-colors" title="Edit">
+          <Edit2 className="w-4 h-4" />
+        </button>
+        <button type="button" onClick={() => handleDeleteAddress(addr.id)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors" title="Delete">
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -335,6 +396,39 @@ export default function CustomerDetailPage() {
               </div>
             )}
 
+            {/* Granular Permissions */}
+            {!isCreatingUser && (Number(formData.role_id) === 5 || Number(formData.role_id) === 4) && (
+              <div className="space-y-4">
+                <h4 className={sectionHeadCls}><Shield className="w-4 h-4" /> Granular Permissions</h4>
+                <div className="bg-white/60 p-5 rounded-xl border border-[#312f2c]/10">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {allPermissions.map(p => (
+                      <label key={p.id} className="flex items-start gap-3 cursor-pointer group p-2 hover:bg-[#312f2c]/5 rounded-lg transition-colors">
+                        <input type="checkbox" checked={userPermissions.includes(p.id)} onChange={e => {
+                          if (e.target.checked) setUserPermissions(prev => [...prev, p.id]);
+                          else setUserPermissions(prev => prev.filter(id => id !== p.id));
+                        }} disabled={!isEditing} className="w-4 h-4 mt-0.5 rounded border-[#312f2c]/20 accent-[#d1a054] disabled:opacity-50" />
+                        <div>
+                          <p className="text-sm font-medium text-[#312f2c]">{p.name}</p>
+                          {p.description && <p className="text-xs text-[#312f2c]/50 mt-0.5">{p.description}</p>}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {allPermissions.length === 0 && (
+                    <p className="text-sm text-[#312f2c]/50 text-center py-4">No granular permissions found in the database.</p>
+                  )}
+                  {isEditing && allPermissions.length > 0 && (
+                    <div className="flex justify-end mt-4 pt-4 border-t border-[#312f2c]/10">
+                      <button type="button" onClick={handleSavePermissions} disabled={isSavingPermissions} className="px-4 py-2 bg-[#d1a054] text-white text-sm font-medium rounded-lg hover:bg-[#d1a054]/90 transition-colors flex items-center gap-2">
+                        {isSavingPermissions ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save Permissions
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Personal Details */}
             <div className="space-y-4">
               <h4 className={sectionHeadCls}><Users className="w-4 h-4" /> Personal Details</h4>
@@ -409,24 +503,41 @@ export default function CustomerDetailPage() {
             {/* Child Sub-Users */}
             {!isCreatingUser && selectedUser?.sub_users && selectedUser.sub_users.length > 0 && (
               <div className="space-y-4">
-                <h4 className={sectionHeadCls}><Users className="w-4 h-4" /> Child Sub-Users</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {selectedUser.sub_users.map((sub: any) => (
-                    <div key={sub.id} className="bg-white/60 p-4 rounded-xl border border-[#312f2c]/10 flex items-center justify-between">
-                      <div className="min-w-0 pr-4">
-                        <p className="text-sm font-medium text-[#312f2c] truncate">{sub.username || sub.first_name}</p>
-                        <p className="text-xs text-[#312f2c]/45 mt-1 truncate">{sub.email}</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border ${sub.status === 'approved' ? 'bg-[#d1a054]/10 text-[#d1a054] border-[#d1a054]/20' : 'bg-[#312f2c]/6 text-[#312f2c]/50 border-[#312f2c]/10'}`}>
-                          {sub.status || 'pending'}
-                        </span>
-                        <Link href={`/crown-admin/customers/${sub.id}`} className="p-2 bg-[#d1a054]/10 text-[#d1a054] rounded-lg hover:bg-[#d1a054]/20 transition-colors" title="View Profile">
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </div>
+                <h4 className={sectionHeadCls}><Network className="w-4 h-4" /> Sub-User Hierarchy</h4>
+                <div className="bg-white/60 p-5 rounded-xl border border-[#312f2c]/10 font-sans">
+                  <div className="flex items-center gap-3 p-3 bg-[#f8f7f4] rounded-lg border border-[#312f2c]/5">
+                    <div className="w-10 h-10 rounded-full bg-[#d1a054] flex items-center justify-center text-white font-bold text-lg shadow-md">
+                      {(selectedUser.username || selectedUser.first_name)?.charAt(0)?.toUpperCase()}
                     </div>
-                  ))}
+                    <div>
+                      <p className="font-semibold text-[#312f2c]">{selectedUser.first_name} {selectedUser.last_name}</p>
+                      <p className="text-xs text-[#312f2c]/60">Parent Account ({selectedUser.email})</p>
+                    </div>
+                  </div>
+                  <div className="relative mt-2 ml-5 border-l-2 border-[#d1a054]/30 pl-6 space-y-4 py-2">
+                    {selectedUser.sub_users.map((sub: any, idx: number) => (
+                      <div key={sub.id} className="relative flex items-center justify-between p-3 bg-white border border-[#312f2c]/10 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div className="absolute -left-6 top-1/2 w-6 border-t-2 border-[#d1a054]/30"></div>
+                        <div className="flex items-center gap-3 min-w-0 pr-4">
+                          <div className="w-8 h-8 rounded-full bg-[#312f2c]/5 border border-[#312f2c]/10 flex items-center justify-center text-[#312f2c]/70 font-semibold text-sm">
+                            {(sub.username || sub.first_name)?.charAt(0)?.toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-[#312f2c] truncate">{sub.username || sub.first_name}</p>
+                            <p className="text-[11px] text-[#312f2c]/45 mt-0.5 truncate">{sub.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border ${sub.status === 'approved' ? 'bg-[#d1a054]/10 text-[#d1a054] border-[#d1a054]/20' : 'bg-[#312f2c]/6 text-[#312f2c]/50 border-[#312f2c]/10'}`}>
+                            {sub.status || 'pending'}
+                          </span>
+                          <Link href={`/crown-admin/customers/${sub.id}`} className="p-2 bg-[#d1a054]/10 text-[#d1a054] rounded-lg hover:bg-[#d1a054]/20 transition-colors" title="View Profile">
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -508,28 +619,23 @@ export default function CustomerDetailPage() {
                         <p className="text-[#312f2c]/40 text-sm">No addresses saved.</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {addresses.map((addr: any) => (
-                          <div key={addr.id} className="bg-white/60 p-4 rounded-xl border border-[#312f2c]/10 relative group">
-                            {addr.is_default && <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider bg-[#d1a054]/10 text-[#d1a054] px-2 py-0.5 rounded-full">Default {addr.type}</span>}
-                            <h5 className="font-semibold text-[#312f2c] text-sm capitalize mb-1">{addr.type} Address</h5>
-                            <div className="text-sm text-[#312f2c]/70 leading-relaxed mb-4">
-                              <p>{addr.address_line1}</p>
-                              {addr.address_line2 && <p>{addr.address_line2}</p>}
-                              <p>{addr.city}, {addr.state} {addr.postal_code}</p>
-                              <p>{addr.country}</p>
-                              {addr.phone && <p className="mt-1">Phone: {addr.phone}</p>}
-                            </div>
-                            <div className="flex gap-2">
-                              <button type="button" onClick={() => { setAddressForm(addr); setIsEditingAddress(addr.id); }} className="p-2 bg-[#d1a054]/10 text-[#d1a054] rounded-lg hover:bg-[#d1a054]/20 transition-colors" title="Edit">
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button type="button" onClick={() => handleDeleteAddress(addr.id)} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors" title="Delete">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Billing Addresses */}
+                        <div>
+                          <h5 className="font-semibold text-[#312f2c]/70 uppercase tracking-wide text-xs mb-3 border-b border-[#312f2c]/10 pb-1">Billing Addresses</h5>
+                          <div className="space-y-4">
+                            {addresses.filter(a => a.type === 'billing').map(addr => renderAddressCard(addr))}
+                            {addresses.filter(a => a.type === 'billing').length === 0 && <p className="text-xs text-[#312f2c]/40 italic">No billing addresses.</p>}
                           </div>
-                        ))}
+                        </div>
+                        {/* Shipping Addresses */}
+                        <div>
+                          <h5 className="font-semibold text-[#312f2c]/70 uppercase tracking-wide text-xs mb-3 border-b border-[#312f2c]/10 pb-1">Shipping Addresses</h5>
+                          <div className="space-y-4">
+                            {addresses.filter(a => a.type === 'shipping' || a.type === 'other').map(addr => renderAddressCard(addr))}
+                            {addresses.filter(a => a.type === 'shipping' || a.type === 'other').length === 0 && <p className="text-xs text-[#312f2c]/40 italic">No shipping addresses.</p>}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
@@ -563,6 +669,62 @@ export default function CustomerDetailPage() {
                 ) : (
                   <div className="bg-white/40 p-6 rounded-xl border border-[#312f2c]/10 text-center">
                     <p className="text-[#312f2c]/40 text-sm">No documents uploaded for this user.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Login History / Security */}
+            {!isCreatingUser && (
+              <div className="space-y-4">
+                <h4 className={sectionHeadCls}><Shield className="w-4 h-4" /> Security & Login History</h4>
+                {selectedUser?.login_history && selectedUser.login_history.length > 0 ? (
+                  <div className="bg-white/60 rounded-xl border border-[#312f2c]/10 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-white/40 border-b border-[#312f2c]/10 text-[#312f2c]/60 text-xs uppercase tracking-wider font-semibold">
+                            <th className="p-3 pl-4">Time</th>
+                            <th className="p-3">IP Address</th>
+                            <th className="p-3">OS / Device</th>
+                            <th className="p-3">Browser</th>
+                            <th className="p-3 pr-4 text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#312f2c]/5">
+                          {selectedUser.login_history.map((log: any) => {
+                            let browser = 'Unknown';
+                            if (log.user_agent) {
+                              if (log.user_agent.includes('Chrome')) browser = 'Chrome';
+                              else if (log.user_agent.includes('Safari')) browser = 'Safari';
+                              else if (log.user_agent.includes('Firefox')) browser = 'Firefox';
+                              else if (log.user_agent.includes('Edge')) browser = 'Edge';
+                            }
+                            return (
+                              <tr key={log.id} className="hover:bg-white/30 transition-colors">
+                                <td className="p-3 pl-4 text-[#312f2c] whitespace-nowrap">
+                                  {new Date(log.login_time).toLocaleString()}
+                                </td>
+                                <td className="p-3 text-[#312f2c]/70 font-mono text-xs">{log.ip_address}</td>
+                                <td className="p-3 text-[#312f2c]/70">{log.os} {log.device ? `(${log.device})` : ''}</td>
+                                <td className="p-3 text-[#312f2c]/70">{browser}</td>
+                                <td className="p-3 pr-4 text-right">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                    log.status === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {log.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white/40 p-6 rounded-xl border border-[#312f2c]/10 text-center">
+                    <p className="text-[#312f2c]/40 text-sm">No login history available.</p>
                   </div>
                 )}
               </div>

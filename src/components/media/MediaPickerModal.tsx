@@ -32,11 +32,6 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect, title = "S
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
   const [showUploader, setShowUploader] = useState(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    fetchMedia();
-  }, [isOpen]);
-
   const fetchMedia = async () => {
     setIsLoading(true);
     try {
@@ -55,6 +50,11 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect, title = "S
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetchMedia();
+  }, [isOpen]);
 
   const handleConfirm = () => {
     if (selectedFile) {

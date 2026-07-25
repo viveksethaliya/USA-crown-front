@@ -174,7 +174,7 @@ function ProductsContent() {
   }, [categoryParam, searchParams.get('search')]);
 
   // Sync URL params to state
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+   
   useEffect(() => {
     setSelectedCategories(categoryParam ? categoryParam.split(',') : []);
     const s = searchParams.get('search') || '';

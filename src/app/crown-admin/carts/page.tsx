@@ -25,10 +25,6 @@ export default function AdminCartsPage() {
     }
   };
 
-  useEffect(() => {
-    fetchCarts();
-  }, []);
-
   const fetchCarts = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -44,6 +40,10 @@ export default function AdminCartsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCarts();
+  }, []);
 
   const handleSendReminder = async (userId: string) => {
     setSendingReminder(userId);

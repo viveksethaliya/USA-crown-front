@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Tag, Plus, CheckCircle2, XCircle, Trash2, Loader2, Save, Edit2, ChevronDown, ChevronUp, Search, Target, Zap, CalendarRange, HelpCircle, X, Layers, ShoppingBag, Users, ArrowRight, Lightbulb, Settings, Ticket, Check, Trophy, Ban, Globe, Folder, Package, Info } from 'lucide-react';
+import { Tag, Plus, CheckCircle2, XCircle, Trash2, Loader2, Save, Edit2, Search, Target, Zap, CalendarRange, HelpCircle, X, Layers, ShoppingBag, ArrowRight, Lightbulb, Settings, Ticket, Check, Trophy, Ban, Globe, Folder, Package, Info, AlertOctagon, Filter } from 'lucide-react';
 import { ADMIN_API as API } from '@/lib/config';
 import { apiUrl } from '@/lib/cart';
 import toast from 'react-hot-toast';
@@ -32,6 +32,43 @@ const TARGET_SCOPES = [
   { value: 'product', label: 'Specific Product(s)' },
 ];
 
+const CONDITION_TYPES = [
+  { value: 'user_role', label: 'User Role', type: 'text' },
+  { value: 'customer_group', label: 'Customer Group', type: 'entity' },
+  { value: 'specific_user', label: 'Specific User ID', type: 'entity' },
+  { value: 'account_status', label: 'Account Status', type: 'text' },
+  { value: 'guest_only', label: 'Guest Only', type: 'boolean' },
+  { value: 'product', label: 'Product ID', type: 'entity' },
+  { value: 'category', label: 'Category', type: 'entity' },
+  { value: 'tag', label: 'Tag ID', type: 'entity' },
+  { value: 'brand', label: 'Brand ID', type: 'entity' },
+  { value: 'attribute_value', label: 'Attribute Value ID', type: 'entity' },
+  { value: 'variation', label: 'Variation ID', type: 'entity' },
+  { value: 'quantity_min', label: 'Line Quantity Min', type: 'number' },
+  { value: 'cart_subtotal_min', label: 'Cart Subtotal Min ($)', type: 'number' },
+  { value: 'cart_subtotal_max', label: 'Cart Subtotal Max ($)', type: 'number' },
+  { value: 'total_qty_min', label: 'Cart Total Qty Min', type: 'number' },
+  { value: 'first_purchase', label: 'First Purchase', type: 'boolean' },
+  { value: 'repeat_customer', label: 'Repeat Customer', type: 'boolean' },
+  { value: 'ltv_min', label: 'Lifetime Value Min ($)', type: 'number' },
+  { value: 'purchased_before', label: 'Purchased Before (Product ID)', type: 'entity' },
+  { value: 'shipping_country', label: 'Shipping Country Code', type: 'text' },
+  { value: 'billing_country', label: 'Billing Country Code', type: 'text' },
+  { value: 'payment_method', label: 'Payment Method', type: 'text' },
+  { value: 'shipping_method', label: 'Shipping Method', type: 'text' },
+  { value: 'date_range', label: 'Date Range', type: 'text' }, // simplified text for now
+  { value: 'day_of_week', label: 'Day of Week (1-7)', type: 'number' },
+];
+
+const OPERATORS = [
+  { value: 'equals', label: 'Equals' },
+  { value: 'not_equals', label: 'Not Equals' },
+  { value: 'greater_than', label: 'Greater Than' },
+  { value: 'less_than', label: 'Less Than' },
+  { value: 'in', label: 'In (comma list)' },
+  { value: 'not_in', label: 'Not In (comma list)' },
+];
+
 const EMPTY_RULE = {
   name: '',
   internal_note: '',
@@ -40,7 +77,7 @@ const EMPTY_RULE = {
   stacking_mode: 'stackable',
   priority: 100,
   status: 'active',
-  customer_group_id: '',
+  campaign_id: '',
   starts_at: '',
   ends_at: '',
   // Action
@@ -53,6 +90,8 @@ const EMPTY_RULE = {
   target_scope: 'all',
   target_category_id: '',
   target_product_ids: [] as number[],
+  // Attribute Exclusions
+  exclusion_attribute_value_ids: [] as number[],
 };
 
 function getActionSummary(rule: any) {
@@ -65,11 +104,21 @@ function getActionSummary(rule: any) {
 
 function getTargetSummary(rule: any) {
   const targets = rule.discount_targets || [];
-  if (targets.length === 0) return <span className="text-[#312f2c]/50 text-xs">All Products</span>;
-  const firstInclusion = targets.find((t: any) => !t.is_exclusion);
-  if (!firstInclusion) return <span className="text-[#312f2c]/50 text-xs">All Products</span>;
-  const extra = targets.filter((t: any) => !t.is_exclusion).length - 1;
-  return <span className="text-[#312f2c]/70 text-xs capitalize">{firstInclusion.target_type} #{firstInclusion.target_id}{extra > 0 ? ` +${extra} more` : ''}</span>;
+  const inclusions = targets.filter((t: any) => !t.is_exclusion);
+  const exclusions = targets.filter((t: any) => t.is_exclusion);
+  if (inclusions.length === 0) return (
+    <span className="text-[#312f2c]/50 text-xs">
+      All Products{exclusions.length > 0 ? <span className="ml-1 text-orange-500">({exclusions.length} excl.)</span> : ''}
+    </span>
+  );
+  const firstInclusion = inclusions[0];
+  const extra = inclusions.length - 1;
+  return (
+    <span className="text-[#312f2c]/70 text-xs capitalize">
+      {firstInclusion.target_type} #{firstInclusion.target_id}{extra > 0 ? ` +${extra} more` : ''}
+      {exclusions.length > 0 && <span className="ml-1 text-orange-500">({exclusions.length} excl.)</span>}
+    </span>
+  );
 }
 
 // ============================================================
@@ -111,21 +160,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
             </h3>
             <p className="text-sm text-[#312f2c]/70 leading-relaxed">
               A <strong>Promotion Rule</strong> tells the system: <em>&ldquo;Give X% off to customers who meet Y conditions on Z products.&rdquo;</em>
-              Every rule has three parts you must fill in:
             </p>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {[
-                { icon: <Settings className="w-6 h-6" />, title: 'Rule Settings', desc: 'Who gets it, when it runs, and whether it combines with other deals.', color: 'text-gray-500' },
-                { icon: <Tag className="w-6 h-6" />, title: 'Discount Action', desc: 'The actual amount — e.g. 10% off or $5 off. This is required.', color: 'text-[#d1a054]' },
-                { icon: <Target className="w-6 h-6" />, title: 'Target', desc: 'Which products it applies to — all, a category, or specific items.', color: 'text-rose-500' },
-              ].map(item => (
-                <div key={item.title} className="bg-[#f0ede5]/60 rounded-2xl p-4 flex flex-col items-center text-center">
-                  <div className={`mb-2 ${item.color}`}>{item.icon}</div>
-                  <div className="text-xs font-bold text-[#312f2c] mb-1">{item.title}</div>
-                  <div className="text-xs text-[#312f2c]/60 leading-snug">{item.desc}</div>
-                </div>
-              ))}
-            </div>
           </section>
 
           <hr className="border-[#312f2c]/8" />
@@ -145,7 +180,6 @@ function HelpModal({ onClose }: { onClose: () => void }) {
                   <div className="text-sm text-[#312f2c]/65 leading-relaxed">
                     The discount is applied <strong>without the customer doing anything</strong>. As soon as they qualify (right group, right products in cart), the price drops automatically.
                   </div>
-                  <div className="mt-1.5 text-xs text-[#d1a054] font-medium">Example: &ldquo;All Wholesale A members get 10% off sterling silver wire automatically.&rdquo;</div>
                 </div>
               </div>
               <div className="flex gap-3 p-4 bg-purple-50 border border-purple-100 rounded-2xl">
@@ -157,106 +191,10 @@ function HelpModal({ onClose }: { onClose: () => void }) {
                   <div className="text-sm text-[#312f2c]/65 leading-relaxed">
                     The customer must <strong>type a code at checkout</strong> to activate this rule. After creating a coupon-type rule here, go to <strong>Coupon Codes</strong> to generate the actual code.
                   </div>
-                  <div className="mt-1.5 text-xs text-purple-600 font-medium">Example: &ldquo;Enter SAVE20 to get 20% off your order.&rdquo;</div>
                 </div>
               </div>
             </div>
           </section>
-
-          <hr className="border-[#312f2c]/8" />
-
-          {/* Section: Stacking Modes */}
-          <section>
-            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#d1a054]" /> Stacking Modes — Can Discounts Combine?
-            </h3>
-            <div className="space-y-2.5">
-              {[
-                {
-                  badge: 'Stackable', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <Check className="w-5 h-5 text-emerald-600" />,
-                  desc: 'This discount adds on top of other discounts. If a customer qualifies for multiple stackable rules, they get all of them combined.',
-                  example: 'Group gets 5% off. Plus a stackable holiday promo adds another 10%. Total = 15% off.'
-                },
-                {
-                  badge: 'Best of Group', color: 'bg-[#d1a054]/15 text-[#c19044] border-[#d1a054]/30', icon: <Trophy className="w-5 h-5 text-[#d1a054]" />,
-                  desc: 'If multiple rules exist at the same priority level, only the one that gives the biggest savings is used. Prevents customers from getting too many overlapping deals.',
-                  example: 'Two category discounts exist: 8% off chains, 12% off chains for VIP. VIP gets 12%, not both.'
-                },
-                {
-                  badge: 'Exclusive', color: 'bg-red-100 text-red-700 border-red-200', icon: <Ban className="w-5 h-5 text-red-500" />,
-                  desc: 'If this rule applies, NO other discount can apply at the same time. Use for special one-time deals where you want full control.',
-                  example: 'Clearance sale: 40% off selected items. No other discounts can stack on these items.'
-                },
-              ].map(item => (
-                <div key={item.badge} className="flex gap-4 p-4 border border-[#312f2c]/8 rounded-2xl items-start">
-                  <div className="mt-0.5">{item.icon}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${item.color}`}>{item.badge}</span>
-                    </div>
-                    <p className="text-sm text-[#312f2c]/65 leading-relaxed">{item.desc}</p>
-                    <p className="text-xs text-[#312f2c]/45 mt-1 italic">{item.example}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <hr className="border-[#312f2c]/8" />
-
-          {/* Section: Priority */}
-          <section>
-            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-[#d1a054]" /> Priority Number
-            </h3>
-            <div className="text-sm text-[#312f2c]/70 leading-relaxed space-y-2">
-              <p>The <strong>Priority</strong> number decides the order in which rules are evaluated. <strong>Lower number = runs first.</strong></p>
-              <div className="flex items-center gap-2 bg-[#f0ede5] rounded-xl px-4 py-3 text-sm">
-                <span className="font-mono font-bold bg-[#312f2c] text-white rounded-md px-2 py-0.5 text-xs">10</span>
-                <ArrowRight className="w-3 h-3 text-[#312f2c]/40" />
-                <span className="font-mono font-bold bg-[#312f2c] text-white rounded-md px-2 py-0.5 text-xs">50</span>
-                <ArrowRight className="w-3 h-3 text-[#312f2c]/40" />
-                <span className="font-mono font-bold bg-[#312f2c] text-white rounded-md px-2 py-0.5 text-xs">100</span>
-                <span className="text-[#312f2c]/50 text-xs ml-2">(default)</span>
-              </div>
-              <p className="text-xs text-[#312f2c]/50">If two exclusive rules both match a cart, the one with the lower priority number wins. For stackable rules, priority just controls the evaluation order.</p>
-            </div>
-          </section>
-
-          <hr className="border-[#312f2c]/8" />
-
-          {/* Section: Targets */}
-          <section>
-            <h3 className="text-sm font-bold text-[#312f2c] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Target className="w-4 h-4 text-[#d1a054]" /> Targets — What the Discount Applies To
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { icon: <Globe className="w-6 h-6" />, title: 'All Products', desc: 'Every single product in the store gets this discount (for qualifying customers).', color: 'text-indigo-500' },
-                { icon: <Folder className="w-6 h-6" />, title: 'Specific Category', desc: 'Only products inside the selected category get the discount. Subcategories are included.', color: 'text-amber-500' },
-                { icon: <Package className="w-6 h-6" />, title: 'Specific Products', desc: 'You search for and pick exact products. Only those items are discounted.', color: 'text-teal-500' },
-              ].map(item => (
-                <div key={item.title} className="bg-[#f0ede5]/60 rounded-2xl p-4 flex flex-col items-center text-center">
-                  <div className={`mb-2 ${item.color}`}>{item.icon}</div>
-                  <div className="text-xs font-bold text-[#312f2c] mb-1">{item.title}</div>
-                  <div className="text-xs text-[#312f2c]/60 leading-snug">{item.desc}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Footer note */}
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 flex gap-4 items-start">
-            <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="text-sm font-bold text-blue-800 mb-0.5">Group Pricing Rules are separate</div>
-              <div className="text-sm text-blue-700/80 leading-relaxed">
-                The rules here (Promotions) are for store-wide or campaign discounts. For <strong>per-customer-group pricing</strong>
-                (like &ldquo;Wholesale A gets 15% off all gold wire&rdquo;), go to <strong>Group Pricing</strong> in the sidebar instead.
-                Both systems work together — group pricing fires first, then promotions are layered on top.
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>,
@@ -268,6 +206,8 @@ export default function DiscountsPage() {
   const [rules, setRules] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [attributes, setAttributes] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [productSearch, setProductSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -275,22 +215,30 @@ export default function DiscountsPage() {
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  
   const [form, setForm] = useState({ ...EMPTY_RULE });
   const [selectedProducts, setSelectedProducts] = useState<{ id: number; name: string; sku: string }[]>([]);
+  
+  // Array of dynamic conditions
+  const [conditions, setConditions] = useState<any[]>([]);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : '';
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [rulesRes, groupsRes, catsRes] = await Promise.all([
+      const [rulesRes, groupsRes, catsRes, attrsRes, campaignsRes] = await Promise.all([
         fetch(`${API}/discounts`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/groups`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(apiUrl('/api/admin/categories'), { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(apiUrl('/api/admin/attributes'), { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/campaigns`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setRules((await rulesRes.json()).data || []);
       setGroups((await groupsRes.json()).groups || []);
       setCategories((await catsRes.json()) || []);
+      setAttributes((await attrsRes.json()) || []);
+      setCampaigns((await campaignsRes.json()).data || []);
     } catch {
       toast.error('Failed to fetch data');
     } finally {
@@ -315,6 +263,7 @@ export default function DiscountsPage() {
   const openNewForm = () => {
     setForm({ ...EMPTY_RULE });
     setSelectedProducts([]);
+    setConditions([]);
     setEditingRuleId(null);
     setShowForm(true);
   };
@@ -323,12 +272,12 @@ export default function DiscountsPage() {
     const res = await fetch(`${API}/discounts/${rule.id}`, { headers: { Authorization: `Bearer ${token}` } });
     const { data: full } = await res.json();
 
-    const cond = full.discount_conditions?.find((c: any) => c.condition_type === 'customer_group');
     const action = full.discount_actions?.[0];
-    const targets = (full.discount_targets || []).filter((t: any) => !t.is_exclusion);
-    const firstTarget = targets[0];
+    const inclusions = (full.discount_targets || []).filter((t: any) => !t.is_exclusion);
+    const exclusions = (full.discount_targets || []).filter((t: any) => t.is_exclusion && t.target_type === 'attribute_value');
+    const firstTarget = inclusions[0];
 
-    const targetScope = targets.length === 0 ? 'all' : firstTarget.target_type === 'category' ? 'category' : 'product';
+    const targetScope = inclusions.length === 0 ? 'all' : firstTarget.target_type === 'category' ? 'category' : 'product';
 
     setForm({
       name: full.name || '',
@@ -338,7 +287,7 @@ export default function DiscountsPage() {
       stacking_mode: full.stacking_mode || 'stackable',
       priority: full.priority || 100,
       status: full.status || 'active',
-      customer_group_id: cond ? String(cond.entity_id) : '',
+      campaign_id: full.campaign_id ? String(full.campaign_id) : '',
       starts_at: full.starts_at ? full.starts_at.slice(0, 16) : '',
       ends_at: full.ends_at ? full.ends_at.slice(0, 16) : '',
       action_type: action?.action_type || 'percent_off',
@@ -347,16 +296,66 @@ export default function DiscountsPage() {
       applies_to: action?.applies_to || 'matching_line',
       max_discount_amount: action?.max_discount_amount?.toString() || '',
       target_scope: targetScope,
-      target_category_id: targetScope === 'category' ? String(targets[0]?.target_id || '') : '',
-      target_product_ids: targetScope === 'product' ? targets.map((t: any) => t.target_id) : [],
+      target_category_id: targetScope === 'category' ? String(inclusions[0]?.target_id || '') : '',
+      target_product_ids: targetScope === 'product' ? inclusions.map((t: any) => t.target_id) : [],
+      exclusion_attribute_value_ids: exclusions.map((t: any) => t.target_id),
     });
+
     if (targetScope === 'product') {
-      setSelectedProducts(targets.map((t: any) => ({ id: t.target_id, name: `Product #${t.target_id}`, sku: '' })));
+      setSelectedProducts(inclusions.map((t: any) => ({ id: t.target_id, name: `Product #${t.target_id}`, sku: '' })));
     } else {
       setSelectedProducts([]);
     }
+
+    // Map existing conditions to local state
+    if (full.discount_conditions && full.discount_conditions.length > 0) {
+      const mapped = full.discount_conditions.map((c: any) => ({
+        id: Math.random(),
+        condition_group: c.condition_group,
+        logic_operator: c.logic_operator,
+        condition_type: c.condition_type,
+        operator: c.operator,
+        entity_id: c.entity_id ? String(c.entity_id) : '',
+        value_text: c.value_text || '',
+        value_number: c.value_number !== null ? String(c.value_number) : '',
+      }));
+      setConditions(mapped);
+    } else {
+      setConditions([]);
+    }
+
     setEditingRuleId(rule.id);
     setShowForm(true);
+  };
+
+  const handleAddCondition = () => {
+    const newGroupId = conditions.length > 0 ? Math.max(...conditions.map(c => c.condition_group)) : 1;
+    setConditions([
+      ...conditions,
+      { id: Math.random(), condition_group: newGroupId, logic_operator: 'AND', condition_type: 'cart_subtotal_min', operator: 'greater_than', entity_id: '', value_text: '', value_number: '' }
+    ]);
+  };
+
+  const handleUpdateCondition = (idx: number, key: string, val: any) => {
+    const next = [...conditions];
+    next[idx] = { ...next[idx], [key]: val };
+    
+    // Auto-clean up values when changing type
+    if (key === 'condition_type') {
+      next[idx].entity_id = '';
+      next[idx].value_text = '';
+      next[idx].value_number = '';
+      const ctDef = CONDITION_TYPES.find(ct => ct.value === val);
+      if (ctDef?.type === 'boolean') {
+        next[idx].operator = 'equals';
+      }
+    }
+    
+    setConditions(next);
+  };
+
+  const handleRemoveCondition = (idx: number) => {
+    setConditions(conditions.filter((_, i) => i !== idx));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -371,9 +370,11 @@ export default function DiscountsPage() {
         ...form,
         priority: Number(form.priority),
         target_product_ids: selectedProducts.map(p => p.id),
-        customer_group_id: form.customer_group_id || null,
+        campaign_id: form.campaign_id || null,
         starts_at: form.starts_at || null,
         ends_at: form.ends_at || null,
+        // Drop the temporary local ID from conditions
+        conditions: conditions.map(({ id, ...rest }) => rest)
       };
 
       const method = editingRuleId ? 'PUT' : 'POST';
@@ -458,7 +459,9 @@ export default function DiscountsPage() {
 
           {/* === Section 1: Rule Header === */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[#312f2c]/40 mb-3">Rule Settings</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#312f2c]/40 mb-3 flex items-center gap-1.5">
+              <Settings className="w-4 h-4" /> Rule Settings
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2">
                 <label className="block text-sm font-semibold text-[#312f2c] mb-1.5">Rule Name *</label>
@@ -503,11 +506,11 @@ export default function DiscountsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-[#312f2c] mb-1.5">Restrict to Customer Group</label>
-                <select value={form.customer_group_id} onChange={e => fv('customer_group_id', e.target.value)}
+                <label className="block text-sm font-semibold text-[#312f2c] mb-1.5">Attach to Campaign</label>
+                <select value={form.campaign_id} onChange={e => fv('campaign_id', e.target.value)}
                   className="w-full bg-white/70 border border-white/50 focus:border-[#d1a054] rounded-xl px-4 py-2.5 outline-none transition-all">
-                  <option value="">All Customers</option>
-                  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  <option value="">None (Standalone Rule)</option>
+                  {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
@@ -531,10 +534,108 @@ export default function DiscountsPage() {
 
           <hr className="border-white/40" />
 
+          {/* === Section 1.5: Eligibility Conditions === */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#312f2c]/40 flex items-center gap-1.5">
+                <Filter className="w-4 h-4 text-indigo-500" /> Eligibility Conditions
+              </p>
+              <button type="button" onClick={handleAddCondition} className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Add Condition
+              </button>
+            </div>
+            
+            {conditions.length === 0 ? (
+              <div className="bg-indigo-50/50 border border-indigo-100/50 rounded-2xl p-5 text-center text-sm text-indigo-700/70">
+                This rule currently applies to everyone. Click "Add Condition" to restrict who gets it (e.g. Cart Subtotal {'>'} $500).
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {conditions.map((cond, index) => {
+                  const typeDef = CONDITION_TYPES.find(c => c.value === cond.condition_type);
+                  return (
+                    <div key={cond.id} className="flex flex-col sm:flex-row gap-3 bg-white/80 border border-indigo-100 rounded-2xl p-3 items-center shadow-sm">
+                      
+                      {/* Logic Operator (show after first item) */}
+                      {index > 0 ? (
+                        <div className="sm:w-24">
+                          <select value={cond.logic_operator} onChange={e => handleUpdateCondition(index, 'logic_operator', e.target.value)}
+                            className="w-full bg-indigo-50 text-indigo-700 font-bold border-0 focus:ring-2 focus:ring-indigo-300 rounded-lg px-2 py-2 outline-none text-xs text-center cursor-pointer">
+                            <option value="AND">AND</option>
+                            <option value="OR">OR</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="sm:w-24 text-center text-xs font-bold text-[#312f2c]/30 uppercase tracking-widest">
+                          When
+                        </div>
+                      )}
+
+                      {/* Condition Type */}
+                      <div className="flex-1 min-w-0 w-full">
+                        <select value={cond.condition_type} onChange={e => handleUpdateCondition(index, 'condition_type', e.target.value)}
+                          className="w-full bg-white border border-[#312f2c]/15 focus:border-indigo-400 rounded-xl px-3 py-2 outline-none text-sm font-semibold text-[#312f2c]">
+                          {CONDITION_TYPES.map(ct => <option key={ct.value} value={ct.value}>{ct.label}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Operator */}
+                      <div className="sm:w-36 w-full">
+                        <select value={cond.operator} onChange={e => handleUpdateCondition(index, 'operator', e.target.value)}
+                          className="w-full bg-white border border-[#312f2c]/15 focus:border-indigo-400 rounded-xl px-3 py-2 outline-none text-sm">
+                          {OPERATORS.map(op => <option key={op.value} value={op.value}>{op.label}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Value Input */}
+                      <div className="flex-1 min-w-0 w-full">
+                        {typeDef?.type === 'entity' && cond.condition_type === 'customer_group' ? (
+                          <select value={cond.entity_id} onChange={e => handleUpdateCondition(index, 'entity_id', e.target.value)}
+                            className="w-full bg-white border border-[#312f2c]/15 focus:border-indigo-400 rounded-xl px-3 py-2 outline-none text-sm">
+                            <option value="">Select group...</option>
+                            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                          </select>
+                        ) : typeDef?.type === 'entity' && cond.condition_type === 'category' ? (
+                          <select value={cond.entity_id} onChange={e => handleUpdateCondition(index, 'entity_id', e.target.value)}
+                            className="w-full bg-white border border-[#312f2c]/15 focus:border-indigo-400 rounded-xl px-3 py-2 outline-none text-sm">
+                            <option value="">Select category...</option>
+                            {displayCategories.map(c => (
+                              <option key={c.id} value={c.id}>{'\u00A0\u00A0\u00A0'.repeat(c.depth)}{c.depth > 0 ? '↳ ' : ''}{c.name}</option>
+                            ))}
+                          </select>
+                        ) : typeDef?.type === 'entity' ? (
+                          <input type="number" placeholder="Enter ID..." value={cond.entity_id} onChange={e => handleUpdateCondition(index, 'entity_id', e.target.value)}
+                            className="w-full bg-white border border-[#312f2c]/15 focus:border-indigo-400 rounded-xl px-3 py-2 outline-none text-sm" />
+                        ) : typeDef?.type === 'number' ? (
+                          <input type="number" step="0.01" placeholder="Enter number..." value={cond.value_number} onChange={e => handleUpdateCondition(index, 'value_number', e.target.value)}
+                            className="w-full bg-white border border-[#312f2c]/15 focus:border-indigo-400 rounded-xl px-3 py-2 outline-none text-sm" />
+                        ) : typeDef?.type === 'boolean' ? (
+                          <div className="flex items-center h-full px-2 text-xs text-[#312f2c]/40 italic">
+                            (No value needed)
+                          </div>
+                        ) : (
+                          <input type="text" placeholder="Enter text..." value={cond.value_text} onChange={e => handleUpdateCondition(index, 'value_text', e.target.value)}
+                            className="w-full bg-white border border-[#312f2c]/15 focus:border-indigo-400 rounded-xl px-3 py-2 outline-none text-sm" />
+                        )}
+                      </div>
+
+                      {/* Remove Button */}
+                      <button type="button" onClick={() => handleRemoveCondition(index)} className="p-2 text-[#312f2c]/30 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <hr className="border-white/40" />
+
           {/* === Section 2: Action (The Actual Discount) === */}
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-[#312f2c]/40 mb-3 flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-[#d1a054]" /> Discount Action <span className="text-red-400">*</span>
+              <Zap className="w-4 h-4 text-[#d1a054]" /> Discount Action <span className="text-red-400">*</span>
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#d1a054]/5 border border-[#d1a054]/20 rounded-2xl p-4">
               <div>
@@ -575,7 +676,7 @@ export default function DiscountsPage() {
           {/* === Section 3: Targets (What Does it Apply To?) === */}
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-[#312f2c]/40 mb-3 flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5" /> Target — What does this apply to?
+              <Target className="w-4 h-4 text-rose-500" /> Target — What does this apply to?
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -638,6 +739,78 @@ export default function DiscountsPage() {
             </div>
           </div>
 
+          <hr className="border-white/40" />
+
+          {/* === Section 4: Attribute-Based Exclusions === */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#312f2c]/40 mb-1 flex items-center gap-1.5">
+              <AlertOctagon className="w-3.5 h-3.5 text-orange-500" /> Attribute Exclusions <span className="font-normal text-[#312f2c]/30 normal-case text-[11px]">(optional)</span>
+            </p>
+            <p className="text-xs text-[#312f2c]/50 mb-4">
+              Products with any of the checked attribute values will be <strong>excluded</strong> from this discount.
+            </p>
+            {attributes.length === 0 ? (
+              <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl text-sm text-orange-700">
+                No attributes found. Add attributes first from the <strong>Attributes</strong> section.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {attributes.map((attr: any) => (
+                  <div key={attr.id} className="bg-white/50 border border-white/50 rounded-2xl p-4">
+                    <p className="text-sm font-semibold text-[#312f2c] mb-3 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                      {attr.name}
+                    </p>
+                    {attr.attribute_values && attr.attribute_values.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {attr.attribute_values.map((av: any) => {
+                          const isExcluded = form.exclusion_attribute_value_ids.includes(av.id);
+                          return (
+                            <label
+                              key={av.id}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border cursor-pointer text-sm font-medium transition-all select-none ${
+                                isExcluded
+                                  ? 'bg-orange-500/10 border-orange-400/40 text-orange-700'
+                                  : 'bg-white/60 border-[#312f2c]/15 text-[#312f2c]/65 hover:border-orange-300 hover:bg-orange-50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isExcluded}
+                                onChange={(e) => {
+                                  const ids = form.exclusion_attribute_value_ids;
+                                  if (e.target.checked) {
+                                    fv('exclusion_attribute_value_ids', [...ids, av.id]);
+                                  } else {
+                                    fv('exclusion_attribute_value_ids', ids.filter((x: number) => x !== av.id));
+                                  }
+                                }}
+                                className="w-3.5 h-3.5 accent-orange-500"
+                              />
+                              {av.color_hex && (
+                                <span className="w-3.5 h-3.5 rounded-full border border-white/60 flex-shrink-0" style={{ backgroundColor: av.color_hex }}></span>
+                              )}
+                              {av.value}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[#312f2c]/40 italic">No values for this attribute.</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {form.exclusion_attribute_value_ids.length > 0 && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-orange-600 font-medium">
+                <AlertOctagon className="w-3.5 h-3.5" />
+                {form.exclusion_attribute_value_ids.length} attribute value(s) will be excluded.
+                <button type="button" onClick={() => fv('exclusion_attribute_value_ids', [])} className="underline hover:no-underline ml-1">Clear all</button>
+              </div>
+            )}
+          </div>
+
           {/* Form Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 rounded-xl font-semibold text-[#312f2c]/70 hover:bg-white/50 transition-all">Cancel</button>
@@ -680,26 +853,37 @@ export default function DiscountsPage() {
                     <td className="p-4 pl-6">
                       <div className="font-semibold text-[#312f2c]">{rule.name}</div>
                       {rule.internal_note && <div className="text-xs text-[#312f2c]/40 mt-0.5 truncate max-w-[200px]">{rule.internal_note}</div>}
+                      {rule.discount_conditions && rule.discount_conditions.length > 0 && (
+                        <div className="mt-1 flex items-center gap-1 text-[10px] text-indigo-600 font-semibold uppercase tracking-wider">
+                          <Filter className="w-3 h-3" /> {rule.discount_conditions.length} conditions
+                        </div>
+                      )}
                     </td>
                     <td className="p-4">{getActionSummary(rule)}</td>
                     <td className="p-4">{getTargetSummary(rule)}</td>
                     <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${rule.trigger_type === 'automatic' ? 'bg-[#d1a054]/10 text-[#d1a054]' : 'bg-purple-500/10 text-purple-600'}`}>
-                        {rule.trigger_type}
-                      </span>
+                      {rule.trigger_type === 'coupon' ? (
+                        <span className="flex items-center gap-1.5 text-purple-600 font-semibold text-xs"><Ticket className="w-3.5 h-3.5" /> Coupon</span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-[#312f2c]/60 font-semibold text-xs"><Zap className="w-3.5 h-3.5" /> Auto</span>
+                      )}
                     </td>
-                    <td className="p-4 text-[#312f2c]/70 text-xs capitalize">{rule.stacking_mode?.replace(/_/g, ' ')}</td>
                     <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${rule.status === 'active' ? 'bg-green-500/10 text-green-600' : 'bg-gray-500/10 text-gray-600'}`}>
+                      {rule.stacking_mode === 'exclusive' && <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-bold">Exclusive</span>}
+                      {rule.stacking_mode === 'stackable' && <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">Stackable</span>}
+                      {rule.stacking_mode === 'best_of_group' && <span className="px-2 py-0.5 bg-[#d1a054]/20 text-[#c19044] rounded text-xs font-bold">Best of Group</span>}
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${rule.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-gray-500/10 text-gray-500'}`}>
                         {rule.status}
                       </span>
                     </td>
                     <td className="p-4 pr-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex justify-end gap-2">
                         <button onClick={() => openEditForm(rule)} className="p-2 text-[#312f2c]/50 hover:text-[#d1a054] hover:bg-[#d1a054]/10 rounded-lg transition-colors" title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(rule.id)} className="p-2 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete">
+                        <button onClick={() => handleDelete(rule.id)} className="p-2 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

@@ -90,7 +90,7 @@ export default async function CollectionPage({ params }: Props) {
             gap: '2rem' 
           }}>
             {products.map((product: Record<string, unknown>) => (
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               <ProductCard key={product.id as number} product={product as any} filters={filters} />
             ))}
           </div>

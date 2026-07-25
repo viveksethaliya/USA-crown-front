@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, CheckCircle2, XCircle, Save, Mail } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Save, Mail, Search } from 'lucide-react';
 import { apiUrl } from '@/lib/cart';
+import SeoFormBlock from '@/components/SeoFormBlock';
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -13,12 +14,14 @@ export default function SettingsPage() {
     metal_price_gold: '',
     metal_price_silver: '',
     metal_price_platinum: '',
-    abandoned_cart_reminder_days: ''
+    abandoned_cart_reminder_days: '',
+    password_min_length: 8,
+    password_expiry_days: '',
+    require_special_chars: false,
+    seo_default_title: '',
+    seo_default_description: '',
+    seo_default_og_image: ''
   });
-
-  useEffect(() => {
-    fetchSettings();
-  }, []);
 
   const fetchSettings = async () => {
     try {
@@ -33,7 +36,13 @@ export default function SettingsPage() {
           metal_price_gold: data.metal_price_gold || '',
           metal_price_silver: data.metal_price_silver || '',
           metal_price_platinum: data.metal_price_platinum || '',
-          abandoned_cart_reminder_days: data.abandoned_cart_reminder_days || 10
+          abandoned_cart_reminder_days: data.abandoned_cart_reminder_days || 10,
+          password_min_length: data.password_min_length || 8,
+          password_expiry_days: data.password_expiry_days || '',
+          require_special_chars: data.require_special_chars || false,
+          seo_default_title: data.seo_default_title || '',
+          seo_default_description: data.seo_default_description || '',
+          seo_default_og_image: data.seo_default_og_image || ''
         });
       }
     } catch (err) {
@@ -42,6 +51,10 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -132,6 +145,69 @@ export default function SettingsPage() {
                     Number of days a cart must be inactive before sending a reminder. Set to 0 to disable.
                   </p>
                 </div>
+              </div>
+
+              <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8 mt-6">
+                <div className="flex items-center gap-3 border-b border-[#312f2c]/10 pb-4 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 flex items-center justify-center border border-red-500/20 shadow-sm shrink-0">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[#312f2c] uppercase tracking-wider">Password Policies</h2>
+                    <p className="text-xs font-bold text-[#312f2c]/50 uppercase tracking-wider mt-0.5">Global security constraints for all user accounts.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Minimum Length</label>
+                    <input
+                      type="number"
+                      min="6"
+                      name="password_min_length"
+                      value={formData.password_min_length}
+                      onChange={handleInputChange}
+                      className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Expiry (Days)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="password_expiry_days"
+                      value={formData.password_expiry_days}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 90 (leave empty for no expiry)"
+                      className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="require_special_chars"
+                        checked={formData.require_special_chars}
+                        onChange={handleInputChange}
+                        className="w-5 h-5 rounded-md border-[#312f2c]/20 text-[#d1a054] focus:ring-[#d1a054] transition-colors"
+                      />
+                      <span className="text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Require Special Characters (!@#$%^&*)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* ─── SEO Defaults ─────────────────────── */}
+              <div className="mt-6">
+                <SeoFormBlock
+                  seoTitle={formData.seo_default_title}
+                  seoDescription={formData.seo_default_description}
+                  seoOgImage={formData.seo_default_og_image}
+                  onChange={(field, value) => setFormData(prev => ({ ...prev, [`seo_default_${field.replace('seo_', '')}`]: value }))}
+                  titlePlaceholder="e.g. Crown Findings — Wholesale Jewelry Findings"
+                  descriptionPlaceholder="e.g. Shop premium quality jewelry findings at wholesale prices."
+                />
               </div>
 
               <div className="flex justify-end pt-4">

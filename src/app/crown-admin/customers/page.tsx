@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Search, Trash2, Loader2, ChevronLeft, ChevronRight, Mail, Edit2 } from 'lucide-react';
+import { Users, Search, Trash2, Loader2, ChevronLeft, ChevronRight, Mail, Edit2, Download, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { Pagination } from '@/types/admin';
 
@@ -15,6 +15,9 @@ export default function CustomersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
@@ -49,6 +52,51 @@ export default function CustomersPage() {
       await fetch(`${API}/customers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       fetchCustomers(pagination.page);
     } catch (error) { console.error(error); }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const res = await fetch(`${API}/customers/export`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+      });
+      if (!res.ok) throw new Error('Export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `customers-export-${Date.now()}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.message || 'Export failed');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsImporting(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch(`${API}/customers/import`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Import failed');
+      alert(`Import complete: ${data.imported} created, ${data.updated} updated, ${data.failed} failed.`);
+      fetchCustomers(1);
+    } catch (err: any) {
+      alert(err.message || 'Import failed');
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const getRoleBadge = (roles: any) => {
@@ -118,6 +166,32 @@ export default function CustomersPage() {
             ))}
           </select>
 
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#312f2c]/10 text-[#312f2c]/70 hover:bg-[#312f2c]/5 rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Export
+          </button>
+          
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#312f2c]/10 text-[#312f2c]/70 hover:bg-[#312f2c]/5 rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50"
+          >
+            {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            Import
+          </button>
+          <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={handleImport} />
+          
+          <Link
+            href={`${API}/customers/template`}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#312f2c]/10 text-[#312f2c]/70 hover:bg-[#312f2c]/5 rounded-xl font-medium transition-colors shadow-sm"
+          >
+            Template
+          </Link>
+
           <Link
             href="/crown-admin/customers/new"
             className="flex items-center gap-2 px-4 py-2.5 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-xl font-medium transition-colors shadow-sm"
@@ -140,6 +214,7 @@ export default function CustomersPage() {
                 <th className="px-6 py-4 font-medium">Role</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium">Created</th>
+                <th className="px-6 py-4 font-medium">Last Login</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -177,6 +252,9 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-[#312f2c]/50">
                       {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-[#312f2c]/50">
+                      {customer.last_login_at ? new Date(customer.last_login_at).toLocaleDateString() : 'Never'}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <Link
