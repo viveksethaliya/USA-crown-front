@@ -92,8 +92,8 @@ export default function PriceListsPage() {
   // Confirm modal
   const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const userSearchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isExporting, setIsExporting] = useState(false);

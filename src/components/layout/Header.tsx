@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { apiUrl, cartFetch } from '@/lib/cart';
 import styles from './Header.module.css';
 import SmartSearchBar from './SmartSearchBar';
-import { FiUser, FiMapPin, FiLogOut } from 'react-icons/fi';
+import { FiUser, FiMapPin, FiLogOut, FiBriefcase, FiUsers } from 'react-icons/fi';
 
 // Static fallback mega menu data
 const fallbackMegaMenuData: Record<string, { title: string, slug: string, links: { label: string, href: string }[] }> = {
@@ -78,11 +78,10 @@ interface UserSession {
 
 interface Product {
   id: number;
-  name: string;
-  price?: number;
-  regular_price?: number;
-  image: string | null;
   slug: string;
+  name: string;
+  image: string | null;
+  priceRange?: string | null;
 }
 
 const CATEGORY_ORDER = [
@@ -137,7 +136,7 @@ export default function Header() {
     async function fetchProducts() {
       setLoadingProducts(true);
       try {
-        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=3`));
+        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=5`));
         if (res.ok) {
           const data = await res.json();
           setRecommendedCache(prev => ({
@@ -429,6 +428,24 @@ export default function Header() {
                       <FiUser /> My Profile
                     </Link>
                     {user.level !== 1 && (
+                      <>
+                        <Link
+                          href="/account/company"
+                          className={styles.userDropdownItem}
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <FiBriefcase /> Company Profile
+                        </Link>
+                        <Link
+                          href="/account/users"
+                          className={styles.userDropdownItem}
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <FiUsers /> Manage Users
+                        </Link>
+                      </>
+                    )}
+                    {user.level !== 1 && (
                       <Link
                         href="/account/addresses"
                         className={styles.userDropdownItem}
@@ -469,7 +486,9 @@ export default function Header() {
             </div>
 
             {/* Global Search */}
-            <SmartSearchBar />
+            <div className={styles.searchWrapper}>
+              <SmartSearchBar />
+            </div>
 
             {/* Live Metal Prices */}
             <div className={styles.metalPrices}>
@@ -577,7 +596,7 @@ export default function Header() {
                               ) : (
                                 <div className={styles.recommendedGrid}>
                                   {recommendedCache[activeCategory].map(prod => (
-                                    <Link href={`/products/${prod.id}`} key={prod.id} style={{ textDecoration: 'none' }} onClick={() => setIsMegaMenuOpen(false)}>
+                                    <Link href={`/products/${encodeURIComponent(prod.slug)}`} key={prod.id} style={{ textDecoration: 'none' }} onClick={() => setIsMegaMenuOpen(false)}>
                                       <div className={styles.recommendedCard}>
                                         {prod.image ? (
                                           // eslint-disable-next-line @next/next/no-img-element
@@ -587,10 +606,8 @@ export default function Header() {
                                         )}
                                         <div className={styles.prodInfo}>
                                           <div className={styles.prodName}>{prod.name}</div>
-                                          {!!prod.regular_price && (
-                                            <div className={styles.prodPrice}>
-                                              ${prod.regular_price.toFixed(2)}
-                                            </div>
+                                          {prod.priceRange && (
+                                            <div className={styles.prodPrice}>{prod.priceRange}</div>
                                           )}
                                         </div>
                                       </div>

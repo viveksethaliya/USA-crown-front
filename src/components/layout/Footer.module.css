@@ -1,9 +1,9 @@
 .footer {
-  background-color: var(--color-inkblue);
+  background-color: var(--color-primary);
   color: var(--color-white);
   padding-top: 0;
   margin-top: auto;
-  border-top: 4px solid var(--color-gold);
+  border-top: 4px solid var(--color-accent2);
 }
 
 /* ─── Newsletter Banner ─── */
@@ -32,12 +32,12 @@
 }
 
 .newsletterTitle {
-  color: var(--color-gold);
+  color: var(--color-accent2);
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   margin: 0 0 0.4rem;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 .newsletterSubtitle {
@@ -62,9 +62,12 @@
 
 .newsletterInput {
   flex: 1;
-  padding: 0.9rem 1.2rem;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 1.2rem;
   border: 2px solid rgba(212, 175, 55, 0.3);
   border-right: none;
+  border-radius: 4px 0 0 4px;
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--color-white);
   font-size: 0.95rem;
@@ -78,27 +81,34 @@
 
 .newsletterInput:focus {
   outline: none;
-  border-color: var(--color-gold);
+  border-color: var(--color-accent2);
   background-color: rgba(255, 255, 255, 0.1);
 }
 
 .newsletterBtn {
-  padding: 0.9rem 2rem;
-  background-color: var(--color-gold);
-  color: var(--color-inkblue);
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 2rem;
+  background-color: var(--color-accent2);
+  color: var(--color-primary);
   font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 1.5px;
-  border: 2px solid var(--color-gold);
+  border: 2px solid var(--color-accent2);
+  border-radius: 0 4px 4px 0;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  transition: all 0.3s ease;
   white-space: nowrap;
   font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .newsletterBtn:hover {
-  background-color: transparent;
-  color: var(--color-gold);
+  background-color: #e0852b;
+  border-color: #e0852b;
+  color: var(--color-primary);
 }
 
 .newsletterBtn:disabled {
@@ -150,11 +160,11 @@
 }
 
 .heading {
-  color: var(--color-gold);
+  color: var(--color-accent2);
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 1px;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
   margin-bottom: 0.5rem;
   position: relative;
   padding-bottom: 0.5rem;
@@ -167,7 +177,7 @@
   bottom: 0;
   width: 40px;
   height: 2px;
-  background-color: var(--color-gold);
+  background-color: var(--color-accent2);
 }
 
 .text {
@@ -198,11 +208,11 @@
 }
 
 .contactItem a:hover {
-  color: var(--color-gold);
+  color: var(--color-accent2);
 }
 
 .icon {
-  color: var(--color-gold);
+  color: var(--color-accent2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,7 +237,7 @@
 }
 
 .link:hover {
-  color: var(--color-gold);
+  color: var(--color-accent2);
   transform: translateX(5px);
 }
 
@@ -268,7 +278,7 @@
 }
 
 .socialIcon:hover {
-  color: var(--color-gold);
+  color: var(--color-accent2);
 }
 
 /* =============================================
@@ -352,6 +362,11 @@
   .newsletterInput {
     border-right: 2px solid rgba(212, 175, 55, 0.3);
     border-bottom: none;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .newsletterBtn {
+    border-radius: 0 0 4px 4px;
   }
 
   .container {

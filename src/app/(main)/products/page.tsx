@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname, ReadonlyURLSearchParams } from 'next/navigation';
 import { FiMenu, FiX, FiSearch } from 'react-icons/fi';
-import { API_URL } from '@/lib/config';
+import { apiUrl } from '@/lib/api';
 import styles from './products.module.css';
+import ProductCard from '@/components/products/ProductCard';
+import { useSessionStatus } from '@/lib/auth';
+import ScrollReveal from '@/components/animations/ScrollReveal';
 
 interface Product {
   id: number;
@@ -73,78 +76,75 @@ function sortCategories(aTitle: string, bTitle: string) {
   return aTitle.localeCompare(bTitle);
 }
 
+function readCatalogState(params: ReadonlyURLSearchParams) {
+  const attributes: Record<string, string[]> = {};
+  params.forEach((value, key) => {
+    if (key.startsWith('attr_')) attributes[key.slice(5)] = value.split(',').filter(Boolean);
+  });
+  return {
+    search: params.get('search') ?? '',
+    categories: (params.get('category') ?? '').split(',').filter(Boolean),
+    attributes,
+  };
+}
+
 function ProductsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get('category');
+  const { isAuthenticated, userPermission } = useSessionStatus();
+
+  const catalogState = useMemo(() => readCatalogState(searchParams), [searchParams]);
+
+  function replaceCatalogState(next: ReturnType<typeof readCatalogState>) {
+    const params = new URLSearchParams();
+    if (next.search) params.set('search', next.search);
+    if (next.categories.length) params.set('category', next.categories.join(','));
+    Object.entries(next.attributes).forEach(([attributeSlug, values]) => {
+      if (values.length) params.set(`attr_${attributeSlug}`, values.join(','));
+    });
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   const [products, setProducts] = useState<Product[]>([]);
   const [filters, setFilters] = useState<DynamicFilter[]>([]);
-
-  // Parse initial selected attributes from URL
-  const initialSelectedAttrs: Record<string, string[]> = {};
-  for (const [key, val] of searchParams.entries()) {
-    if (key.startsWith('attr_') && val) {
-      initialSelectedAttrs[key.replace('attr_', '')] = val.split(',');
-    }
-  }
-
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>(initialSelectedAttrs);
   const [categories, setCategories] = useState<CategoryTree[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [sortBy, setSortBy] = useState('name');
-  const searchParamVal = searchParams.get('search') || '';
 
-  const [expandedFilters, setExpandedFilters] = useState<string[]>([]);
+  const [expandedFilters, setExpandedFilters] = useState<string[]>(['categories']);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   const toggleFilterExpand = (filterKey: string) => {
     setExpandedFilters(prev => prev.includes(filterKey) ? prev.filter(f => f !== filterKey) : [...prev, filterKey]);
   };
-  const [searchQuery, setSearchQuery] = useState(searchParamVal);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParamVal);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    categoryParam ? categoryParam.split(',') : []
-  );
+  
+  const [searchQuery, setSearchQuery] = useState(catalogState.search);
   const [mobileSidebar, setMobileSidebar] = useState(false);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userPermission, setUserPermission] = useState<string | null>(null);
-
-  // Check user session on mount
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const token = localStorage.getItem('storeToken');
-        if (!token) return;
-        const res = await fetch(`${API_URL}/api/store/auth/me`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated) {
-            setIsAuthenticated(true);
-            setUserPermission(data.user?.purchasing_permission || 'can_place_orders');
-          }
-        }
-      } catch {
-        // silently fail
+    if (!loadMoreRef.current || loading || page >= totalPages) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setLoading(true);
+        setPage(p => p + 1);
       }
-    }
-    checkSession();
-  }, []);
+    }, { rootMargin: '400px' });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [loading, page, totalPages]);
 
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/store/catalog/categories`);
+        const res = await fetch(apiUrl('/api/store/catalog/categories'));
         const data = await res.json();
         setCategories(data.categories || []);
       } catch (err) {
@@ -155,33 +155,36 @@ function ProductsContent() {
   }, []);
 
   // Fetch attribute filters
+  const categoryStr = catalogState.categories.join(',');
+  const searchStr = catalogState.search;
   useEffect(() => {
     const fetchFilters = async () => {
       try {
         const queryParams = new URLSearchParams();
-        if (categoryParam) queryParams.set('category', categoryParam);
-        const s = searchParams.get('search');
-        if (s) queryParams.set('search', s);
+        if (categoryStr) queryParams.set('category', categoryStr);
+        if (searchStr) queryParams.set('search', searchStr);
 
-        const res = await fetch(`${API_URL}/api/store/catalog/filters?${queryParams.toString()}`);
+        const res = await fetch(apiUrl(`/api/store/catalog/filters?${queryParams.toString()}`));
         const data = await res.json();
         setFilters(data.filters || []);
+        
+        // Also expand metal filters by default
+        const metalFilters = (data.filters || [])
+          .filter((f: any) => f.name.toLowerCase().includes('metal'))
+          .map((f: any) => f.slug);
+        setExpandedFilters(prev => Array.from(new Set([...prev, 'categories', ...metalFilters])));
       } catch (err) {
         console.error('Failed to fetch product filters', err);
       }
     };
     fetchFilters();
-  }, [categoryParam, searchParams.get('search')]);
+  }, [categoryStr, searchStr]);
 
-  // Sync URL params to state
-   
+  // Sync searchQuery when URL changes (e.g. back/forward button)
   useEffect(() => {
-    setSelectedCategories(categoryParam ? categoryParam.split(',') : []);
-    const s = searchParams.get('search') || '';
-    setSearchQuery(s);
-    setDebouncedSearchQuery(s);
+    setSearchQuery(catalogState.search);
     setPage(1);
-  }, [categoryParam, searchParams]);
+  }, [catalogState.search]);
 
   // Fetch products
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
@@ -201,12 +204,21 @@ function ProductsContent() {
         if (Array.isArray(values) && values.length > 0) params.set(`attr_${slug}`, values.join(','));
       });
 
-      const res = await fetch(`${API_URL}/api/store/catalog/products?${params}`, { signal });
+      const res = await fetch(apiUrl(`/api/store/catalog/products?${params}`), { signal });
       const data = await res.json();
 
       if (signal?.aborted) return;
 
-      setProducts(data.products || []);
+      if (p === 1) {
+        setProducts(data.products || []);
+      } else {
+        setProducts(prev => {
+          // Avoid appending duplicates if React double-fires
+          const existingIds = new Set(prev.map(prod => prod.id));
+          const newProducts = (data.products || []).filter((prod: any) => !existingIds.has(prod.id));
+          return [...prev, ...newProducts];
+        });
+      }
       setTotalPages(data.totalPages || 1);
       setTotal(data.total || 0);
     } catch (err) {
@@ -218,60 +230,49 @@ function ProductsContent() {
     }
   }, []);
 
-  // Debounce search
+  // Debounce search input to URL
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setPage(1);
+      if (catalogState.search !== searchQuery) {
+        replaceCatalogState({ ...catalogState, search: searchQuery });
+        setPage(1);
+      }
     }, 400);
     return () => clearTimeout(timeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // Trigger fetch
   useEffect(() => {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
-      fetchProducts(page, debouncedSearchQuery, sortBy, selectedCategories, selectedAttributes, controller.signal);
+      fetchProducts(page, catalogState.search, sortBy, catalogState.categories, catalogState.attributes, controller.signal);
     }, 0);
     return () => {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [page, debouncedSearchQuery, sortBy, selectedCategories, selectedAttributes, fetchProducts]);
+  }, [page, catalogState, sortBy, fetchProducts]);
 
   const handleSearch = (val: string) => {
     setSearchQuery(val);
     setLoading(true);
   };
 
-  const updateUrlParams = (cats: string[], attrs: Record<string, string[]>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (cats.length > 0) params.set('category', cats.join(','));
-    else params.delete('category');
-    const keys = Array.from(params.keys());
-    keys.forEach(k => { if (k.startsWith('attr_')) params.delete(k); });
-    params.delete('metal');
-    Object.entries(attrs).forEach(([slug, values]) => {
-      if (values.length > 0) params.set(`attr_${slug}`, values.join(','));
-    });
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
-
   const toggleCategorySelection = (slug: string, descendantSlugs: string[], ancestorSlugs: string[]) => {
     setLoading(true);
     let newCats: string[];
 
-    if (selectedCategories.includes(slug)) {
+    if (catalogState.categories.includes(slug)) {
       // Unchecking: remove this slug and ensure descendants are also removed
-      newCats = selectedCategories.filter(c => c !== slug && !descendantSlugs.includes(c));
+      newCats = catalogState.categories.filter(c => c !== slug && !descendantSlugs.includes(c));
     } else {
       // Checking: remove all ancestors (to narrow down) and descendants (to broaden up), then add this slug
-      newCats = selectedCategories.filter(c => !ancestorSlugs.includes(c) && !descendantSlugs.includes(c));
+      newCats = catalogState.categories.filter(c => !ancestorSlugs.includes(c) && !descendantSlugs.includes(c));
       newCats.push(slug);
     }
 
-    setSelectedCategories(newCats);
-    updateUrlParams(newCats, selectedAttributes);
+    replaceCatalogState({ ...catalogState, categories: newCats });
     setPage(1);
   };
 
@@ -292,7 +293,7 @@ function ProductsContent() {
 
   const renderCategoryFilter = (category: CategoryTree, ancestorSlugs: string[] = []) => {
     const childSlugs = getCategoryDescendantSlugs(category);
-    const isParentSelected = selectedCategories.includes(category.slug);
+    const isParentSelected = catalogState.categories.includes(category.slug);
     const hasChildren = category.children.length > 0;
     const isExpanded = expandedCategories.includes(category.slug);
 
@@ -331,26 +332,23 @@ function ProductsContent() {
 
   const toggleAttribute = (attrSlug: string, termName: string) => {
     setLoading(true);
-    const current = selectedAttributes[attrSlug] || [];
+    const current = catalogState.attributes[attrSlug] || [];
     const updated = current.includes(termName)
       ? current.filter(t => t !== termName)
       : [...current, termName];
-    const next = { ...selectedAttributes };
-    if (updated.length > 0) next[attrSlug] = updated;
-    else delete next[attrSlug];
+    const nextAttributes = { ...catalogState.attributes };
+    if (updated.length > 0) nextAttributes[attrSlug] = updated;
+    else delete nextAttributes[attrSlug];
 
-    setSelectedAttributes(next);
-    updateUrlParams(selectedCategories, next);
+    replaceCatalogState({ ...catalogState, attributes: nextAttributes });
     setPage(1);
   };
 
   const resetFilters = () => {
     setLoading(true);
-    setSelectedCategories([]);
     setSearchQuery('');
-    setDebouncedSearchQuery('');
+    replaceCatalogState({ search: '', categories: [], attributes: {} });
     setPage(1);
-    updateUrlParams([], {});
   };
 
   return (
@@ -415,7 +413,7 @@ function ProductsContent() {
                     <label key={term.id} className={styles.checkLabel}>
                       <input
                         type="checkbox"
-                        checked={(selectedAttributes[filter.slug] || []).includes(term.name)}
+                        checked={(catalogState.attributes[filter.slug] || []).includes(term.name)}
                         onChange={() => toggleAttribute(filter.slug, term.name)}
                         className={styles.checkInput}
                       />
@@ -454,14 +452,14 @@ function ProductsContent() {
                 </span>
               )}
 
-              {selectedCategories.map(cat => (
+              {catalogState.categories.map(cat => (
                 <span key={cat} className={styles.activeFilterTag}>
                   {getCategoryName(cat)}
                   <button className={styles.activeFilterRemoveBtn} onClick={() => toggleCategorySelection(cat, [], [])}><FiX /></button>
                 </span>
               ))}
 
-              {Object.entries(selectedAttributes).map(([slug, values]) =>
+              {Object.entries(catalogState.attributes).map(([slug, values]) =>
                 values.map(val => {
                   const filterName = filters.find(f => f.slug === slug)?.name || slug;
                   return (
@@ -488,97 +486,47 @@ function ProductsContent() {
           </div>
 
           {/* Product Grid */}
-          {loading ? (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#888' }}>
-              Loading products...
+          {loading && page === 1 ? (
+            <div className="global-loader-container">
+              <div className="global-spinner"></div>
+              <div className="global-loader-text">Loading Products</div>
             </div>
           ) : (
             <div className={styles.productGrid}>
-              {products.map(product => (
-                <div key={product.id} className={styles.productCard}>
-                  <div className={styles.productImageWrap}>
-                    {product.tags && product.tags.length > 0 && (
-                      <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                        {product.tags.map((t) => (
-                          <span key={t.id} style={{ background: '#111', color: '#fff', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', borderRadius: 4 }}>
-                            {t.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={product.image || '/web-phts/a-17.jpg'}
-                      alt={product.name}
-                      className={styles.productImage}
-                    />
-                  </div>
-                  <div className={styles.productInfo}>
-                    <h3 className={styles.productName}>{product.name}</h3>
-                    {product.swatchAttributes && product.swatchAttributes.length > 0 && (
-                      <div className={styles.metalRow}>
-                        <span className={styles.metalLabel}>Options:</span>
-                        <div className={styles.metalDots}>
-                          {product.swatchAttributes.map(swatch => (
-                            <span
-                              key={swatch.value}
-                              className={styles.metalDot}
-                              style={
-                                swatch.type === 'color' && swatch.color_hex
-                                  ? { backgroundColor: swatch.color_hex, border: '1px solid rgba(0,0,0,0.1)' }
-                                  : swatch.type === 'image' && swatch.image_url
-                                    ? { backgroundImage: `url(${swatch.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid rgba(0,0,0,0.1)' }
-                                    : { background: '#f4f6f8', border: '1px solid #d0d5dd', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#555', fontWeight: 600, letterSpacing: '-0.5px' }
-                              }
-                              title={swatch.value}
-                            >
-                              {(!swatch.color_hex && !swatch.image_url) ? swatch.value.substring(0, 3).toUpperCase() : ''}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {product.sizeRanges && product.sizeRanges.map((sz, i) => (
-                      <div key={i} className={styles.metalRow}>
-                        <span className={styles.metalLabel}>{sz.name}:</span>
-                        <span className={styles.metalValue}>{sz.range}</span>
-                      </div>
-                    ))}
-                    {isAuthenticated && userPermission !== 'view_only' && product.priceRange && (
-                      <div className={styles.metalRow}>
-                        <span className={styles.metalLabel}>Price:</span>
-                        <span className={styles.priceValue}>{product.priceRange}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Link href={`/products/${product.id}`} className={styles.viewBtn}>
-                    View Details
-                  </Link>
-                </div>
+              {products.map((product, index) => (
+                <ScrollReveal key={product.id} animation="fade-up" delay={(index % 4) * 100 as 0|100|200|300} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <ProductCard 
+                    product={product} 
+                    isAuthenticated={isAuthenticated} 
+                    userPermission={userPermission} 
+                  />
+                </ScrollReveal>
               ))}
             </div>
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', padding: '2rem 0', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => { setLoading(true); setPage(p => Math.max(1, p - 1)); }}
-                disabled={page <= 1}
-                style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: page <= 1 ? '#f4f6f8' : '#fff', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
-              >
-                ← Previous
-              </button>
-              <span style={{ padding: '0.5rem 1rem', color: '#666', fontSize: '0.9rem' }}>
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => { setLoading(true); setPage(p => Math.min(totalPages, p + 1)); }}
-                disabled={page >= totalPages}
-                style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: page >= totalPages ? '#f4f6f8' : '#fff', cursor: page >= totalPages ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
-              >
-                Next →
-              </button>
+          {/* Infinite Scroll Trigger */}
+          {page < totalPages && (
+            <div ref={loadMoreRef} style={{ display: 'flex', justifyContent: 'center', padding: '2rem 0' }}>
+              {loading && page > 1 ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#666' }}>
+                  <div className="global-spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></div>
+                  <span>Loading more...</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setLoading(true); setPage(p => p + 1); }}
+                  style={{ padding: '0.5rem 1rem', border: '1px solid #d0d5dd', background: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Load More
+                </button>
+              )}
+            </div>
+          )}
+          {page >= totalPages && products.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#888', fontSize: '0.9rem' }}>
+              You have reached the end of the catalog.
             </div>
           )}
         </main>

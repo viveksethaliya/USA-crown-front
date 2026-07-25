@@ -1,6 +1,7 @@
 export interface CartItem {
   id: string;
   productId: number;
+  productSlug: string | null;
   variationId: number | null;
   productName: string;
   variationLabel: string | null;
@@ -33,33 +34,9 @@ export interface CartApiResponse {
   error?: string;
 }
 
-export function apiUrl(path: string) {
-  let base = process.env.NEXT_PUBLIC_API_URL;
-  
-  // If on client and base is localhost, dynamically rewrite to actual hostname for LAN testing
-  if (typeof window !== 'undefined' && base && base.includes('localhost')) {
-    if (window.location.hostname !== 'localhost') {
-      base = base.replace('localhost', window.location.hostname);
-    }
-  }
+import { apiUrl, storeFetch as cartFetch } from './api';
 
-  if (!base) {
-    base = typeof window !== 'undefined' ? `http://${window.location.hostname}:5000` : 'http://localhost:5000';
-  }
-  return `${base}${path}`;
-}
-
-export function cartFetch(path: string, options: RequestInit = {}) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('storeToken') : null;
-  return fetch(apiUrl(path), {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-}
+export { apiUrl, cartFetch };
 
 export function formatMoney(value: number | null | undefined) {
   if (value === null || value === undefined) return 'Login to view';
@@ -68,4 +45,14 @@ export function formatMoney(value: number | null | undefined) {
     style: 'currency',
     currency: 'USD'
   }).format(value);
+}
+
+export function getGuestCartId(): string {
+  if (typeof window === 'undefined') return '';
+  let guestId = localStorage.getItem('guestCartId');
+  if (!guestId) {
+    guestId = 'guest_' + Math.random().toString(36).substring(2, 11) + Date.now();
+    localStorage.setItem('guestCartId', guestId);
+  }
+  return guestId;
 }

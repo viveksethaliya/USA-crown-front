@@ -2,22 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import styles from '../blog.module.css';
+import { apiUrl } from '@/lib/api';
 
-// Fallback mock data for when API is unavailable
-const fallbackData: Record<string, { title: string; date: string; image: string; content: string }> = {
-  'the-essential-guide-to-jewelry-findings': {
-    title: 'The Essential Guide to Jewelry Findings: What Every Jeweler Needs',
-    date: 'October 12, 2023',
-    image: 'https://images.unsplash.com/photo-1599643478514-411c7f558155?q=80&w=1200&auto=format&fit=crop',
-    content: `
-      <p>Whether you are a seasoned bench jeweler or just starting to design your own line, understanding the vast world of jewelry findings is absolutely essential. Findings are the building blocks of jewelry making—the functional components that hold pieces together, provide wearability, and often add that final touch of professionalism.</p>
-      <h2>What Exactly Are Findings?</h2>
-      <p>In the jewelry trade, "findings" refers to the components that go into the making of jewelry, excluding the gemstones and the primary metal stock (like sheet or wire). They are the clasps, the jump rings, the ear wires, the settings, and the bails.</p>
-      <h2>Quality Matters</h2>
-      <p>When it comes to fine jewelry, the quality of your findings reflects the quality of your brand. At Crown Findings, we pride ourselves on providing high-quality, durable findings manufactured to precise standards.</p>
-    `
-  }
-};
 
 interface BlogDetail {
   title: string;
@@ -46,7 +32,7 @@ interface RelatedData {
 
 async function getBlogPost(slug: string): Promise<BlogDetail | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${slug}`, {
+    const res = await fetch(apiUrl(`/api/blogs/${slug}`), {
       cache: 'no-store'
     });
     if (!res.ok) return null;
@@ -59,7 +45,7 @@ async function getBlogPost(slug: string): Promise<BlogDetail | null> {
 
 async function getRelatedPosts(slug: string): Promise<RelatedData | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${slug}/related`, {
+    const res = await fetch(apiUrl(`/api/blogs/${slug}/related`), {
       cache: 'no-store'
     });
     if (!res.ok) return null;
@@ -81,10 +67,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  // Fallback
-  const fallback = fallbackData[resolvedParams.slug];
-  if (fallback) return { title: `${fallback.title} | Crown Findings` };
-
   return { title: 'Post Not Found' };
 }
 
@@ -93,16 +75,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await getBlogPost(resolvedParams.slug);
   const related = await getRelatedPosts(resolvedParams.slug);
 
-  // If API returned data
-  if (post) {
-    const dateStr = new Date(post.published_at).toLocaleDateString('en-US', {
-      month: 'long', day: 'numeric', year: 'numeric'
-    });
+  if (!post) {
+    notFound();
+  }
 
-    return (
-      <main className={styles.main}>
-        <section className={styles.postContainer}>
-          <Link href="/blog" className={styles.backLink}>&larr; Back to Blog</Link>
+  const dateStr = new Date(post.published_at).toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric'
+  });
+
+  return (
+    <main className={styles.main}>
+      <section className={styles.postContainer}>
+        <Link href="/blog" className={styles.backLink}>&larr; Back to Blog</Link>
 
           <div className={styles.postHeader}>
             <span className={styles.postDate}>{dateStr}</span>
@@ -160,34 +144,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </section>
           )}
         </section>
-      </main>
-    );
-  }
-
-  // Fallback to static data
-  const fallback = fallbackData[resolvedParams.slug];
-  if (!fallback) {
-    notFound();
-  }
-
-  return (
-    <main className={styles.main}>
-      <section className={styles.postContainer}>
-        <Link href="/blog" className={styles.backLink}>&larr; Back to Blog</Link>
-
-        <div className={styles.postHeader}>
-          <span className={styles.postDate}>{fallback.date}</span>
-          <h1 className={styles.postTitle}>{fallback.title}</h1>
-        </div>
-
-        <img src={fallback.image} alt={fallback.title} className={styles.postHeroImage} />
-
-        <div
-          className={styles.postContent}
-          dangerouslySetInnerHTML={{ __html: fallback.content }}
-        />
-      </section>
     </main>
   );
 }
-

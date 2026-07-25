@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import ReCAPTCHA from 'react-google-recaptcha';
 import styles from './login.module.css';
 import { toast } from 'react-hot-toast';
 import { apiUrl } from '@/lib/cart';
@@ -13,6 +14,8 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState('');
@@ -23,6 +26,12 @@ export default function LoginPage() {
 
   const handleSubmit = async (e?: React.FormEvent | React.KeyboardEvent | React.MouseEvent) => {
     if (e) e.preventDefault();
+    
+    if (!recaptchaValue) {
+      toast.error('Please complete the reCAPTCHA');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -33,21 +42,29 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      // Safe JSON parse — backend may return HTML on errors
+      let data: Record<string, unknown> = {};
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error('Non-JSON response from login API:', text.slice(0, 200));
+        throw new Error('Server error. Please try again later.');
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error((data.error as string) || 'Login failed');
       }
 
       if (data.requireOtp) {
-        setUserId(data.userId);
+        setUserId(data.userId as string);
         setStep(2);
-        toast.success(data.message || 'OTP sent to your email');
+        toast.success((data.message as string) || 'OTP sent to your email');
         return;
       }
 
       if (data.token) {
-        localStorage.setItem('storeToken', data.token);
+        localStorage.setItem('storeToken', data.token as string);
       }
 
       // Dispatch a custom event so the Header updates immediately
@@ -131,11 +148,20 @@ export default function LoginPage() {
         body: JSON.stringify({ userId, otp: otpValue }),
       });
       
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'OTP verification failed');
+      // Safe JSON parse — backend may return HTML on errors
+      let data: Record<string, unknown> = {};
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error('Non-JSON response from OTP API:', text.slice(0, 200));
+        throw new Error('Server error. Please try again later.');
+      }
+
+      if (!res.ok) throw new Error((data.error as string) || 'OTP verification failed');
 
       if (data.token) {
-        localStorage.setItem('storeToken', data.token);
+        localStorage.setItem('storeToken', data.token as string);
       }
 
       window.dispatchEvent(new Event('user-auth-change'));
@@ -243,7 +269,15 @@ export default function LoginPage() {
                     </label>
                   </div>
 
-                  <button type="button" onClick={(e) => submitForm(e)} className={styles.loginBtn} disabled={isLoading}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'}
+                      onChange={(value) => setRecaptchaValue(value)}
+                    />
+                  </div>
+
+                  <button type="button" onClick={(e) => submitForm(e)} className={styles.loginBtn} disabled={isLoading || !recaptchaValue}>
                     {isLoading ? 'Signing in...' : 'Log in'}
                   </button>
 

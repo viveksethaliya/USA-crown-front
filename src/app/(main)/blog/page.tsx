@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import styles from './blog.module.css';
 import { FiSearch, FiX } from 'react-icons/fi';
+import styles from './blog.module.css';
+import { apiUrl } from '@/lib/api';
+import ScrollReveal from "@/components/animations/ScrollReveal";
 
 interface BlogPost {
   slug: string;
@@ -32,7 +34,7 @@ export default function BlogPage() {
       if (search) params.set('search', search);
       if (category) params.set('category', category);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs?${params.toString()}`);
+      const res = await fetch(apiUrl(`/api/blogs?${params.toString()}`));
       if (res.ok) {
         const data = await res.json();
         setPosts(data.blogs || []);
@@ -51,7 +53,7 @@ export default function BlogPage() {
     // Fetch categories
     async function fetchCategories() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/categories`);
+        const res = await fetch(apiUrl('/api/blogs/categories'));
         if (res.ok) {
           const data = await res.json();
           setCategories(data.categories || []);
@@ -90,9 +92,9 @@ export default function BlogPage() {
   return (
     <main className={styles.main}>
       <section className={styles.heroSection}>
-        <div className={styles.heroContent}>
+        <ScrollReveal animation="fade-up" className={styles.heroContent}>
           <h1 className={styles.heroTitle}>The Crown Blog</h1>
-        </div>
+        </ScrollReveal>
       </section>
 
       <section className={styles.blogLayout}>
@@ -177,25 +179,27 @@ export default function BlogPage() {
                 </p>
               )}
               <div className={styles.blogGrid}>
-                {posts.map((post) => {
+                {posts.map((post, index) => {
                   const dateStr = new Date(post.published_at).toLocaleDateString('en-US', {
                     month: 'long', day: 'numeric', year: 'numeric'
                   });
                   return (
-                    <Link href={`/blog/${post.slug}`} key={post.slug} className={styles.blogCard}>
-                      {post.cover_image && (
-                        <img src={post.cover_image} alt={post.title} className={styles.blogImage} />
-                      )}
-                      <div className={styles.blogCardContent}>
-                        {post.category && (
-                          <span className={styles.blogCategory}>{post.category}</span>
+                    <ScrollReveal key={post.slug} animation="fade-up" delay={(index % 3) * 100 as 0|100|200} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <Link href={`/blog/${post.slug}`} className={styles.blogCard} style={{ width: '100%' }}>
+                        {post.cover_image && (
+                          <img src={post.cover_image} alt={post.title} className={styles.blogImage} />
                         )}
-                        <span className={styles.blogDate}>{dateStr}</span>
-                        <h2 className={styles.blogCardTitle}>{post.title}</h2>
-                        <p className={styles.blogCardExcerpt}>{post.excerpt}</p>
-                        <span className={styles.readMore}>Read Article &rarr;</span>
-                      </div>
-                    </Link>
+                        <div className={styles.blogCardContent}>
+                          {post.category && (
+                            <span className={styles.blogCategory}>{post.category}</span>
+                          )}
+                          <span className={styles.blogDate}>{dateStr}</span>
+                          <h2 className={styles.blogCardTitle}>{post.title}</h2>
+                          <p className={styles.blogCardExcerpt}>{post.excerpt}</p>
+                          <span className={styles.readMore}>Read Article &rarr;</span>
+                        </div>
+                      </Link>
+                    </ScrollReveal>
                   );
                 })}
               </div>

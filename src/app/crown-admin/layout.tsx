@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   LayoutDashboard, Image, Package, Tag, Tags, SlidersHorizontal, Shapes,
-  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, Undo2, FileText, FormInput
+  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, Undo2, FileText, FormInput, Search
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 
@@ -63,6 +63,7 @@ const NAV: NavElement[] = [
       { label: 'Collections', href: '/crown-admin/brands', icon: Tag },
       { label: 'Attributes', href: '/crown-admin/attributes', icon: SlidersHorizontal },
       { label: 'Pages & Blog', href: '/crown-admin/pages', icon: FileText },
+      { label: 'Search Synonyms', href: '/crown-admin/synonyms', icon: Search },
     ]
   },
   {

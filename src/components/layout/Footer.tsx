@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { apiUrl } from '@/lib/cart';
 import styles from './Footer.module.css';
 
 export default function Footer() {
@@ -16,7 +17,7 @@ export default function Footer() {
 
     setStatus('loading');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/newsletter/subscribe`, {
+      const res = await fetch(apiUrl('/api/store/newsletter/subscribe'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, source: 'footer' }),
@@ -121,7 +122,6 @@ export default function Footer() {
           <div className={styles.section}>
             <h4 className={styles.heading}>HELP CENTER</h4>
             <ul className={styles.list}>
-              <li><Link href="/affiliation" className={styles.link}>Affiliation</Link></li>
               <li><Link href="/about" className={styles.link}>About us</Link></li>
               <li><Link href="/faqs" className={styles.link}>FAQs</Link></li>
             </ul>
@@ -138,13 +138,7 @@ export default function Footer() {
 
         {/* Column 3 */}
         <div className={styles.column}>
-          <div className={styles.section}>
-            <h4 className={styles.heading}>TOP TRENDING</h4>
-            <ul className={styles.list}>
-              <li><Link href="/new" className={styles.link}>New</Link></li>
-              <li><Link href="/best-selling" className={styles.link}>Best Selling</Link></li>
-            </ul>
-          </div>
+
           <div className={styles.section}>
             <h4 className={styles.heading}>CUSTOMER</h4>
             <ul className={styles.list}>
@@ -162,9 +156,8 @@ export default function Footer() {
               <li><Link href="/" className={styles.link}>Home</Link></li>
               <li><Link href="/about" className={styles.link}>About us</Link></li>
               <li><Link href="/blog" className={styles.link}>Blog</Link></li>
-              <li><Link href="/discount" className={styles.link}>Discount</Link></li>
               <li><Link href="/contact" className={styles.link}>Contact us</Link></li>
-              <li><Link href="/certificate" className={styles.link}>Resale Certificate</Link></li>
+              <li><Link href="/resale-certificate" className={styles.link}>Resale Certificate</Link></li>
             </ul>
           </div>
         </div>
@@ -174,13 +167,13 @@ export default function Footer() {
           <div className={styles.section}>
             <h4 className={styles.heading}>CATEGORIES</h4>
             <ul className={styles.list}>
-              <li><Link href="/category/batteries" className={styles.link}>Batteries</Link></li>
-              <li><Link href="/category/beads" className={styles.link}>Beads</Link></li>
-              <li><Link href="/category/bracelet" className={styles.link}>Bracelet</Link></li>
-              <li><Link href="/category/chains" className={styles.link}>Chains</Link></li>
-              <li><Link href="/category/cd-mounting" className={styles.link}>CD Mounting</Link></li>
-              <li><Link href="/category/clasps" className={styles.link}>Clasps</Link></li>
-              <li><Link href="/category/discs" className={styles.link}>Discs</Link></li>
+              <li><Link href="/products?category=batteries" className={styles.link}>Batteries</Link></li>
+              <li><Link href="/products?category=beads" className={styles.link}>Beads</Link></li>
+              <li><Link href="/products?category=bracelet" className={styles.link}>Bracelet</Link></li>
+              <li><Link href="/products?category=chains" className={styles.link}>Chains</Link></li>
+              <li><Link href="/products?category=cd-mounting" className={styles.link}>CD Mounting</Link></li>
+              <li><Link href="/products?category=clasps" className={styles.link}>Clasps</Link></li>
+              <li><Link href="/products?category=discs" className={styles.link}>Discs</Link></li>
               <li><Link href="/products" className={styles.link}>View All</Link></li>
             </ul>
           </div>

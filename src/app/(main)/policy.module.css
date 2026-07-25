@@ -45,7 +45,7 @@
   font-weight: 700;
   margin-bottom: 0.5rem;
   color: var(--color-gold);
-  text-transform: uppercase;
+  
   letter-spacing: 1px;
 }
 
@@ -71,7 +71,7 @@
   border-bottom: 2px solid var(--color-gold);
   padding-bottom: 0.5rem;
   display: inline-block;
-  text-transform: uppercase;
+  
 }
 
 .text {

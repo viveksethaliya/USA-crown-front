@@ -1,8 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Playfair_Display, Outfit } from "next/font/google";
 import "./storefront.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
 
 export const metadata: Metadata = {
   title: "Crown Findings | B2B Wholesale Jewelry",
@@ -21,7 +32,7 @@ export default function StorefrontLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="storefront-root flex flex-col min-h-full w-full">
+    <div className={`storefront-root flex flex-col min-h-full w-full ${playfair.variable} ${outfit.variable}`}>
       <Header />
       <main className="flex-1 w-full">{children}</main>
       <Footer />
