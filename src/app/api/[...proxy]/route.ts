@@ -7,10 +7,11 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
   const url = new URL(req.url);
   const targetUrl = `${BACKEND_URL}/api/${path}${url.search}`;
 
-  // Forward all headers except host
+  // Forward all headers except host and content-length (will be recalculated)
   const headers = new Headers();
   req.headers.forEach((value, key) => {
-    if (key.toLowerCase() !== 'host') {
+    const lower = key.toLowerCase();
+    if (lower !== 'host' && lower !== 'content-length') {
       headers.set(key, value);
     }
   });
@@ -21,10 +22,12 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
   };
 
   // Forward body for non-GET/HEAD requests
+  // Use arrayBuffer() instead of text() so binary multipart/form-data
+  // (file uploads) are forwarded without corruption.
   if (req.method !== 'GET' && req.method !== 'HEAD') {
-    const body = await req.text();
-    if (body) {
-      fetchOptions.body = body;
+    const buffer = await req.arrayBuffer();
+    if (buffer.byteLength > 0) {
+      fetchOptions.body = buffer;
     }
   }
 
@@ -32,13 +35,13 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
     const response = await fetch(targetUrl, fetchOptions);
     const responseHeaders = new Headers();
     response.headers.forEach((value, key) => {
-      // Skip headers that Next.js manages
-      if (!['transfer-encoding', 'connection'].includes(key.toLowerCase())) {
+      // Skip hop-by-hop headers that Next.js manages
+      if (!['transfer-encoding', 'connection', 'keep-alive'].includes(key.toLowerCase())) {
         responseHeaders.set(key, value);
       }
     });
 
-    const responseBody = await response.text();
+    const responseBody = await response.arrayBuffer();
     return new NextResponse(responseBody, {
       status: response.status,
       headers: responseHeaders,

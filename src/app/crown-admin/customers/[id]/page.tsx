@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Loader2, Save, Edit2, Trash2, Building2, Users, FileText, Eye, ChevronLeft, MapPin, Plus, Shield, Network, Activity, Clock } from 'lucide-react';
+import { Loader2, Save, Edit2, Trash2, Building2, Users, FileText, Eye, ChevronLeft, MapPin, Plus, Shield, Network, Activity, Clock, Mail, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -39,6 +39,11 @@ export default function CustomerDetailPage() {
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [allCustomers, setAllCustomers] = useState<any[]>([]);
   const [customerGroups, setCustomerGroups] = useState<any[]>([]);
+
+  // Welcome email modal state
+  const [welcomeModal, setWelcomeModal] = useState<{ show: boolean; userId: string; plainPassword: string; email: string } | null>(null);
+  const [isSendingWelcome, setIsSendingWelcome] = useState(false);
+  const [showModalPw, setShowModalPw] = useState(false);
 
   // Permissions Management
   const [allPermissions, setAllPermissions] = useState<any[]>([]);
@@ -170,13 +175,49 @@ export default function CustomerDetailPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to save');
       toast.success(isCreatingUser ? 'User created successfully' : 'Profile updated successfully');
-      if (isCreatingUser) router.push(`/crown-admin/customers/${json.id}`);
-      else { setIsEditing(false); setCertificateFile(null); await fetchUser(); }
+      if (isCreatingUser) {
+        // Show welcome email prompt before navigating
+        setWelcomeModal({
+          show: true,
+          userId: json.id,
+          plainPassword: formData.password,
+          email: formData.email,
+        });
+      } else {
+        setIsEditing(false);
+        setCertificateFile(null);
+        await fetchUser();
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Send welcome email then navigate to the new user page
+  const handleSendWelcome = async (send: boolean) => {
+    if (!welcomeModal) return;
+    if (send) {
+      setIsSendingWelcome(true);
+      try {
+        const token = localStorage.getItem('adminToken');
+        const res = await fetch(`${API}/customers/${welcomeModal.userId}/send-welcome`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ plain_password: welcomeModal.plainPassword }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to send email');
+        toast.success(`Welcome email sent to ${welcomeModal.email}`);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to send welcome email');
+      } finally {
+        setIsSendingWelcome(false);
+      }
+    }
+    setWelcomeModal(null);
+    router.push(`/crown-admin/customers/${welcomeModal.userId}`);
   };
 
   const handleDeleteDocument = async (docId: number) => {
@@ -283,6 +324,83 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
+
+      {/* ── Welcome Email Modal ─────────────────────────────── */}
+      {welcomeModal?.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-[#312f2c]/10 animate-fade-in">
+            {/* Modal Header */}
+            <div className="bg-[#001f3f] px-6 py-5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#d1a054]/20 flex items-center justify-center">
+                <Mail className="w-5 h-5 text-[#d1a054]" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-base">Send Welcome Email?</h3>
+                <p className="text-[#c8b89a] text-xs mt-0.5">The user account has been created successfully.</p>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-[#312f2c]/70 text-sm leading-relaxed">
+                Would you like to send a welcome email to <strong className="text-[#312f2c]">{welcomeModal.email}</strong> with their login credentials?
+              </p>
+
+              {/* Credentials Preview */}
+              <div className="bg-[#f5f0e8] rounded-xl border border-[#312f2c]/10 p-4 space-y-2 text-sm">
+                <div className="flex gap-3">
+                  <span className="text-[#312f2c]/45 w-20 shrink-0">Email / ID</span>
+                  <span className="text-[#312f2c] font-medium break-all">{welcomeModal.email}</span>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <span className="text-[#312f2c]/45 w-20 shrink-0">Password</span>
+                  <span className="text-[#312f2c] font-mono font-medium tracking-widest">
+                    {showModalPw ? welcomeModal.plainPassword : '••••••••'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowModalPw(p => !p)}
+                    className="ml-auto p-1.5 text-[#d1a054] hover:bg-[#d1a054]/10 rounded-lg transition-colors"
+                    title={showModalPw ? 'Hide password' : 'Reveal password'}
+                  >
+                    {showModalPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-[#312f2c]/45 text-xs">
+                The email will include a reveal-password button so the recipient can securely view their password.
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="px-6 pb-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => handleSendWelcome(false)}
+                disabled={isSendingWelcome}
+                className="px-5 py-2.5 rounded-xl border border-[#312f2c]/15 text-[#312f2c]/70 hover:bg-[#312f2c]/5 font-medium text-sm transition-colors disabled:opacity-40"
+              >
+                Skip, just go to profile
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSendWelcome(true)}
+                disabled={isSendingWelcome}
+                className="px-5 py-2.5 rounded-xl bg-[#001f3f] hover:bg-[#001f3f]/85 text-white font-medium text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+              >
+                {isSendingWelcome ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
+                ) : (
+                  <><Mail className="w-4 h-4" /> Yes, Send Email</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ─────────────────────────────────────────────────────── */}
+
       <div>
         <Link href="/crown-admin/customers" className="text-sm text-[#312f2c]/50 hover:text-[#312f2c] transition-colors mb-2 inline-flex items-center gap-1">
           <ChevronLeft className="w-4 h-4" /> Back to Customers

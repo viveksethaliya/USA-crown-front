@@ -418,7 +418,9 @@ export default function Header() {
                   <div className={styles.userDropdown}>
                     <div className={styles.userDropdownHeader}>
                       <strong>{user.firstName} {user.lastName}</strong>
-                      <span>{user.companyName}</span>
+                      {user.companyName && user.companyName !== 'N/A' && (
+                        <span>{user.companyName}</span>
+                      )}
                     </div>
                     <Link
                       href="/profile"
@@ -427,33 +429,7 @@ export default function Header() {
                     >
                       <FiUser /> My Profile
                     </Link>
-                    {user.level !== 1 && (
-                      <>
-                        <Link
-                          href="/account/company"
-                          className={styles.userDropdownItem}
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <FiBriefcase /> Company Profile
-                        </Link>
-                        <Link
-                          href="/account/users"
-                          className={styles.userDropdownItem}
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <FiUsers /> Manage Users
-                        </Link>
-                      </>
-                    )}
-                    {user.level !== 1 && (
-                      <Link
-                        href="/account/addresses"
-                        className={styles.userDropdownItem}
-                        onClick={() => setUserMenuOpen(false)}
-                      >
-                        <FiMapPin /> Addresses
-                      </Link>
-                    )}
+
                     <button
                       onClick={handleLogout}
                       className={styles.userDropdownLogout}

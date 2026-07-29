@@ -19,7 +19,7 @@ export default function OrderPaymentPage(props: { params: Promise<{ id: string }
   const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    fetch(apiUrl(`/api/account/orders/${params.id}`))
+    fetch(apiUrl(`/api/store/account/orders/${params.id}`))
       .then(res => res.json())
       .then(data => {
         if (!data || data.error) {

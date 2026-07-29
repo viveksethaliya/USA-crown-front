@@ -3,16 +3,15 @@
 import Link from 'next/link';
 import { useState, useRef } from 'react';
 import styles from './apply.module.css';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiEye, FiEyeOff, FiUploadCloud, FiCheckCircle, FiAlertCircle, FiFileText } from 'react-icons/fi';
 import { apiUrl } from '@/lib/cart';
-
-
 
 export default function ApplyPage() {
   const [step, setStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [errorField, setErrorField] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const firstNameRef = useRef<HTMLInputElement>(null);
   const lastNameRef = useRef<HTMLInputElement>(null);
@@ -31,6 +30,10 @@ export default function ApplyPage() {
   const stateProvinceRef = useRef<HTMLInputElement>(null);
   const countryRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // Password visibility state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Step 1: Personal Information
   const [firstName, setFirstName] = useState('');
@@ -64,7 +67,7 @@ export default function ApplyPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const getPasswordStrength = (pass: string) => {
-    if (!pass) return { label: '', color: 'transparent' };
+    if (!pass) return { label: '', color: 'transparent', score: 0 };
     let score = 0;
     if (pass.length >= 8) score += 1;
     if (/[A-Z]/.test(pass)) score += 1;
@@ -72,51 +75,128 @@ export default function ApplyPage() {
     if (/[0-9]/.test(pass)) score += 1;
     if (/[^A-Za-z0-9]/.test(pass)) score += 1;
     
-    if (score < 3) return { label: 'Weak', color: '#ff4d4f' };
-    if (score < 5) return { label: 'Medium', color: '#faad14' };
-    return { label: 'Strong', color: '#52c41a' };
+    if (score < 3) return { label: 'Weak', color: '#ff4d4f', score };
+    if (score < 5) return { label: 'Medium', color: '#faad14', score };
+    return { label: 'Strong', color: '#52c41a', score };
   };
   const strength = getPasswordStrength(password);
 
+  const highlightAndFocus = (fieldName: string, msg: string, ref?: React.RefObject<HTMLElement | null>) => {
+    setErrorField(fieldName);
+    setErrorMessage(msg);
+    if (ref && ref.current) {
+      ref.current.focus();
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   const handleNext = () => {
     if (step === 1) {
-      if (!firstName.trim()) { setErrorField('firstName'); firstNameRef.current?.focus(); return; }
-      if (!lastName.trim()) { setErrorField('lastName'); lastNameRef.current?.focus(); return; }
-      if (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim())) { setErrorField('email'); emailRef.current?.focus(); return; }
-      if (!hearAbout) { setErrorField('hearAbout'); hearAboutRef.current?.focus(); return; }
-      if (!password) { setErrorField('password'); passwordRef.current?.focus(); return; }
-      if (getPasswordStrength(password).label === 'Weak') { setErrorField('password'); passwordRef.current?.focus(); return; }
-      if (!confirmPassword) { setErrorField('confirmPassword'); confirmPasswordRef.current?.focus(); return; }
+      if (!firstName.trim()) {
+        highlightAndFocus('firstName', 'Please enter your first name.', firstNameRef);
+        return;
+      }
+      if (!lastName.trim()) {
+        highlightAndFocus('lastName', 'Please enter your last name.', lastNameRef);
+        return;
+      }
+      if (!email.trim() || !/\S+@\S+\.\S+/.test(email.trim())) {
+        highlightAndFocus('email', 'Please enter a valid email address.', emailRef);
+        return;
+      }
+      if (!hearAbout) {
+        highlightAndFocus('hearAbout', 'Please select how you heard about us.', hearAboutRef);
+        return;
+      }
+      if (!password) {
+        highlightAndFocus('password', 'Please enter a password.', passwordRef);
+        return;
+      }
+      if (getPasswordStrength(password).label === 'Weak') {
+        highlightAndFocus('password', 'Password is too weak. It must be at least 8 characters with letters, numbers & special characters.', passwordRef);
+        return;
+      }
+      if (!confirmPassword) {
+        highlightAndFocus('confirmPassword', 'Please retype your password to confirm.', confirmPasswordRef);
+        return;
+      }
+      if (password !== confirmPassword) {
+        highlightAndFocus('confirmPassword', 'Passwords do not match.', confirmPasswordRef);
+        return;
+      }
     } else if (step === 2) {
-      if (!companyName.trim()) { setErrorField('companyName'); companyNameRef.current?.focus(); return; }
-      if (companyWebsite.trim() && !/^(https?:\/\/)?([\w\d\.-]+)\.([a-z\.]{2,6})(\/[\w\d\.-]*)*\/?$/i.test(companyWebsite.trim())) { setErrorField('companyWebsite'); companyWebsiteRef.current?.focus(); return; }
-      if (!addressLine.trim()) { setErrorField('addressLine'); addressLineRef.current?.focus(); return; }
-      if (!phone.trim()) { setErrorField('phone'); phoneRef.current?.focus(); return; }
-      if (!resaleTaxId.trim()) { setErrorField('resaleTaxId'); resaleTaxIdRef.current?.focus(); return; }
-      if (!city.trim()) { setErrorField('city'); cityRef.current?.focus(); return; }
-      if (!zipCode.trim()) { setErrorField('zipCode'); zipCodeRef.current?.focus(); return; }
-      if (!stateProvince.trim()) { setErrorField('stateProvince'); stateProvinceRef.current?.focus(); return; }
-      if (!country) { setErrorField('country'); countryRef.current?.focus(); return; }
+      if (!companyName.trim()) {
+        highlightAndFocus('companyName', 'Please enter your company name.', companyNameRef);
+        return;
+      }
+      if (companyWebsite.trim() && !/^(https?:\/\/)?([\w\d\.-]+)\.([a-z\.]{2,6})(\/[\w\d\.-]*)*\/?$/i.test(companyWebsite.trim())) {
+        highlightAndFocus('companyWebsite', 'Please enter a valid website URL (e.g. example.com).', companyWebsiteRef);
+        return;
+      }
+      if (!addressLine.trim()) {
+        highlightAndFocus('addressLine', 'Please enter your business address line.', addressLineRef);
+        return;
+      }
+      if (!phone.trim()) {
+        highlightAndFocus('phone', 'Please enter a phone number.', phoneRef);
+        return;
+      }
+      if (!resaleTaxId.trim()) {
+        highlightAndFocus('resaleTaxId', 'Please enter your Resale/Tax ID number.', resaleTaxIdRef);
+        return;
+      }
+      if (!city.trim()) {
+        highlightAndFocus('city', 'Please enter your city.', cityRef);
+        return;
+      }
+      if (!zipCode.trim()) {
+        highlightAndFocus('zipCode', 'Please enter your postal/zip code.', zipCodeRef);
+        return;
+      }
+      if (!stateProvince.trim()) {
+        highlightAndFocus('stateProvince', 'Please enter your state/province.', stateProvinceRef);
+        return;
+      }
+      if (!country.trim()) {
+        highlightAndFocus('country', 'Please enter your country.', countryRef);
+        return;
+      }
     }
     setErrorField('');
+    setErrorMessage('');
     if (step < 3) setStep(step + 1);
   };
 
   const handlePrev = () => {
+    setErrorField('');
+    setErrorMessage('');
     if (step > 1) setStep(step - 1);
+  };
+
+  const processFiles = (files: File[]) => {
+    const valid = files.filter(f => {
+      const isAllowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(f.type);
+      if (!isAllowed) {
+        setSubmitError(`File "${f.name}" is not a valid format. Please upload PDF, JPG, or PNG.`);
+      }
+      return isAllowed;
+    }).slice(0, 2);
+
+    if (valid.length > 0) {
+      setSubmitError('');
+      setUploadedFiles(valid);
+    }
   };
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).slice(0, 2);
-    setUploadedFiles(files);
+    processFiles(Array.from(e.dataTransfer.files));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files).slice(0, 2);
-      setUploadedFiles(files);
+      processFiles(Array.from(e.target.files));
     }
   };
 
@@ -127,12 +207,10 @@ export default function ApplyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (uploadedFiles.length === 0) {
-      setErrorField('certificates');
+      highlightAndFocus('certificates', 'Please upload your signed resale certificate before submitting.', dropZoneRef);
       setSubmitError('Please upload your signed resale certificate.');
-      dropZoneRef.current?.focus();
       return;
     }
-    setErrorField('');
     if (password !== confirmPassword) {
       setSubmitError('Passwords do not match');
       return;
@@ -140,6 +218,7 @@ export default function ApplyPage() {
 
     setIsSubmitting(true);
     setSubmitError('');
+    setErrorField('');
 
     try {
       const formData = new FormData();
@@ -171,10 +250,17 @@ export default function ApplyPage() {
         body: formData,
       });
 
-      const data = await response.json();
+      // Safely parse JSON response to handle empty bodies or server errors gracefully
+      const responseText = await response.text();
+      let data: any = {};
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        data = { error: 'Server returned an unparseable response. Please check your backend connection.' };
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit registration');
+        throw new Error(data.error || data.message || `Failed to submit registration (Server Status: ${response.status})`);
       }
 
       setSubmitSuccess(true);
@@ -185,14 +271,30 @@ export default function ApplyPage() {
     }
   };
 
+  // Live validation helpers
+  const isValidEmail = (val: string) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+  const isValidPhone = (val: string) => !val || /^[0-9\+\-\s\(\)]{7,20}$/.test(val.trim());
+  const isValidUrl = (val: string) => !val || /^(https?:\/\/)?([\w\d\.-]+)\.([a-z\.]{2,6})(\/[\w\d\.-]*)*\/?$/i.test(val.trim());
+  const isValidZip = (val: string) => !val || /^[A-Za-z0-9\s\-]{3,10}$/.test(val.trim());
+  const isValidCity = (val: string) => !val || (val.trim().length >= 2 && !/^\d+$/.test(val.trim()));
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
   if (submitSuccess) {
     return (
       <div className={styles.page}>
         <div className={styles.container}>
           <div className={styles.formCard} style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-            <h2 className={styles.stepTitle} style={{ color: 'green' }}>Registration Submitted!</h2>
-            <p className={styles.stepDesc} style={{ marginTop: '1rem', fontSize: '1.1rem' }}>
-              Your application has been received and is pending review. We will contact you once it is approved.
+            <div style={{ fontSize: '3rem', color: '#52c41a', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+              <FiCheckCircle />
+            </div>
+            <h2 className={styles.stepTitle} style={{ color: '#001f3f' }}>Registration Submitted!</h2>
+            <p className={styles.stepDesc} style={{ marginTop: '1rem', fontSize: '1.05rem', color: '#555' }}>
+              Thank you, <strong>{firstName}</strong>. Your wholesale application has been received and is pending review by our team. We will notify you at <strong>{email}</strong> once your account is approved.
             </p>
             <Link href="/" className={styles.submitBtn} style={{ display: 'inline-block', marginTop: '2rem', textDecoration: 'none' }}>
               Return to Home
@@ -228,6 +330,25 @@ export default function ApplyPage() {
         <div className={styles.formCard}>
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
 
+            {/* Error Banner */}
+            {errorMessage && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                backgroundColor: '#fff1f0',
+                border: '1px solid #ffa39e',
+                color: '#cf1322',
+                padding: '0.8rem 1rem',
+                borderRadius: '4px',
+                marginBottom: '1.5rem',
+                fontSize: '0.9rem'
+              }}>
+                <FiAlertCircle style={{ flexShrink: 0, fontSize: '1.2rem' }} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             {/* ===== STEP 1: Personal Information ===== */}
             {step === 1 && (
               <div className={styles.stepContent}>
@@ -244,10 +365,10 @@ export default function ApplyPage() {
                         <input
                           ref={firstNameRef}
                           type="text"
+                          autoComplete="given-name"
                           value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
+                          onChange={(e) => { setFirstName(e.target.value); if (errorField === 'firstName') setErrorField(''); }}
                           className={`${styles.input} ${errorField === 'firstName' ? styles.errorBlink : ''}`}
-                          onAnimationEnd={() => setErrorField('')}
                           placeholder="First name"
                           required
                         />
@@ -257,10 +378,10 @@ export default function ApplyPage() {
                         <input
                           ref={lastNameRef}
                           type="text"
+                          autoComplete="family-name"
                           value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
+                          onChange={(e) => { setLastName(e.target.value); if (errorField === 'lastName') setErrorField(''); }}
                           className={`${styles.input} ${errorField === 'lastName' ? styles.errorBlink : ''}`}
-                          onAnimationEnd={() => setErrorField('')}
                           placeholder="Last Name"
                           required
                         />
@@ -274,13 +395,18 @@ export default function ApplyPage() {
                     <input
                       ref={emailRef}
                       type="email"
+                      autoComplete="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`${styles.input} ${errorField === 'email' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
+                      onChange={(e) => { setEmail(e.target.value); if (errorField === 'email') setErrorField(''); }}
+                      className={`${styles.input} ${(errorField === 'email' || !isValidEmail(email)) ? styles.errorBlink : ''}`}
                       placeholder="Email"
                       required
                     />
+                    {!isValidEmail(email) && (
+                      <span style={{ fontSize: '0.8rem', color: '#d9534f', marginTop: '0.2rem' }}>
+                        ⚠️ Please enter a valid email address (e.g. name@company.com)
+                      </span>
+                    )}
                   </div>
 
                   <div className={styles.inputGroup}>
@@ -288,9 +414,8 @@ export default function ApplyPage() {
                     <select
                       ref={hearAboutRef}
                       value={hearAbout}
-                      onChange={(e) => setHearAbout(e.target.value)}
+                      onChange={(e) => { setHearAbout(e.target.value); if (errorField === 'hearAbout') setErrorField(''); }}
                       className={`${styles.select} ${errorField === 'hearAbout' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
                       required
                     >
                       <option value="">How did you hear about us?</option>
@@ -305,52 +430,100 @@ export default function ApplyPage() {
 
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Password <span className={styles.required}>*</span></label>
-                    <input
-                      ref={passwordRef}
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={`${styles.input} ${errorField === 'password' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
-                      placeholder="Password"
-                      required
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        ref={passwordRef}
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={(e) => { setPassword(e.target.value); if (errorField === 'password') setErrorField(''); }}
+                        className={`${styles.input} ${errorField === 'password' ? styles.errorBlink : ''}`}
+                        style={{ paddingRight: '2.8rem' }}
+                        placeholder="Password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '0.8rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#666',
+                          cursor: 'pointer',
+                          padding: '0.3rem',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                        title={showPassword ? 'Hide Password' : 'Show Password'}
+                      >
+                        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </button>
+                    </div>
                     {password && (
                       <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ flex: 1, height: '4px', background: '#e8e8e8', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ flex: 1, height: '5px', background: '#e8e8e8', borderRadius: '3px', overflow: 'hidden' }}>
                           <div style={{ 
                             height: '100%', 
                             width: strength.label === 'Weak' ? '33%' : strength.label === 'Medium' ? '66%' : '100%', 
                             background: strength.color,
-                            transition: 'all 0.3s'
+                            transition: 'all 0.3s ease-in-out'
                           }} />
                         </div>
-                        <span style={{ color: strength.color, fontWeight: 500, minWidth: '45px' }}>{strength.label}</span>
+                        <span style={{ color: strength.color, fontWeight: 600, minWidth: '50px', fontSize: '0.8rem' }}>{strength.label}</span>
                       </div>
                     )}
                     {errorField === 'password' && strength.label === 'Weak' && (
-                      <p style={{ color: '#ff4d4f', fontSize: '0.85rem', marginTop: '0.5rem' }}>Password is too weak. Must be at least 8 characters and contain a mix of uppercase, lowercase, numbers, and special characters.</p>
+                      <p style={{ color: '#ff4d4f', fontSize: '0.825rem', marginTop: '0.4rem' }}>
+                        Password must be at least 8 characters long and include uppercase, lowercase, numbers &amp; symbols.
+                      </p>
                     )}
                   </div>
 
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Confirm Password <span className={styles.required}>*</span></label>
-                    <input
-                      ref={confirmPasswordRef}
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={`${styles.input} ${errorField === 'confirmPassword' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
-                      placeholder="Retype Password"
-                      required
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        ref={confirmPasswordRef}
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(e) => { setConfirmPassword(e.target.value); if (errorField === 'confirmPassword') setErrorField(''); }}
+                        className={`${styles.input} ${errorField === 'confirmPassword' ? styles.errorBlink : ''}`}
+                        style={{ paddingRight: '2.8rem' }}
+                        placeholder="Retype Password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '0.8rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#666',
+                          cursor: 'pointer',
+                          padding: '0.3rem',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                        title={showConfirmPassword ? 'Hide Password' : 'Show Password'}
+                      >
+                        {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <div className={styles.btnRow}>
                   <button type="button" onClick={handleNext} className={styles.nextBtn}>
-                    Next
+                    Next Step &rarr;
                   </button>
                 </div>
               </div>
@@ -367,10 +540,10 @@ export default function ApplyPage() {
                     <input
                       ref={companyNameRef}
                       type="text"
+                      autoComplete="organization"
                       value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
+                      onChange={(e) => { setCompanyName(e.target.value); if (errorField === 'companyName') setErrorField(''); }}
                       className={`${styles.input} ${errorField === 'companyName' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Company Name"
                       required
                     />
@@ -381,12 +554,17 @@ export default function ApplyPage() {
                     <input
                       ref={companyWebsiteRef}
                       type="url"
+                      autoComplete="url"
                       value={companyWebsite}
-                      onChange={(e) => setCompanyWebsite(e.target.value)}
-                      className={`${styles.input} ${errorField === 'companyWebsite' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
-                      placeholder="Company Website"
+                      onChange={(e) => { setCompanyWebsite(e.target.value); if (errorField === 'companyWebsite') setErrorField(''); }}
+                      className={`${styles.input} ${(errorField === 'companyWebsite' || !isValidUrl(companyWebsite)) ? styles.errorBlink : ''}`}
+                      placeholder="Company Website (e.g. www.example.com)"
                     />
+                    {!isValidUrl(companyWebsite) && (
+                      <span style={{ fontSize: '0.8rem', color: '#d9534f', marginTop: '0.2rem' }}>
+                        ⚠️ Please enter a valid URL starting with http://, https://, or www. (e.g. www.mycompany.com)
+                      </span>
+                    )}
                   </div>
 
                   <div className={styles.inputGroup}>
@@ -405,10 +583,10 @@ export default function ApplyPage() {
                     <input
                       ref={addressLineRef}
                       type="text"
+                      autoComplete="street-address"
                       value={addressLine}
-                      onChange={(e) => setAddressLine(e.target.value)}
+                      onChange={(e) => { setAddressLine(e.target.value); if (errorField === 'addressLine') setErrorField(''); }}
                       className={`${styles.input} ${errorField === 'addressLine' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Address Line"
                       required
                     />
@@ -420,13 +598,18 @@ export default function ApplyPage() {
                       <input
                         ref={phoneRef}
                         type="tel"
+                        autoComplete="tel"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className={`${styles.input} ${errorField === 'phone' ? styles.errorBlink : ''}`}
-                        onAnimationEnd={() => setErrorField('')}
+                        onChange={(e) => { setPhone(e.target.value); if (errorField === 'phone') setErrorField(''); }}
+                        className={`${styles.input} ${(errorField === 'phone' || !isValidPhone(phone)) ? styles.errorBlink : ''}`}
                         placeholder="+1 (555) 123-4567"
                         required
                       />
+                      {!isValidPhone(phone) && (
+                        <span style={{ fontSize: '0.8rem', color: '#d9534f', marginTop: '0.2rem' }}>
+                          ⚠️ Please enter a valid phone number with at least 7 digits (e.g. +1 555-123-4567)
+                        </span>
+                      )}
                     </div>
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>Fax</label>
@@ -446,9 +629,8 @@ export default function ApplyPage() {
                       ref={resaleTaxIdRef}
                       type="text"
                       value={resaleTaxId}
-                      onChange={(e) => setResaleTaxId(e.target.value)}
+                      onChange={(e) => { setResaleTaxId(e.target.value); if (errorField === 'resaleTaxId') setErrorField(''); }}
                       className={`${styles.input} ${errorField === 'resaleTaxId' ? styles.errorBlink : ''}`}
-                      onAnimationEnd={() => setErrorField('')}
                       placeholder="Resale/Tax Id Number"
                       required
                     />
@@ -460,28 +642,39 @@ export default function ApplyPage() {
                       <input
                         ref={cityRef}
                         type="text"
+                        autoComplete="address-level2"
                         value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        className={`${styles.input} ${errorField === 'city' ? styles.errorBlink : ''}`}
-                        onAnimationEnd={() => setErrorField('')}
+                        onChange={(e) => { setCity(e.target.value); if (errorField === 'city') setErrorField(''); }}
+                        className={`${styles.input} ${(errorField === 'city' || !isValidCity(city)) ? styles.errorBlink : ''}`}
                         placeholder="City"
                         required
                       />
+                      {!isValidCity(city) && (
+                        <span style={{ fontSize: '0.8rem', color: '#d9534f', marginTop: '0.2rem' }}>
+                          ⚠️ City name must be at least 2 letters
+                        </span>
+                      )}
                     </div>
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>Postal / Zip Code <span className={styles.required}>*</span></label>
                       <input
                         ref={zipCodeRef}
                         type="text"
+                        autoComplete="postal-code"
                         value={zipCode}
-                        onChange={(e) => setZipCode(e.target.value)}
-                        className={`${styles.input} ${errorField === 'zipCode' ? styles.errorBlink : ''}`}
-                        onAnimationEnd={() => setErrorField('')}
+                        onChange={(e) => { setZipCode(e.target.value); if (errorField === 'zipCode') setErrorField(''); }}
+                        className={`${styles.input} ${(errorField === 'zipCode' || !isValidZip(zipCode)) ? styles.errorBlink : ''}`}
                         placeholder="Postal / Zip Code"
                         required
                       />
+                      {!isValidZip(zipCode) && (
+                        <span style={{ fontSize: '0.8rem', color: '#d9534f', marginTop: '0.2rem' }}>
+                          ⚠️ Zip/Postal code must be at least 3 characters (e.g. 10001 or M5V 2T6)
+                        </span>
+                      )}
                     </div>
                   </div>
+
 
                   <div className={styles.twoCol}>
                     <div className={styles.inputGroup}>
@@ -489,10 +682,10 @@ export default function ApplyPage() {
                       <input
                         ref={stateProvinceRef}
                         type="text"
+                        autoComplete="address-level1"
                         value={stateProvince}
-                        onChange={(e) => setStateProvince(e.target.value)}
+                        onChange={(e) => { setStateProvince(e.target.value); if (errorField === 'stateProvince') setErrorField(''); }}
                         className={`${styles.input} ${errorField === 'stateProvince' ? styles.errorBlink : ''}`}
-                        onAnimationEnd={() => setErrorField('')}
                         placeholder="State / Province / Region"
                         required
                       />
@@ -502,10 +695,10 @@ export default function ApplyPage() {
                       <input
                         ref={countryRef}
                         type="text"
+                        autoComplete="country-name"
                         value={country}
-                        onChange={(e) => setCountry(e.target.value)}
+                        onChange={(e) => { setCountry(e.target.value); if (errorField === 'country') setErrorField(''); }}
                         className={`${styles.input} ${errorField === 'country' ? styles.errorBlink : ''}`}
-                        onAnimationEnd={() => setErrorField('')}
                         placeholder="Country"
                         required
                       />
@@ -543,10 +736,10 @@ export default function ApplyPage() {
 
                 <div className={styles.btnRow}>
                   <button type="button" onClick={handlePrev} className={styles.prevBtn}>
-                    Previous
+                    &larr; Previous
                   </button>
                   <button type="button" onClick={handleNext} className={styles.nextBtn}>
-                    Next
+                    Next Step &rarr;
                   </button>
                 </div>
               </div>
@@ -557,7 +750,7 @@ export default function ApplyPage() {
               <div className={styles.stepContent}>
                 <h2 className={styles.stepTitle}>Resale Certificate</h2>
                 <p className={styles.stepDesc}>
-                  Please fill out and submit the registration form to gain full access to the Crown Findings Co., INC Website.
+                  Please upload your completed &amp; signed Resale Certificate to gain full wholesale access to Crown Findings.
                 </p>
                 <div className={styles.certificateNotice}>
                   <p>
@@ -570,24 +763,24 @@ export default function ApplyPage() {
                   target="_blank"
                   className={styles.downloadBtn}
                 >
-                  ↓ Download Resale Certificate
+                  &darr; Download Resale Certificate Form (ST-120)
                 </Link>
 
                 <p className={styles.uploadInstructions}>
-                  The Resale Certificate will open in a New Tab. Fill out the form and upload it back with your signature filled in.
+                  The Resale Certificate will open in a New Tab. Fill out the form, save it with your signature, and upload it below.
                 </p>
 
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Upload Signed Certificate <span className={styles.required}>*</span></label>
                   <div
                     ref={dropZoneRef}
-                    tabIndex={-1}
+                    tabIndex={0}
                     className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''} ${errorField === 'certificates' ? styles.errorBlink : ''}`}
                     onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={handleFileDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    onAnimationEnd={() => setErrorField('')}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
                   >
                     <input
                       ref={fileInputRef}
@@ -597,30 +790,55 @@ export default function ApplyPage() {
                       onChange={handleFileSelect}
                       className={styles.fileInput}
                     />
-                    <div className={styles.dropIcon}>📄</div>
-                    <p className={styles.dropText}>Drag &amp; Drop Files, or <span className={styles.browseLink}>Choose Files</span> to Upload</p>
-                    <p className={styles.dropHint}>You can upload up to 2 files.</p>
+                    <div className={styles.dropIcon}>
+                      <FiUploadCloud style={{ color: '#001f3f' }} />
+                    </div>
+                    <p className={styles.dropText}>Drag &amp; Drop Files, or <span className={styles.browseLink}>Browse Files</span> to Upload</p>
+                    <p className={styles.dropHint}>Supports PDF, JPG, or PNG (up to 2 files, max 15MB each)</p>
                   </div>
 
                   {uploadedFiles.length > 0 && (
                     <div className={styles.fileList}>
                       {uploadedFiles.map((file, idx) => (
                         <div key={idx} className={styles.fileItem}>
-                          <span className={styles.fileName}>📎 {file.name}</span>
-                          <button type="button" onClick={() => removeFile(idx)} className={styles.removeFile}><FiX /></button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', overflow: 'hidden' }}>
+                            <FiFileText style={{ flexShrink: 0, color: '#001f3f' }} />
+                            <span className={styles.fileName}>{file.name}</span>
+                            <span style={{ fontSize: '0.75rem', color: '#888', flexShrink: 0 }}>({formatFileSize(file.size)})</span>
+                          </div>
+                          <button type="button" onClick={() => removeFile(idx)} className={styles.removeFile} title="Remove File">
+                            <FiX />
+                          </button>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
+                {submitError && (
+                  <div className={styles.errorText} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    color: '#cf1322',
+                    backgroundColor: '#fff1f0',
+                    border: '1px solid #ffa39e',
+                    padding: '0.8rem 1rem',
+                    borderRadius: '4px',
+                    margin: '1.5rem 0 0.5rem',
+                    fontSize: '0.9rem'
+                  }}>
+                    <FiAlertCircle style={{ flexShrink: 0 }} />
+                    <span>{submitError}</span>
+                  </div>
+                )}
+
                 <div className={styles.btnRow}>
-                  <button type="button" onClick={handlePrev} className={styles.prevBtn}>
-                    Previous
+                  <button type="button" onClick={handlePrev} className={styles.prevBtn} disabled={isSubmitting}>
+                    &larr; Previous
                   </button>
-                  {submitError && <div className={styles.errorText} style={{ color: 'red', marginBottom: '1rem' }}>{submitError}</div>}
                   <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
-                    {isSubmitting ? 'Submitting...' : 'Submit Registration Application'}
+                    {isSubmitting ? 'Submitting Application...' : 'Submit Registration Application'}
                   </button>
                 </div>
               </div>
@@ -632,3 +850,4 @@ export default function ApplyPage() {
     </div>
   );
 }
+
