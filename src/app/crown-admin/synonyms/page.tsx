@@ -67,7 +67,10 @@ export default function SynonymsPage() {
         })
       });
 
-      if (!res.ok) throw new Error("Failed to save");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to save");
+      }
       
       toast.success("Synonym rule saved!");
       setIsAdding(false);
@@ -75,8 +78,8 @@ export default function SynonymsPage() {
       setFormTerm("");
       setFormSynonyms("");
       fetchSynonyms();
-    } catch (err) {
-      toast.error("Error saving synonym rule");
+    } catch (err: any) {
+      toast.error(err.message || "Error saving synonym rule");
     }
   };
 

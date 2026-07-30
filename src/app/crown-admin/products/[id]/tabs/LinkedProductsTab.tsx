@@ -24,8 +24,13 @@ export default function LinkedProductsTab({ productId, productRelations, setProd
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data.data.filter((p: any) => p.id !== parseInt(productId)));
+      } else {
+        toast.error('Failed to search products');
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e); 
+      toast.error('Failed to search products');
+    }
     finally { setIsSearching(false); }
   };
 
@@ -57,9 +62,14 @@ export default function LinkedProductsTab({ productId, productRelations, setProd
   const handleRemoveLink = async (relatedId: string, type: string) => {
     if (!confirm('Remove this product link?')) return;
     try {
-      await fetch(`${API}/products/${productId}/relations/${relatedId}/${type}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await fetch(`${API}/products/${productId}/relations/${relatedId}/${type}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      if (!res.ok) throw new Error('Failed to remove link');
       setProductRelations(prev => prev.filter(r => !(r.related_product_id === relatedId && r.relation_type === type)));
-    } catch (e) { console.error(e); }
+      toast.success('Product link removed');
+    } catch (e: any) { 
+      console.error(e); 
+      toast.error(e.message || 'Failed to remove link');
+    }
   };
 
   const upsells = productRelations.filter(r => r.relation_type === 'upsell');

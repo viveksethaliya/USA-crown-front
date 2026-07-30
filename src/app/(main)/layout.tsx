@@ -36,7 +36,7 @@ export default function StorefrontLayout({
       <Header />
       <main className="flex-1 w-full">{children}</main>
       <Footer />
-      <Toaster position="bottom-right" toastOptions={{ duration: 6000 }} />
+      <Toaster position="top-right" toastOptions={{ duration: 6000 }} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Trash2, ImageIcon, Star, Library } from 'lucide-react';
 import ImageUploader from '../../../components/ImageUploader';
 import MediaPickerModal from '../../../../../components/media/MediaPickerModal';
+import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
 
@@ -20,8 +21,15 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
         body: JSON.stringify({ url, alt_text: '', position: images.length })
       });
       const data = await res.json();
-      if (res.ok) setImages(prev => [...prev, { ...data, _storagePath: storagePath }]);
-    } catch (error) { console.error(error); }
+      if (res.ok) {
+        setImages(prev => [...prev, { ...data, _storagePath: storagePath }]);
+      } else {
+        toast.error(data.error || 'Failed to upload image');
+      }
+    } catch (error) { 
+      console.error(error); 
+      toast.error('Failed to upload image'); 
+    }
   };
 
   const handleMediaSelected = async (url: string, path: string) => {
@@ -33,19 +41,28 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
         body: JSON.stringify({ url, alt_text: '', position: images.length })
       });
       const data = await res.json();
-      if (res.ok) setImages(prev => [...prev, { ...data, _storagePath: path }]);
-    } catch (error) { console.error(error); }
+      if (res.ok) {
+        setImages(prev => [...prev, { ...data, _storagePath: path }]);
+      } else {
+        toast.error(data.error || 'Failed to attach image');
+      }
+    } catch (error) { 
+      console.error(error); 
+      toast.error('Failed to attach image'); 
+    }
   };
 
   const handleSetMain = async (image: any) => {
     setIsDeleting(image.id);
     const token = localStorage.getItem('adminToken');
     try {
-      await fetch(`${API}/products/${productId}/images/${image.id}`, {
+      const res = await fetch(`${API}/products/${productId}/images/${image.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ position: 0 })
       });
+      if (!res.ok) throw new Error('Failed to set main image');
+      
       setImages(prev => {
         const currentMain = prev.find(img => img.position === 0);
         return prev.map(img => {
@@ -54,7 +71,10 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
           return img;
         });
       });
-    } catch (error) { console.error(error); }
+    } catch (error: any) { 
+      console.error(error); 
+      toast.error(error.message || 'Failed to set main image'); 
+    }
     finally { setIsDeleting(null); }
   };
 
@@ -63,12 +83,17 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
     setIsDeleting(image.id);
     const token = localStorage.getItem('adminToken');
     try {
-      await fetch(`${API}/products/${productId}/images/${image.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch(`${API}/products/${productId}/images/${image.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error('Failed to remove image');
+      
       if (image._storagePath || image.storage_path) {
         await fetch(`${API}/upload`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ path: image._storagePath || image.storage_path }) });
       }
       setImages(prev => prev.filter(img => img.id !== image.id));
-    } catch (error) { console.error(error); }
+    } catch (error: any) { 
+      console.error(error); 
+      toast.error(error.message || 'Failed to remove image'); 
+    }
     finally { setIsDeleting(null); }
   };
 

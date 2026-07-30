@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 
+import { toast } from 'react-hot-toast';
+
 export default function AdminLogin() {
   const router = useRouter();
   const [step, setStep] = useState<'login' | 'otp'>('login');
@@ -44,6 +46,7 @@ export default function AdminLogin() {
       }
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +70,7 @@ export default function AdminLogin() {
       router.push('/crown-admin');
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message);
     } finally {
       setIsLoading(false);
     }

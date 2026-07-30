@@ -304,7 +304,10 @@ export default function ProfilePage() {
         router.push('/login');
         throw new Error('Session expired. Please log in again.');
       }
-      if (!res.ok) throw new Error('Failed to create sub-user. Sub-users cannot create other users.');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || 'Failed to create sub-user.');
+      }
       const data = await res.json();
       setSubUsers([...subUsers, data]);
       toast.success('Sub-user created successfully!');

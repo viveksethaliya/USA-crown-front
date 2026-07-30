@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Loader2, Layers, X, Image as ImageIcon, Edit2, Library } from 'lucide-react';
 import ImageUploader from '../../../components/ImageUploader';
 import MediaPickerModal from '../../../../../components/media/MediaPickerModal';
+import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
 
@@ -74,17 +75,27 @@ export default function VariationsTab({ productId, productType, variations, setV
       if (res.ok) {
         const data = await res.json();
         setProductAttributes(prev => [...prev, data]);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to link attribute');
       }
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e); 
+      toast.error(e.message || 'Failed to link attribute'); 
+    }
     finally { setIsLinkingAttr(false); }
   };
 
   const handleUnlinkAttribute = async (attributeId: number) => {
     if (!confirm('Remove this attribute from this product? Existing variations will lose this dimension.')) return;
     try {
-      await fetch(`${API}/products/${productId}/attributes/${attributeId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await fetch(`${API}/products/${productId}/attributes/${attributeId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      if (!res.ok) throw new Error('Failed to unlink attribute');
       setProductAttributes(prev => prev.filter(pa => pa.attribute_id !== attributeId));
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e); 
+      toast.error(e.message || 'Failed to unlink attribute');
+    }
   };
 
   const handleAddVariation = async () => {
@@ -119,8 +130,14 @@ export default function VariationsTab({ productId, productType, variations, setV
         if (refetch.ok) setVariations(await refetch.json());
         setNewVar({ sku: '', regular_price: '', sale_price: '', stock_quantity: '', stock_status: 'instock', is_published: true, image_url: '', weight_g: '', length_in: '', width_in: '', height_in: '', position: '', selectedValues: {} });
         setShowAddForm(false);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to add variation');
       }
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e); 
+      toast.error(e.message || 'Failed to add variation'); 
+    }
     finally { setIsAddingVar(false); }
   };
 
@@ -149,17 +166,27 @@ export default function VariationsTab({ productId, productType, variations, setV
         const refetch = await fetch(`${API}/products/${productId}/variations`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
         if (refetch.ok) setVariations(await refetch.json());
         setEditingVarId(null); setEditVar(null);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to update variation');
       }
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e); 
+      toast.error(e.message || 'Failed to update variation'); 
+    }
     finally { setIsUpdatingVar(false); }
   };
 
   const handleDeleteVariation = async (varId: number) => {
     if (!confirm('Delete this variation?')) return;
     try {
-      await fetch(`${API}/products/${productId}/variations/${varId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await fetch(`${API}/products/${productId}/variations/${varId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      if (!res.ok) throw new Error('Failed to delete variation');
       setVariations(prev => prev.filter(v => v.id !== varId));
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e); 
+      toast.error(e.message || 'Failed to delete variation');
+    }
   };
 
   // ── Not a variable product ────────────────────────────────────────────────

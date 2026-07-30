@@ -5,6 +5,7 @@ import { useState, useRef } from 'react';
 import styles from './apply.module.css';
 import { FiX, FiEye, FiEyeOff, FiUploadCloud, FiCheckCircle, FiAlertCircle, FiFileText } from 'react-icons/fi';
 import { apiUrl } from '@/lib/cart';
+import { toast } from 'react-hot-toast';
 
 export default function ApplyPage() {
   const [step, setStep] = useState(1);
@@ -209,10 +210,12 @@ export default function ApplyPage() {
     if (uploadedFiles.length === 0) {
       highlightAndFocus('certificates', 'Please upload your signed resale certificate before submitting.', dropZoneRef);
       setSubmitError('Please upload your signed resale certificate.');
+      toast.error('Please upload your signed resale certificate.');
       return;
     }
     if (password !== confirmPassword) {
       setSubmitError('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
 
@@ -265,7 +268,9 @@ export default function ApplyPage() {
 
       setSubmitSuccess(true);
     } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : 'An error occurred during submission');
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred during submission';
+      setSubmitError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

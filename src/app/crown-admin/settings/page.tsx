@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { Loader2, CheckCircle2, XCircle, Save, Mail, Search } from 'lucide-react';
 import { apiUrl } from '@/lib/cart';
 import SeoFormBlock from '@/components/SeoFormBlock';
+import { toast } from 'react-hot-toast';
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
 
   const [formData, setFormData] = useState({
     metal_price_gold: '',
@@ -47,6 +47,7 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error('Error fetching settings:', err);
+      toast.error('Failed to load store settings');
     } finally {
       setLoading(false);
     }
@@ -69,7 +70,6 @@ export default function SettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage({ text: '', type: '' });
 
     try {
       const res = await fetch(apiUrl('/api/admin/settings'), {
@@ -82,17 +82,16 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        setMessage({ text: 'Settings updated successfully!', type: 'success' });
+        toast.success('Settings updated successfully!');
       } else {
         const err = await res.json();
-        setMessage({ text: err.error || 'Failed to update settings', type: 'error' });
+        toast.error(err.error || 'Failed to update settings');
       }
     } catch (err) {
       console.error('Error saving settings:', err);
-      setMessage({ text: 'An unexpected error occurred', type: 'error' });
+      toast.error('An unexpected error occurred');
     } finally {
       setSaving(false);
-      setTimeout(() => setMessage({ text: '', type: '' }), 5000);
     }
   };
 
@@ -110,13 +109,6 @@ export default function SettingsPage() {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-            {message.text && (
-              <div className={`mb-6 p-4 rounded-2xl border shadow-sm flex items-center gap-3 font-medium text-sm transition-all ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-700' : 'bg-red-500/10 border-red-500/20 text-red-700'}`}>
-                {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <XCircle className="w-5 h-5 shrink-0" />}
-                {message.text}
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8">
                 <div className="flex items-center gap-3 border-b border-[#312f2c]/10 pb-4 mb-6">

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 export default function AdminForgotPassword() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function AdminForgotPassword() {
       setEmail('');
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message);
     } finally {
       setIsLoading(false);
     }

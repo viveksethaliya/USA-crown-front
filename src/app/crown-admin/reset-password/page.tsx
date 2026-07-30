@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { API_URL } from '@/lib/config';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -30,6 +31,7 @@ function ResetPasswordForm() {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -51,6 +53,7 @@ function ResetPasswordForm() {
       setTimeout(() => router.push('/crown-admin/login'), 2000);
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message);
     } finally {
       setIsLoading(false);
     }
