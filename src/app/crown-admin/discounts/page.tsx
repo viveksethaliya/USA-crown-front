@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Tag, Plus, CheckCircle2, XCircle, Trash2, Loader2, Save, Edit2, Search, Target, Zap, CalendarRange, HelpCircle, X, Layers, ShoppingBag, ArrowRight, Lightbulb, Settings, Ticket, Check, Trophy, Ban, Globe, Folder, Package, Info, AlertOctagon, Filter } from 'lucide-react';
 import { ADMIN_API as API } from '@/lib/config';
-import { apiUrl } from '@/lib/cart';
+import { apiUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 const RULE_TYPES = [
@@ -227,20 +227,34 @@ export default function DiscountsPage() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [rulesRes, groupsRes, catsRes, attrsRes, campaignsRes] = await Promise.all([
-        fetch(`${API}/discounts`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/groups`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(apiUrl('/api/admin/categories'), { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(apiUrl('/api/admin/attributes'), { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/campaigns`, { headers: { Authorization: `Bearer ${token}` } }),
+      const fetchJson = async (url: string) => {
+        try {
+          const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+          if (!res.ok) { console.error(`Failed to fetch ${url}`); return null; }
+          return await res.json();
+        } catch (e) {
+          console.error(`Fetch error for ${url}`, e);
+          return null;
+        }
+      };
+
+      const [rulesData, groupsData, catsData, attrsData, campaignsData] = await Promise.all([
+        fetchJson(`${API}/discounts`),
+        fetchJson(`${API}/groups`),
+        fetchJson(apiUrl('/api/admin/categories')),
+        fetchJson(apiUrl('/api/admin/attributes')),
+        fetchJson(`${API}/campaigns`),
       ]);
-      setRules((await rulesRes.json()).data || []);
-      setGroups((await groupsRes.json()).groups || []);
-      setCategories((await catsRes.json()) || []);
-      setAttributes((await attrsRes.json()) || []);
-      setCampaigns((await campaignsRes.json()).data || []);
+
+      if (!rulesData) toast.error('Failed to load discounts');
+      
+      setRules(rulesData?.data || []);
+      setGroups(groupsData?.groups || []);
+      setCategories(catsData || []);
+      setAttributes(attrsData || []);
+      setCampaigns(campaignsData?.data || []);
     } catch {
-      toast.error('Failed to fetch data');
+      toast.error('An unexpected error occurred while fetching data');
     } finally {
       setIsLoading(false);
     }
@@ -302,7 +316,23 @@ export default function DiscountsPage() {
     });
 
     if (targetScope === 'product') {
-      setSelectedProducts(inclusions.map((t: any) => ({ id: t.target_id, name: `Product #${t.target_id}`, sku: '' })));
+      const productIds = inclusions.map((t: any) => t.target_id);
+      
+      // Initially set with placeholders
+      setSelectedProducts(productIds.map((id: number) => ({ id, name: `Loading...`, sku: '' })));
+      
+      // Fetch actual names
+      if (productIds.length > 0) {
+        Promise.all(productIds.map((id: number) => 
+          fetch(apiUrl(`/api/admin/products/${id}`), { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
+        )).then(results => {
+          setSelectedProducts(results.map((p: any, idx: number) => ({
+            id: productIds[idx],
+            name: p.name || `Product #${productIds[idx]}`,
+            sku: p.sku || ''
+          })));
+        }).catch(err => console.error("Failed to fetch product names", err));
+      }
     } else {
       setSelectedProducts([]);
     }
@@ -328,12 +358,20 @@ export default function DiscountsPage() {
     setShowForm(true);
   };
 
+  const recalculateGroups = (conds: any[]) => {
+    let currentGroup = 1;
+    return conds.map((c, i) => {
+      if (i > 0 && c.logic_operator === 'OR') currentGroup++;
+      return { ...c, condition_group: currentGroup };
+    });
+  };
+
   const handleAddCondition = () => {
-    const newGroupId = conditions.length > 0 ? Math.max(...conditions.map(c => c.condition_group)) : 1;
-    setConditions([
+    const next = [
       ...conditions,
-      { id: Math.random(), condition_group: newGroupId, logic_operator: 'AND', condition_type: 'cart_subtotal_min', operator: 'greater_than', entity_id: '', value_text: '', value_number: '' }
-    ]);
+      { id: Math.random(), condition_group: 1, logic_operator: 'AND', condition_type: 'cart_subtotal_min', operator: 'greater_than', entity_id: '', value_text: '', value_number: '' }
+    ];
+    setConditions(recalculateGroups(next));
   };
 
   const handleUpdateCondition = (idx: number, key: string, val: any) => {
@@ -351,11 +389,12 @@ export default function DiscountsPage() {
       }
     }
     
-    setConditions(next);
+    setConditions(recalculateGroups(next));
   };
 
   const handleRemoveCondition = (idx: number) => {
-    setConditions(conditions.filter((_, i) => i !== idx));
+    const next = conditions.filter((_, i) => i !== idx);
+    setConditions(recalculateGroups(next));
   };
 
   const handleSave = async (e: React.FormEvent) => {

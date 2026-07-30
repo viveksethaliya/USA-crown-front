@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { ADMIN_API as API } from "@/lib/config";
+
 
 interface Synonym {
   id: number;
@@ -23,7 +25,7 @@ export default function SynonymsPage() {
   const fetchSynonyms = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/admin/synonyms`, {
+      const res = await fetch(`${API}/synonyms`, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
@@ -52,8 +54,8 @@ export default function SynonymsPage() {
       const token = localStorage.getItem("adminToken");
       const method = editingId ? "PUT" : "POST";
       const url = editingId 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/admin/synonyms/${editingId}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/admin/synonyms`;
+        ? `${API}/synonyms/${editingId}`
+        : `${API}/synonyms`;
 
       const res = await fetch(url, {
         method,
@@ -87,7 +89,7 @@ export default function SynonymsPage() {
     if (!confirm("Delete this synonym rule?")) return;
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/admin/synonyms/${id}`, {
+      const res = await fetch(`${API}/synonyms/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`
