@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
@@ -248,7 +248,7 @@ export default function ProductsPage() {
     });
     const options: { id: string; name: string; formattedName: string }[] = [];
     const traverse = (node: any, depth: number) => {
-      const prefix = depth > 0 ? 'â€” '.repeat(depth) : '';
+      const prefix = depth > 0 ? '— '.repeat(depth) : '';
       options.push({ id: node.id, name: node.name, formattedName: `${prefix}${node.name}` });
       node.children.sort((a: any, b: any) => (a.position || 0) - (b.position || 0)).forEach((child: any) => traverse(child, depth + 1));
     };
@@ -286,7 +286,7 @@ export default function ProductsPage() {
                   </div>
                   <div className="bg-[#d1a054]/8 border border-[#d1a054]/20 rounded-2xl p-4 text-sm text-[#312f2c]/80 space-y-2">
                     <p>Click <strong>Template</strong> to download a ready-made example CSV with a variable parent product and one variation row. Edit that file, add your rows, then click <strong>Import CSV</strong>.</p>
-                    <p>If you are migrating from WooCommerce, export your products from WP â†’ WooCommerce â†’ Products â†’ Export and upload that CSV directly â€” no changes needed.</p>
+                    <p>If you are migrating from WooCommerce, export your products from WP → WooCommerce → Products → Export and upload that CSV directly — no changes needed.</p>
                   </div>
                 </section>
 
@@ -302,7 +302,7 @@ export default function ProductsPage() {
                       ['First row', 'Must be the column header row. Do not add blank rows above it.'],
                       ['Delimiter', 'Comma (,). Do not use semicolons or tabs.'],
                       ['Max file size', 'No hard limit, but very large files (50k+ rows) may time out. Split into batches of 5,000 rows if needed.'],
-                      ['Re-import safety', 'Safe to re-import the same file. Rows with an ID column are upserted â€” they update the existing product without creating duplicates.'],
+                      ['Re-import safety', 'Safe to re-import the same file. Rows with an ID column are upserted — they update the existing product without creating duplicates.'],
                     ].map(([label, desc]) => (
                       <li key={label} className="flex gap-3">
                         <span className="shrink-0 font-bold text-[#312f2c] w-32">{label}</span>
@@ -339,7 +339,7 @@ export default function ProductsPage() {
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-[#d1a054] flex items-center justify-center text-white text-xs font-bold">4</div>
-                    <h3 className="font-bold text-[#312f2c]">Variable Products â€” Row Structure</h3>
+                    <h3 className="font-bold text-[#312f2c]">Variable Products — Row Structure</h3>
                   </div>
                   <div className="bg-[#312f2c]/5 border border-[#312f2c]/10 rounded-2xl p-4 font-mono text-xs space-y-1 overflow-x-auto">
                     <p className="text-[#d1a054] font-bold"># Parent row</p>
@@ -381,7 +381,7 @@ export default function ProductsPage() {
                       ['Categories', 'Comma-separated paths, e.g. Rings > Gold Rings, Bracelets'],
                       ['Tags', 'Comma-separated tag names.'],
                       ['Brands', 'Single brand name. Created if it does not exist.'],
-                      ['Images', 'Comma-separated image URLs. Stored as-is â€” not re-uploaded.'],
+                      ['Images', 'Comma-separated image URLs. Stored as-is — not re-uploaded.'],
                       ['Attribute 1-14 name', 'Attribute name, e.g. Metal Type'],
                       ['Attribute 1-14 value(s)', 'On parent: all values comma-separated. On variation: one value.'],
                       ['Attribute 1-14 visible', '1 = show on product page'],
@@ -531,7 +531,7 @@ export default function ProductsPage() {
           </div>
           {importResult.errors?.length > 0 && (
             <details className="mt-2">
-              <summary className="cursor-pointer text-red-600 font-medium text-xs">{importResult.errors.length} errors â€” click to expand</summary>
+              <summary className="cursor-pointer text-red-600 font-medium text-xs">{importResult.errors.length} errors — click to expand</summary>
               <ul className="mt-2 space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-2">
                 {importResult.errors.map((e: any, i: number) => (
                   <li key={i} className="text-xs text-red-700 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 font-medium">
@@ -684,7 +684,7 @@ export default function ProductsPage() {
                               <span className="text-[#312f2c]/40 line-through text-xs font-medium">${product.regular_price}</span>
                             </div>
                           ) : (
-                            <span className="text-[#312f2c] font-bold text-sm">${product.regular_price || 'â€”'}</span>
+                            <span className="text-[#312f2c] font-bold text-sm">${product.regular_price || '—'}</span>
                           )}
                         </td>
                         <td className="p-4">
