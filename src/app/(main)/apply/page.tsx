@@ -763,13 +763,13 @@ export default function ApplyPage() {
                   </p>
                 </div>
 
-                <Link
+                <a
                   href="/NYS-ResaleCertificate-ST120.pdf"
                   target="_blank"
                   className={styles.downloadBtn}
                 >
                   &darr; Download Resale Certificate Form (ST-120)
-                </Link>
+                </a>
 
                 <p className={styles.uploadInstructions}>
                   The Resale Certificate will open in a New Tab. Fill out the form, save it with your signature, and upload it below.

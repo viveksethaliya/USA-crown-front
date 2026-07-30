@@ -61,6 +61,18 @@ interface CheckoutResponse {
   error?: string;
 }
 
+interface SelectOption { label: string; value: string; }
+
+interface CheckoutField {
+  id: number;
+  label: string;
+  field_key: string;
+  field_type: 'text' | 'textarea' | 'select' | 'checkbox' | 'number' | 'email' | 'tel';
+  placeholder: string | null;
+  options: SelectOption[];
+  is_required: boolean;
+}
+
 const emptyAddress: CheckoutAddress = {
   firstName: '',
   lastName: '',
@@ -108,6 +120,8 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([]);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [checkoutFields, setCheckoutFields] = useState<CheckoutField[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
 
   const loadCheckout = async () => {
     setError('');
@@ -133,6 +147,7 @@ export default function CheckoutPage() {
       if (cartData.cart?.id) {
         const profileResponse = await cartFetch('/api/store/account/profile');
         const addressesResponse = await cartFetch('/api/store/account/addresses');
+        const fieldsResponse = await cartFetch('/api/store/checkout/fields');
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json() as ProfileResponse;
@@ -145,6 +160,13 @@ export default function CheckoutPage() {
           const addressesData = await addressesResponse.json();
           if (Array.isArray(addressesData)) {
             setSavedAddresses(addressesData);
+          }
+        }
+        
+        if (fieldsResponse.ok) {
+          const fieldsData = await fieldsResponse.json();
+          if (Array.isArray(fieldsData)) {
+            setCheckoutFields(fieldsData);
           }
         }
       }
@@ -183,7 +205,8 @@ export default function CheckoutPage() {
           shippingAddress: sameAsBilling ? billingAddress : shippingAddress,
           shippingMethod,
           orderNotes,
-          termsAccepted
+          termsAccepted,
+          customFields: customFieldValues
         })
       });
 
@@ -426,6 +449,57 @@ export default function CheckoutPage() {
                   </span>
                 </label>
               </section>
+
+              {checkoutFields.length > 0 && (
+                <section className={styles.section}>
+                  <h2>Additional Information</h2>
+                  <div className={styles.fieldGrid}>
+                    {checkoutFields.map((field) => (
+                      <label key={field.id} className={styles.field}>
+                        <span>{field.label}{field.is_required ? ' *' : ''}</span>
+                        {field.field_type === 'textarea' ? (
+                          <textarea
+                            required={field.is_required}
+                            placeholder={field.placeholder || ''}
+                            value={customFieldValues[field.field_key] || ''}
+                            onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: e.target.value }))}
+                            rows={3}
+                          />
+                        ) : field.field_type === 'select' ? (
+                          <select
+                            required={field.is_required}
+                            value={customFieldValues[field.field_key] || ''}
+                            onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: e.target.value }))}
+                          >
+                            <option value="">-- Select an option --</option>
+                            {field.options?.map((opt, i) => (
+                              <option key={i} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        ) : field.field_type === 'checkbox' ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                            <input
+                              type="checkbox"
+                              required={field.is_required}
+                              checked={!!customFieldValues[field.field_key]}
+                              onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: e.target.checked }))}
+                            />
+                            <span style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>Yes</span>
+                          </div>
+                        ) : (
+                          <input
+                            type={field.field_type}
+                            required={field.is_required}
+                            placeholder={field.placeholder || ''}
+                            value={customFieldValues[field.field_key] || ''}
+                            onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: e.target.value }))}
+                          />
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             <aside className={styles.summary}>

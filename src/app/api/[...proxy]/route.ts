@@ -35,8 +35,9 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
     const response = await fetch(targetUrl, fetchOptions);
     const responseHeaders = new Headers();
     response.headers.forEach((value, key) => {
-      // Skip hop-by-hop headers that Next.js manages
-      if (!['transfer-encoding', 'connection', 'keep-alive'].includes(key.toLowerCase())) {
+      // Skip hop-by-hop headers and compression headers since fetch auto-decompresses
+      const lower = key.toLowerCase();
+      if (!['transfer-encoding', 'connection', 'keep-alive', 'content-encoding', 'content-length'].includes(lower)) {
         responseHeaders.set(key, value);
       }
     });

@@ -385,7 +385,7 @@ export default function Header() {
           <div className={styles.topLinks}>
             <Link href="/resale-certificate" className={styles.topLink}>Generate Resale Certificate</Link>
             <span className={styles.topDivider} />
-            <Link href="/NYS-ResaleCertificate-ST120.pdf" className={styles.topLink} target="_blank" rel="noopener noreferrer">Download Resale Certificate</Link>
+            <a href="/NYS-ResaleCertificate-ST120.pdf" className={styles.topLink} target="_blank" rel="noopener noreferrer">Download Resale Certificate</a>
             <span className={styles.topDivider} />
             <Link href="/" className={styles.topLink}>Home</Link>
             <span className={styles.topDivider} />
