@@ -821,10 +821,10 @@ export default function CustomerDetailPage() {
                             return (
                               <tr key={log.id} className="hover:bg-white/30 transition-colors">
                                 <td className="p-3 pl-4 text-[#312f2c] whitespace-nowrap">
-                                  {new Date(log.login_time).toLocaleString()}
+                                  {new Date(log.created_at || log.login_time || new Date()).toLocaleString()}
                                 </td>
                                 <td className="p-3 text-[#312f2c]/70 font-mono text-xs">{log.ip_address}</td>
-                                <td className="p-3 text-[#312f2c]/70">{log.os} {log.device ? `(${log.device})` : ''}</td>
+                                <td className="p-3 text-[#312f2c]/70">{log.os_info || log.os}</td>
                                 <td className="p-3 text-[#312f2c]/70">{browser}</td>
                                 <td className="p-3 pr-4 text-right">
                                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${

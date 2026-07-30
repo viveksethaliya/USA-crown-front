@@ -207,9 +207,8 @@ export default function CustomersPage() {
           <table className="w-full text-left text-sm text-[#312f2c]/60">
             <thead className="bg-[#312f2c]/5 text-xs uppercase text-[#312f2c]/40 border-b border-[#312f2c]/10">
               <tr>
-                <th className="px-6 py-4 font-medium">Username</th>
-                <th className="px-6 py-4 font-medium">First Name</th>
-                <th className="px-6 py-4 font-medium">Last Name</th>
+                <th className="px-6 py-4 font-medium">Customer</th>
+                <th className="px-6 py-4 font-medium">Total Spent</th>
                 <th className="px-6 py-4 font-medium">Email</th>
                 <th className="px-6 py-4 font-medium">Role</th>
                 <th className="px-6 py-4 font-medium">Status</th>
@@ -235,11 +234,17 @@ export default function CustomersPage() {
               ) : (
                 customers.map(customer => (
                   <tr key={customer.id} className="hover:bg-[#312f2c]/4 transition-colors">
-                    <td className="px-6 py-4 font-medium text-[#312f2c] whitespace-nowrap">
-                      {customer.username || '-'}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[#312f2c]">{customer.username || '-'}</span>
+                        <span className="text-xs text-[#312f2c]/60 mt-0.5">
+                          {customer.first_name || ''} {customer.last_name || ''}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-[#312f2c]/70">{customer.first_name || '-'}</td>
-                    <td className="px-6 py-4 text-[#312f2c]/70">{customer.last_name || '-'}</td>
+                    <td className="px-6 py-4 font-medium text-emerald-600">
+                      {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(customer.totalSpent || 0)}
+                    </td>
                     <td className="px-6 py-4 flex items-center gap-2">
                       <Mail className="w-3.5 h-3.5 text-[#312f2c]/35" />
                       <span className="text-[#312f2c]/70">{customer.email}</span>
