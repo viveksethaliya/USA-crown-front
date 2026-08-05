@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { Product, Pagination } from '@/types/admin';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -41,8 +42,8 @@ export default function ProductsPage() {
       if (!token) return;
       try {
         const [catRes, tagRes] = await Promise.all([
-          fetch(`${API}/categories`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API}/tags`, { headers: { 'Authorization': `Bearer ${token}` } })
+          adminFetch(`${API}/categories`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          adminFetch(`${API}/tags`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         if (catRes.ok) {
           const catJson = await catRes.json();
@@ -73,7 +74,7 @@ export default function ProductsPage() {
       if (tagFilter) params.set('tag', tagFilter);
       if (stockFilter) params.set('stock_status', stockFilter);
 
-      const res = await fetch(`${API}/products?${params}`, {
+      const res = await adminFetch(`${API}/products?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const json = await res.json();
@@ -116,7 +117,7 @@ export default function ProductsPage() {
     if (!confirm(`Delete "${name}"? This will also delete all variations and images.`)) return;
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/products/${id}`, {
+      const res = await adminFetch(`${API}/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -138,7 +139,7 @@ export default function ProductsPage() {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, is_published: newValue } : p));
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/products/${id}/publish`, {
+      const res = await adminFetch(`${API}/products/${id}/publish`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ is_published: newValue })
@@ -160,7 +161,7 @@ export default function ProductsPage() {
     setIsExporting(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/products/export`, {
+      const res = await adminFetch(`${API}/products/export`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Export failed');
@@ -181,7 +182,7 @@ export default function ProductsPage() {
 
   const handleDownloadTemplate = async () => {
     const token = localStorage.getItem('adminToken');
-    const res = await fetch(`${API}/products/template`, {
+    const res = await adminFetch(`${API}/products/template`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
@@ -204,7 +205,7 @@ export default function ProductsPage() {
       const token = localStorage.getItem('adminToken');
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`${API}/products/import`, {
+      const res = await adminFetch(`${API}/products/import`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData

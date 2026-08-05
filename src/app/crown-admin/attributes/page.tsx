@@ -6,6 +6,7 @@ import ImageUploader from '../components/ImageUploader';
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 const API = `${ADMIN_API}/attributes`;
 
 interface AttributeValue {
@@ -48,7 +49,7 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
     if (!newValue.trim()) return;
     setIsSaving(true);
     try {
-      const res = await fetch(`${API}/${attribute.id}/values`, {
+      const res = await adminFetch(`${API}/${attribute.id}/values`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({
@@ -78,7 +79,7 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
 
   const handleUpdateValue = async (valueId: number): Promise<void> => {
     try {
-      const res = await fetch(`${API}/values/${valueId}`, {
+      const res = await adminFetch(`${API}/values/${valueId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ value: editText })
@@ -97,7 +98,7 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
   const handleDeleteValue = async (valueId: number): Promise<void> => {
     if (!confirm('Delete this value?')) return;
     try {
-      const res = await fetch(`${API}/values/${valueId}`, {
+      const res = await adminFetch(`${API}/values/${valueId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${getToken()}` }
       });
@@ -260,7 +261,7 @@ export default function AttributesPage() {
 
   const fetchAttributes = async (): Promise<void> => {
     try {
-      const res = await fetch(API, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await adminFetch(API, { headers: { 'Authorization': `Bearer ${getToken()}` } });
       if (res.ok) setAttributes(await res.json());
     } catch (error) {
       console.error(error);
@@ -294,7 +295,7 @@ export default function AttributesPage() {
     const method = editingId ? 'PUT' : 'POST';
     const url = editingId ? `${API}/${editingId}` : API;
     try {
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify(formData)
@@ -317,7 +318,7 @@ export default function AttributesPage() {
   const handleDelete = async (id: number): Promise<void> => {
     if (!confirm('Delete this attribute? All its values will be lost.')) return;
     try {
-      const res = await fetch(`${API}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await adminFetch(`${API}/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
       if (res.ok) { toast.success('Attribute deleted successfully'); fetchAttributes(); }
       else toast.error('Failed to delete attribute');
     } catch { toast.error('An error occurred'); }

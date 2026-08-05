@@ -6,6 +6,7 @@ import { Eye, Loader2, Undo2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
 import { Pagination } from '@/types/admin';
+import { adminFetch } from '@/lib/api';
 
 const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
 
@@ -27,7 +28,7 @@ export default function ReturnsPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: '25' });
       if (status) params.set('status', status);
-      const response = await fetch(`${API}/returns?${params}`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+      const response = await adminFetch(`${API}/returns?${params}`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || 'Unable to load returns');
       setReturnsList(json.data || []);

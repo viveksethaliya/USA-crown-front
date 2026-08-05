@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, Check, X, Box, DollarSign, RefreshCw, Send, Save, Ban, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 const money = (value: number | string | null | undefined) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
 
@@ -24,7 +25,7 @@ export default function ReturnDetailPage() {
   const [inspectRestock, setInspectRestock] = useState(true);
 
   const request = async (path: string, options: RequestInit = {}) => {
-    const response = await fetch(`${API}/returns${path}`, {
+    const response = await adminFetch(`${API}/returns${path}`, {
       ...options,
       headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}`, 'Content-Type': 'application/json', ...(options.headers || {}) }
     });

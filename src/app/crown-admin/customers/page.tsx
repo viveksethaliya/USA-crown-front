@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Pagination } from '@/types/admin';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -32,7 +33,7 @@ export default function CustomersPage() {
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (roleFilter) params.set('role', roleFilter);
       if (yearFilter) params.set('year', yearFilter);
-      const res = await fetch(`${API}/customers?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/customers?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
       const json = await res.json();
       setCustomers(json.data || []);
       setPagination(json.pagination || { total: 0, page: 1, totalPages: 1 });
@@ -49,7 +50,7 @@ export default function CustomersPage() {
     if (!confirm(`Delete user "${username || id}"? This cannot be undone.`)) return;
     const token = localStorage.getItem('adminToken');
     try {
-      await fetch(`${API}/customers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      await adminFetch(`${API}/customers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       fetchCustomers(pagination.page);
     } catch (error) { console.error(error); }
   };
@@ -57,7 +58,7 @@ export default function CustomersPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const res = await fetch(`${API}/customers/export`, {
+      const res = await adminFetch(`${API}/customers/export`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       });
       if (!res.ok) throw new Error('Export failed');
@@ -82,7 +83,7 @@ export default function CustomersPage() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch(`${API}/customers/import`, {
+      const res = await adminFetch(`${API}/customers/import`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
         body: formData

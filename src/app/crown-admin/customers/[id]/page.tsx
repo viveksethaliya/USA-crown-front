@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 const ROLES = [
   { id: 1, name: 'Admin', slug: 'admin' },
   { id: 4, name: 'Customer', slug: 'customer' },
@@ -61,9 +62,9 @@ export default function CustomerDetailPage() {
       try {
         const token = localStorage.getItem('adminToken');
         const [customersRes, groupsRes, permsRes] = await Promise.all([
-          fetch(`${API}/customers?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API}/groups`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API}/permissions`, { headers: { 'Authorization': `Bearer ${token}` } })
+          adminFetch(`${API}/customers?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          adminFetch(`${API}/groups`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          adminFetch(`${API}/permissions`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         const customersJson = await customersRes.json();
         const groupsJson = await groupsRes.json();
@@ -79,7 +80,7 @@ export default function CustomerDetailPage() {
   const fetchAddresses = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/addresses`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/customers/${id}/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         setAddresses(await res.json());
       }
@@ -89,7 +90,7 @@ export default function CustomerDetailPage() {
   const fetchPermissions = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/permissions`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/customers/${id}/permissions`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         setUserPermissions(data.map((p: any) => p.permission_id));
@@ -120,7 +121,7 @@ export default function CustomerDetailPage() {
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/customers/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (!res.ok) throw new Error('User not found');
       handleSetUser(await res.json());
       await Promise.all([fetchAddresses(), fetchPermissions()]);
@@ -158,7 +159,7 @@ export default function CustomerDetailPage() {
         const form = new FormData();
         form.append('file', certificateFile);
         form.append('folder', 'resale_certs');
-        const uploadRes = await fetch(`${API}/upload`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: form });
+        const uploadRes = await adminFetch(`${API}/upload`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: form });
         if (!uploadRes.ok) throw new Error('Failed to upload certificate');
         const uploadData = await uploadRes.json();
         payload.resale_certificate_url = uploadData.url;
@@ -167,10 +168,10 @@ export default function CustomerDetailPage() {
       let res;
       if (isCreatingUser) {
         if (!payload.email || !payload.password || !payload.first_name || !payload.phone) throw new Error('Email, password, first name, and phone are required.');
-        res = await fetch(`${API}/customers`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+        res = await adminFetch(`${API}/customers`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
       } else {
         if (!payload.password) delete payload.password;
-        res = await fetch(`${API}/customers/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+        res = await adminFetch(`${API}/customers/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
       }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to save');
@@ -202,7 +203,7 @@ export default function CustomerDetailPage() {
       setIsSendingWelcome(true);
       try {
         const token = localStorage.getItem('adminToken');
-        const res = await fetch(`${API}/customers/${welcomeModal.userId}/send-welcome`, {
+        const res = await adminFetch(`${API}/customers/${welcomeModal.userId}/send-welcome`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ plain_password: welcomeModal.plainPassword }),
@@ -224,7 +225,7 @@ export default function CustomerDetailPage() {
     if (!window.confirm("Are you sure you want to delete this document?")) return;
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/documents/${docId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/customers/${id}/documents/${docId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       if (!res.ok) throw new Error('Failed to delete document');
       setSelectedUser((prev: any) => ({ ...prev, user_documents: prev.user_documents.filter((d: any) => d.id !== docId) }));
       toast.success("Document deleted successfully");
@@ -241,7 +242,7 @@ export default function CustomerDetailPage() {
         ? `${API}/customers/${id}/addresses`
         : `${API}/customers/${id}/addresses/${isEditingAddress}`;
 
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(addressForm)
@@ -265,7 +266,7 @@ export default function CustomerDetailPage() {
     if (!window.confirm("Are you sure you want to delete this address?")) return;
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/addresses/${addressId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/customers/${id}/addresses/${addressId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       if (!res.ok) throw new Error('Failed to delete address');
       toast.success("Address deleted successfully");
       await fetchAddresses();
@@ -276,7 +277,7 @@ export default function CustomerDetailPage() {
     setIsSavingPermissions(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/permissions`, {
+      const res = await adminFetch(`${API}/customers/${id}/permissions`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ permissionIds: userPermissions })

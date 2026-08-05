@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ShieldAlert, Monitor, Globe, Mail, Clock, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { API_URL } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 interface AuditLog {
   id: string;
@@ -25,7 +26,7 @@ export default function AuditLogsPage() {
       try {
         const token = localStorage.getItem('adminToken');
         
-        const res = await fetch(`${API_URL}/api/admin/audit/login-history`, {
+        const res = await adminFetch(`${API_URL}/api/admin/audit/login-history`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         

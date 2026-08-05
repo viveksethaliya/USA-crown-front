@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -64,7 +65,7 @@ function authHeader() {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API}/checkout-fields${path}`, { ...init, headers: { ...authHeader(), ...(init?.headers || {}) } });
+  const res = await adminFetch(`${API}/checkout-fields${path}`, { ...init, headers: { ...authHeader(), ...(init?.headers || {}) } });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json.error || 'Request failed');
   return json as T;
@@ -302,7 +303,7 @@ export default function CheckoutFieldsPage() {
       setLoading(true);
       const [fieldsData, rolesData] = await Promise.all([
         apiFetch<CheckoutField[]>(''),
-        fetch(`${API}/permissions/roles`, { headers: authHeader() })
+        adminFetch(`${API}/permissions/roles`, { headers: authHeader() })
           .then(r => r.json())
           .then(d => (Array.isArray(d) ? d : []) as Role[]),
       ]);

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { Brand } from '@/types/admin';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function BrandsPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -19,7 +20,7 @@ export default function BrandsPage() {
   const fetchBrands = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/brands`, {
+      const res = await adminFetch(`${API}/brands`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setBrands(await res.json());
@@ -58,7 +59,7 @@ export default function BrandsPage() {
       ? `${API}/brands/${editingId}`
       : `${API}/brands`;
     try {
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(formData)
@@ -82,7 +83,7 @@ export default function BrandsPage() {
     if (!confirm('Are you sure you want to delete this collection?')) return;
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/brands/${id}`, {
+      const res = await adminFetch(`${API}/brands/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

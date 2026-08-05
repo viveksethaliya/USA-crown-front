@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, Trash2, Plus, Search, Tag, Ruler, Edit2, Check, X, ChevronDown, ChevronUp, CalendarRange, HelpCircle, Lightbulb, Users, ArrowRight, Activity, Layers, BarChart2 } from 'lucide-react';
 import { apiUrl } from '@/lib/cart';
+import { adminFetch } from '@/lib/api';
 
 interface DiscountRule {
   id: number;
@@ -61,7 +62,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
 
   const fetchRules = useCallback(async () => {
     try {
-      const res = await fetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules`), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -76,7 +77,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
   useEffect(() => { fetchRules(); }, [fetchRules]);
 
   useEffect(() => {
-    fetch(apiUrl('/api/admin/categories'), { headers: { Authorization: `Bearer ${token}` } })
+    adminFetch(apiUrl('/api/admin/categories'), { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => setCategories(data || []))
       .catch(console.error);
@@ -86,7 +87,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
   useEffect(() => {
     if (form.scope !== 'product' && form.scope !== 'measurement') return;
     const delay = setTimeout(() => {
-      fetch(apiUrl(`/api/admin/products?search=${encodeURIComponent(searchProduct)}&limit=20`), { headers: { Authorization: `Bearer ${token}` } })
+      adminFetch(apiUrl(`/api/admin/products?search=${encodeURIComponent(searchProduct)}&limit=20`), { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json())
         .then(data => setProducts(data.data || []))
         .catch(console.error);
@@ -97,7 +98,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
   // Fetch variations when a single product is selected in product scope
   useEffect(() => {
     if (form.scope === 'product' && selectedProducts.length === 1) {
-      fetch(apiUrl(`/api/admin/products/${selectedProducts[0].id}`), { headers: { Authorization: `Bearer ${token}` } })
+      adminFetch(apiUrl(`/api/admin/products/${selectedProducts[0].id}`), { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json())
         .then(data => {
           const variations = data.data?.product_variations || data.variations || [];
@@ -202,7 +203,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
         body.scope = first.scope;
       }
 
-      const res = await fetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
@@ -232,7 +233,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
   const handleSaveEdit = async (rule: DiscountRule) => {
     setSavingEditId(rule.id);
     try {
-      const res = await fetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules/${rule.id}`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules/${rule.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -255,7 +256,7 @@ export default function DiscountRulesPanel({ groupId, token }: { groupId: string
     if (!confirm('Delete this rule?')) return;
     setDeletingId(ruleId);
     try {
-      await fetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules/${ruleId}`), {
+      await adminFetch(apiUrl(`/api/admin/groups/${groupId}/discount-rules/${ruleId}`), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

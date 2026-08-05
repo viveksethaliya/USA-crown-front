@@ -11,6 +11,7 @@ import {
 import { ADMIN_API as API } from '@/lib/config';
 import { apiUrl } from '@/lib/cart';
 import toast from 'react-hot-toast';
+import { adminFetch } from '@/lib/api';
 
 // ─── helpers ────────────────────────────────────────────────
 const token = () => (typeof window !== 'undefined' ? localStorage.getItem('adminToken') : '');
@@ -104,7 +105,7 @@ export default function PriceListsPage() {
   const fetchLists = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API}/price-lists`, { headers: authHdr() });
+      const res = await adminFetch(`${API}/price-lists`, { headers: authHdr() });
       const json = await res.json();
       setLists(json.data || []);
     } catch { toast.error('Failed to load price lists'); }
@@ -118,7 +119,7 @@ export default function PriceListsPage() {
     setIsExporting(true);
     try {
       const url = listId ? `${API}/price-lists/${listId}/export` : `${API}/price-lists/export`;
-      const res = await fetch(url, { headers: authHdr() });
+      const res = await adminFetch(url, { headers: authHdr() });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const objUrl = window.URL.createObjectURL(blob);
@@ -147,7 +148,7 @@ export default function PriceListsPage() {
     formData.append('file', file);
     try {
       const url = importTargetId ? `${API}/price-lists/${importTargetId}/import` : `${API}/price-lists/import`;
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` },
         body: formData
@@ -171,7 +172,7 @@ export default function PriceListsPage() {
     setIsDetailLoading(true);
     setDetail(null);
     try {
-      const res = await fetch(`${API}/price-lists/${id}`, { headers: authHdr() });
+      const res = await adminFetch(`${API}/price-lists/${id}`, { headers: authHdr() });
       const json = await res.json();
       setDetail(json.data);
     } catch { toast.error('Failed to load price list details'); }
@@ -186,7 +187,7 @@ export default function PriceListsPage() {
     try {
       const method = editingList ? 'PUT' : 'POST';
       const url = editingList ? `${API}/price-lists/${editingList.id}` : `${API}/price-lists`;
-      const res = await fetch(url, { method, headers: authHdr(), body: JSON.stringify(listForm) });
+      const res = await adminFetch(url, { method, headers: authHdr(), body: JSON.stringify(listForm) });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
       toast.success(editingList ? 'Price list updated' : 'Price list created');
       setShowForm(false);
@@ -204,7 +205,7 @@ export default function PriceListsPage() {
       onConfirm: async () => {
         setConfirm(null);
         try {
-          await fetch(`${API}/price-lists/${pl.id}`, { method: 'DELETE', headers: authHdr() });
+          await adminFetch(`${API}/price-lists/${pl.id}`, { method: 'DELETE', headers: authHdr() });
           toast.success('Price list deleted');
           fetchLists();
           if (detail?.id === pl.id) setDetail(null);
@@ -220,7 +221,7 @@ export default function PriceListsPage() {
     searchTimerRef.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(apiUrl(`/api/admin/products?search=${encodeURIComponent(productSearch)}&limit=10`), { headers: authHdr() });
+        const res = await adminFetch(apiUrl(`/api/admin/products?search=${encodeURIComponent(productSearch)}&limit=10`), { headers: authHdr() });
         const json = await res.json();
         setSearchResults(json.data || []);
       } catch { } finally { setIsSearching(false); }
@@ -234,7 +235,7 @@ export default function PriceListsPage() {
     userSearchTimerRef.current = setTimeout(async () => {
       setIsSearchingUsers(true);
       try {
-        const res = await fetch(apiUrl(`/api/admin/customers?search=${encodeURIComponent(userSearch)}&limit=10`), { headers: authHdr() });
+        const res = await adminFetch(apiUrl(`/api/admin/customers?search=${encodeURIComponent(userSearch)}&limit=10`), { headers: authHdr() });
         const json = await res.json();
         setUserResults(json.data || []);
       } catch { } finally { setIsSearchingUsers(false); }
@@ -248,7 +249,7 @@ export default function PriceListsPage() {
     if (!itemForm.product_id && !itemForm.variation_id) return toast.error('Select a product first');
     setIsSavingItem(true);
     try {
-      const res = await fetch(`${API}/price-lists/${detail.id}/items`, {
+      const res = await adminFetch(`${API}/price-lists/${detail.id}/items`, {
         method: 'POST', headers: authHdr(),
         body: JSON.stringify({ product_id: itemForm.product_id, variation_id: itemForm.variation_id, fixed_price: itemForm.fixed_price, min_qty: itemForm.min_qty })
       });
@@ -266,7 +267,7 @@ export default function PriceListsPage() {
   const handleUpdateItem = async (itemId: number) => {
     if (!detail) return;
     try {
-      const res = await fetch(`${API}/price-lists/${detail.id}/items/${itemId}`, {
+      const res = await adminFetch(`${API}/price-lists/${detail.id}/items/${itemId}`, {
         method: 'PUT', headers: authHdr(),
         body: JSON.stringify({ fixed_price: editItemValues.fixed_price, min_qty: editItemValues.min_qty })
       });
@@ -284,7 +285,7 @@ export default function PriceListsPage() {
       onConfirm: async () => {
         setConfirm(null);
         try {
-          await fetch(`${API}/price-lists/${detail!.id}/items/${itemId}`, { method: 'DELETE', headers: authHdr() });
+          await adminFetch(`${API}/price-lists/${detail!.id}/items/${itemId}`, { method: 'DELETE', headers: authHdr() });
           toast.success('Item removed');
           openDetail(detail!.id);
         } catch { toast.error('Failed to remove item'); }
@@ -298,7 +299,7 @@ export default function PriceListsPage() {
     setUserSearch('');
     setUserResults([]);
     try {
-      const res = await fetch(`${API}/price-lists/${detail.id}/users`, {
+      const res = await adminFetch(`${API}/price-lists/${detail.id}/users`, {
         method: 'POST', headers: authHdr(),
         body: JSON.stringify({ user_id: user.id })
       });
@@ -315,7 +316,7 @@ export default function PriceListsPage() {
       onConfirm: async () => {
         setConfirm(null);
         try {
-          await fetch(`${API}/price-lists/${detail!.id}/users/${userId}`, { method: 'DELETE', headers: authHdr() });
+          await adminFetch(`${API}/price-lists/${detail!.id}/users/${userId}`, { method: 'DELETE', headers: authHdr() });
           toast.success('User removed');
           openDetail(detail!.id);
         } catch { toast.error('Failed to remove user'); }

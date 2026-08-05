@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, FolderTree, Loader2, Search } from 'lucide-react'
 import { toast } from 'react-hot-toast';
 import { Category } from '@/types/admin';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -19,7 +20,7 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/categories`, {
+      const res = await adminFetch(`${API}/categories`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setCategories(await res.json());
@@ -61,7 +62,7 @@ export default function CategoriesPage() {
       : `${API}/categories`;
     const payload = { ...formData, parent_id: formData.parent_id ? parseInt(formData.parent_id) : null };
     try {
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -85,7 +86,7 @@ export default function CategoriesPage() {
     if (!confirm('Are you sure you want to delete this category? Sub-categories will be unlinked.')) return;
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/categories/${id}`, {
+      const res = await adminFetch(`${API}/categories/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

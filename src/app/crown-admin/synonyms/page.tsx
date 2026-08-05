@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { ADMIN_API as API } from "@/lib/config";
-
+import { adminFetch } from "@/lib/api";
 
 interface Synonym {
   id: number;
@@ -25,7 +25,7 @@ export default function SynonymsPage() {
   const fetchSynonyms = async () => {
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${API}/synonyms`, {
+      const res = await adminFetch(`${API}/synonyms`, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
@@ -57,7 +57,7 @@ export default function SynonymsPage() {
         ? `${API}/synonyms/${editingId}`
         : `${API}/synonyms`;
 
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -89,7 +89,7 @@ export default function SynonymsPage() {
     if (!confirm("Delete this synonym rule?")) return;
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${API}/synonyms/${id}`, {
+      const res = await adminFetch(`${API}/synonyms/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`

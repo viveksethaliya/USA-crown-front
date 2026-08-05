@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Plus, Pencil, Trash2, FileText, Newspaper, Loader2, Search, ExternalLink } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function PagesListPage() {
   const [pages, setPages] = useState<any[]>([]);
@@ -23,7 +24,7 @@ export default function PagesListPage() {
       if (filterType) params.set('page_type', filterType);
       if (filterPublished !== '') params.set('is_published', filterPublished);
 
-      const res = await fetch(`${API}/pages?${params}`, {
+      const res = await adminFetch(`${API}/pages?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -44,7 +45,7 @@ export default function PagesListPage() {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/pages/${id}`, {
+      const res = await adminFetch(`${API}/pages/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

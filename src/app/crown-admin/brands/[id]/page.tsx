@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, Package, Search, Plus, Trash2, FolderPlus, FolderMi
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function CollectionProductsPage() {
   const params = useParams();
@@ -48,11 +49,11 @@ export default function CollectionProductsPage() {
       const headers = { 'Authorization': `Bearer ${token}` };
 
       // Fetch assigned products
-      const prodRes = await fetch(`${API}/brands/${id}/products`, { headers });
+      const prodRes = await adminFetch(`${API}/brands/${id}/products`, { headers });
       if (prodRes.ok) setProducts(await prodRes.json());
 
       // Fetch categories for the bulk assign dropdown
-      const catRes = await fetch(`${API}/categories`, { headers });
+      const catRes = await adminFetch(`${API}/categories`, { headers });
       if (catRes.ok) {
         const rawCats = await catRes.json();
         const formattedCats = rawCats.map((c: any) => ({
@@ -83,7 +84,7 @@ export default function CollectionProductsPage() {
       setIsSearching(true);
       try {
         const token = localStorage.getItem('adminToken');
-        const res = await fetch(`${API}/products?search=${encodeURIComponent(searchQuery)}&limit=10`, {
+        const res = await adminFetch(`${API}/products?search=${encodeURIComponent(searchQuery)}&limit=10`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -104,7 +105,7 @@ export default function CollectionProductsPage() {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/brands/${id}/products`, {
+      const res = await adminFetch(`${API}/brands/${id}/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ productId })
@@ -130,7 +131,7 @@ export default function CollectionProductsPage() {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/brands/${id}/products/${productId}`, {
+      const res = await adminFetch(`${API}/brands/${id}/products/${productId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -154,7 +155,7 @@ export default function CollectionProductsPage() {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/brands/${id}/products/bulk`, {
+      const res = await adminFetch(`${API}/brands/${id}/products/bulk`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ productIds: selectedProducts })
@@ -179,7 +180,7 @@ export default function CollectionProductsPage() {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/brands/${id}/products/clear`, {
+      const res = await adminFetch(`${API}/brands/${id}/products/clear`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -206,7 +207,7 @@ export default function CollectionProductsPage() {
     setIsProcessing(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/brands/${id}/products/delete-all`, {
+      const res = await adminFetch(`${API}/brands/${id}/products/delete-all`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -240,7 +241,7 @@ export default function CollectionProductsPage() {
       const method = action === 'add' ? 'POST' : 'DELETE';
       const body = action === 'add' ? JSON.stringify({ categoryId: selectedCategory }) : undefined;
 
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 
           'Content-Type': 'application/json',

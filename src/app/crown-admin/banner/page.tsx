@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Save, Loader2, Image as ImageIcon, Library, Trash2 } from 'lucide-react';
 import MediaPickerModal from '@/components/media/MediaPickerModal';
 import { apiUrl } from '@/lib/cart';
+import { adminFetch } from '@/lib/api';
 
 export default function BannerPage() {
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ export default function BannerPage() {
 
   const fetchSettings = async () => {
     try {
-      const bannerRes = await fetch(apiUrl('/api/admin/settings/hero-banner'), {
+      const bannerRes = await adminFetch(apiUrl('/api/admin/settings/hero-banner'), {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
 
@@ -66,7 +67,7 @@ export default function BannerPage() {
     setMessage({ text: '', type: '' });
 
     try {
-      const bannerRes = await fetch(apiUrl('/api/admin/settings/hero-banner'), {
+      const bannerRes = await adminFetch(apiUrl('/api/admin/settings/hero-banner'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ export default function BannerPage() {
       const oldPath = oldUrl.split('/storage/v1/object/public/storage/')[1];
       if (oldPath && oldPath !== path) { // Don't delete if they pick the exact same image
         try {
-          await fetch(apiUrl('/api/admin/upload'), {
+          await adminFetch(apiUrl('/api/admin/upload'), {
             method: 'DELETE',
             headers: { 
               'Content-Type': 'application/json', 

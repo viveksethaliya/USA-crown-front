@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Tag, Loader2, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function TagsPage() {
   const [tags, setTags] = useState<any[]>([]);
@@ -17,7 +18,7 @@ export default function TagsPage() {
   const fetchTags = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/tags`, {
+      const res = await adminFetch(`${API}/tags`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setTags(await res.json());
@@ -51,7 +52,7 @@ export default function TagsPage() {
       const url = editingId
         ? `${API}/tags/${editingId}`
         : `${API}/tags`;
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(formData)
@@ -75,7 +76,7 @@ export default function TagsPage() {
     if (!confirm('Are you sure you want to delete this tag?')) return;
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/tags/${id}`, {
+      const res = await adminFetch(`${API}/tags/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

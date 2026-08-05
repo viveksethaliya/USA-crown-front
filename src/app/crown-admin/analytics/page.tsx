@@ -9,6 +9,7 @@ import {
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 const COLORS = ['#d1a054', '#312f2c', '#8a7d65', '#d4c9b9', '#a69a84'];
 
@@ -59,9 +60,9 @@ export default function AnalyticsDashboard() {
       if (roleFilter !== 'all') customerParams.append('role', roleFilter);
 
       const [salesRes, custRes, breakRes] = await Promise.all([
-        fetch(`${API}/analytics/sales?${salesParams}`, { headers }),
-        fetch(`${API}/analytics/customers?${customerParams}`, { headers }),
-        fetch(`${API}/analytics/breakdown?${params}`, { headers })
+        adminFetch(`${API}/analytics/sales?${salesParams}`, { headers }),
+        adminFetch(`${API}/analytics/customers?${customerParams}`, { headers }),
+        adminFetch(`${API}/analytics/breakdown?${params}`, { headers })
       ]);
 
       if (!salesRes.ok || !custRes.ok || !breakRes.ok) throw new Error('Failed to load analytics data');

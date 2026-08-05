@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 // Simple formatter since we don't have access to the storefront cart lib here
 const formatMoney = (amount: number) => {
@@ -38,7 +39,7 @@ export default function AdminCartDetailPage() {
   const fetchCart = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/cart`, {
+      const res = await adminFetch(`${API}/customers/${id}/cart`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch cart');
@@ -93,7 +94,7 @@ export default function AdminCartDetailPage() {
     setBusyItemId(itemId);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/cart/items/${itemId}`, {
+      const res = await adminFetch(`${API}/customers/${id}/cart/items/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ quantity })
@@ -112,7 +113,7 @@ export default function AdminCartDetailPage() {
     setBusyItemId(itemId);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/cart/items/${itemId}`, {
+      const res = await adminFetch(`${API}/customers/${id}/cart/items/${itemId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -132,7 +133,7 @@ export default function AdminCartDetailPage() {
     setIsSearching(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/products?search=${encodeURIComponent(searchQuery)}&limit=10`, {
+      const res = await adminFetch(`${API}/products?search=${encodeURIComponent(searchQuery)}&limit=10`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to search');
@@ -170,7 +171,7 @@ export default function AdminCartDetailPage() {
     setIsAdding(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/customers/${id}/cart/items`, {
+      const res = await adminFetch(`${API}/customers/${id}/cart/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -207,7 +208,7 @@ export default function AdminCartDetailPage() {
     try {
       setIsSearching(true);
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/products/${prod.id}`, {
+      const res = await adminFetch(`${API}/products/${prod.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch variations');

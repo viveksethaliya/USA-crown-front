@@ -8,6 +8,7 @@ import {
   Info, Users, Zap
 } from 'lucide-react';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 // ─── helpers ────────────────────────────────────────────────
@@ -73,7 +74,7 @@ export default function CampaignsPage() {
   const fetchCampaigns = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API}/campaigns`, { headers: authHdr() });
+      const res = await adminFetch(`${API}/campaigns`, { headers: authHdr() });
       const json = await res.json();
       setCampaigns(json.data || []);
     } catch { toast.error('Failed to load campaigns'); }
@@ -88,7 +89,7 @@ export default function CampaignsPage() {
     setDetail(null);
     setShowForm(false);
     try {
-      const res = await fetch(`${API}/campaigns/${id}`, { headers: authHdr() });
+      const res = await adminFetch(`${API}/campaigns/${id}`, { headers: authHdr() });
       const json = await res.json();
       setDetail(json.data);
     } catch { toast.error('Failed to load campaign details'); }
@@ -121,7 +122,7 @@ export default function CampaignsPage() {
         ends_at: form.ends_at || null,
       };
 
-      const res = await fetch(url, { method, headers: authHdr(), body: JSON.stringify(payload) });
+      const res = await adminFetch(url, { method, headers: authHdr(), body: JSON.stringify(payload) });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
       
       toast.success(editingCampaign ? 'Campaign updated' : 'Campaign created');
@@ -140,7 +141,7 @@ export default function CampaignsPage() {
       onConfirm: async () => {
         setConfirm(null);
         try {
-          await fetch(`${API}/campaigns/${c.id}`, { method: 'DELETE', headers: authHdr() });
+          await adminFetch(`${API}/campaigns/${c.id}`, { method: 'DELETE', headers: authHdr() });
           toast.success('Campaign deleted');
           fetchCampaigns();
           if (detail?.id === c.id) setDetail(null);

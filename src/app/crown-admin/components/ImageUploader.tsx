@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 
 import { ADMIN_API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 const API = `${ADMIN_API}/upload`;
 
 /**
@@ -42,7 +43,7 @@ export default function ImageUploader({ folder = 'misc', onUploaded, multiple = 
 
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(API, {
+      const res = await adminFetch(API, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData

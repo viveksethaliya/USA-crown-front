@@ -5,6 +5,7 @@ import { Loader2, Shield, Save, CheckCircle2, XCircle, ArrowLeft } from 'lucide-
 import Link from 'next/link';
 import { apiUrl } from '@/lib/cart';
 import { toast } from 'react-hot-toast';
+import { adminFetch } from '@/lib/api';
 
 export default function RolePermissionsPage() {
   const [loading, setLoading] = useState(true);
@@ -18,8 +19,8 @@ export default function RolePermissionsPage() {
   const fetchData = async () => {
     try {
       const [rolesRes, permsRes] = await Promise.all([
-        fetch(apiUrl('/api/admin/permissions/roles'), { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }),
-        fetch(apiUrl('/api/admin/permissions'), { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } })
+        adminFetch(apiUrl('/api/admin/permissions/roles'), { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } }),
+        adminFetch(apiUrl('/api/admin/permissions'), { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } })
       ]);
 
       if (rolesRes.ok && permsRes.ok) {
@@ -64,7 +65,7 @@ export default function RolePermissionsPage() {
     setSaving(true);
     try {
       const permArray = Array.from(rolePermsMap[roleId] || []);
-      const res = await fetch(apiUrl(`/api/admin/permissions/roles/${roleId}`), {
+      const res = await adminFetch(apiUrl(`/api/admin/permissions/roles/${roleId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

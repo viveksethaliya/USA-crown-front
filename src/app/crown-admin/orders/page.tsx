@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Download, Eye, FileText, Loader2, Plus, Search, ShoppingBag } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 import { Pagination } from '@/types/admin';
 
 const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
@@ -43,7 +44,7 @@ export default function OrdersPage() {
       if (paymentStatus) params.set('payment_status', paymentStatus);
       if (dateFrom) params.set('date_from', dateFrom);
       if (dateTo) params.set('date_to', dateTo);
-      const response = await fetch(`${API}/orders?${params}`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+      const response = await adminFetch(`${API}/orders?${params}`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || 'Unable to load orders');
       setOrders(json.data || []);
@@ -63,7 +64,7 @@ export default function OrdersPage() {
   const exportOrders = async () => {
     setExporting(true);
     try {
-      const response = await fetch(`${API}/orders/export`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+      const response = await adminFetch(`${API}/orders/export`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
       if (!response.ok) throw new Error('Export failed');
       const url = URL.createObjectURL(await response.blob());
       const anchor = document.createElement('a');

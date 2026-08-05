@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { LogIn } from 'lucide-react';
 import {
   LayoutDashboard, Image, Package, Tag, Tags, SlidersHorizontal, Shapes,
   Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, Undo2, FileText, FormInput, Search
@@ -103,6 +104,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminUser, setAdminUser] = useState<any | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  // Any page can fire this to show the modal:
+  //   window.dispatchEvent(new CustomEvent('admin:session-expired'))
+  useEffect(() => {
+    const handler = () => setSessionExpired(true);
+    window.addEventListener('admin:session-expired', handler);
+    return () => window.removeEventListener('admin:session-expired', handler);
+  }, []);
+
+  const handleReLogin = useCallback(() => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    setSessionExpired(false);
+    router.push('/crown-admin/login');
+  }, [router]);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -137,6 +154,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen bg-[#f0ede5] text-[#312f2c] font-sans overflow-hidden p-3 gap-3">
       <Toaster position="top-right" toastOptions={{ style: { background: '#312f2c', color: '#f0ede5', border: '1px solid #4a473f' } }} />
+
+      {/* ── Session Expired Modal ── */}
+      {sessionExpired && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#f0ede5] border border-white/60 rounded-3xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center gap-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-[#d1a054]/15 flex items-center justify-center">
+              <LogIn className="w-8 h-8 text-[#d1a054]" />
+            </div>
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-[#312f2c] mb-1">Session Expired</h2>
+              <p className="text-sm text-[#312f2c]/60 leading-relaxed">
+                Your login session has expired or is no longer valid. Please sign in again to continue.
+              </p>
+            </div>
+            <button
+              onClick={handleReLogin}
+              className="w-full flex items-center justify-center gap-2 bg-[#312f2c] hover:bg-[#4a473f] text-[#f0ede5] px-6 py-3 rounded-xl font-semibold transition-all hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In Again
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sidebar */}
       <aside className="w-[260px] bg-[#e8e4d8]/50 backdrop-blur-2xl border border-white/40 rounded-3xl flex flex-col flex-shrink-0 shadow-sm overflow-hidden">

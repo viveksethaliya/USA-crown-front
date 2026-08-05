@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { UploadCloud, Trash2, FileText, Loader2, Search, Image as ImageIcon, Copy, ExternalLink, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 interface MediaFile {
   id: string;
@@ -28,7 +29,7 @@ export default function MediaLibraryPage() {
   const fetchMedia = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/upload`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/upload`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) setFiles(await res.json());
     } catch (error) { console.error('Failed to fetch media:', error); }
     finally { setIsLoading(false); }
@@ -50,7 +51,7 @@ export default function MediaLibraryPage() {
       formData.append('folder', 'misc');
       try {
         const token = localStorage.getItem('adminToken');
-        const res = await fetch(`${API}/upload`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+        const res = await adminFetch(`${API}/upload`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
         if (!res.ok) { const err = await res.json(); console.error(`Failed: ${file.name}`, err); hasError = true; }
       } catch (error) { console.error(error); hasError = true; }
     }
@@ -67,7 +68,7 @@ export default function MediaLibraryPage() {
     const path = editingAltFile.folder ? `${editingAltFile.folder}/${editingAltFile.name}` : editingAltFile.name;
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/upload/metadata`, {
+      const res = await adminFetch(`${API}/upload/metadata`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ file_path: path, alt_text: altText })
@@ -85,7 +86,7 @@ export default function MediaLibraryPage() {
     const path = file.folder ? `${file.folder}/${file.name}` : file.name;
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/upload`, {
+      const res = await adminFetch(`${API}/upload`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ path })

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { UsersRound, Search, Trash2, Loader2, Edit2, Tag, HelpCircle, X, Percent, Target, Settings2, Info } from 'lucide-react';
 import Link from 'next/link';
 import { apiUrl } from '@/lib/cart';
+import { adminFetch } from '@/lib/api';
 
 interface Group {
   id: number;
@@ -40,7 +41,7 @@ export default function GroupsPage() {
 
   const fetchGroups = useCallback(async () => {
     try {
-      const res = await fetch(apiUrl('/api/admin/groups'), {
+      const res = await adminFetch(apiUrl('/api/admin/groups'), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch');
@@ -59,7 +60,7 @@ export default function GroupsPage() {
     e.preventDefault();
     setCreating(true);
     try {
-      const res = await fetch(apiUrl('/api/admin/groups'), {
+      const res = await adminFetch(apiUrl('/api/admin/groups'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -84,7 +85,7 @@ export default function GroupsPage() {
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Delete group "${name}"? All member assignments will be removed.`)) return;
     try {
-      await fetch(apiUrl(`/api/admin/groups/${id}`), {
+      await adminFetch(apiUrl(`/api/admin/groups/${id}`), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

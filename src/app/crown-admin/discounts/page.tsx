@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Tag, Plus, CheckCircle2, XCircle, Trash2, Loader2, Save, Edit2, Search, Target, Zap, CalendarRange, HelpCircle, X, Layers, ShoppingBag, ArrowRight, Lightbulb, Settings, Ticket, Check, Trophy, Ban, Globe, Folder, Package, Info, AlertOctagon, Filter } from 'lucide-react';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 import { apiUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -229,7 +230,7 @@ export default function DiscountsPage() {
     try {
       const fetchJson = async (url: string) => {
         try {
-          const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+          const res = await adminFetch(url, { headers: { Authorization: `Bearer ${token}` } });
           if (!res.ok) { console.error(`Failed to fetch ${url}`); return null; }
           return await res.json();
         } catch (e) {
@@ -266,7 +267,7 @@ export default function DiscountsPage() {
   useEffect(() => {
     if (!productSearch || form.target_scope !== 'product') return;
     const t = setTimeout(() => {
-      fetch(apiUrl(`/api/admin/products?search=${encodeURIComponent(productSearch)}&limit=15`), { headers: { Authorization: `Bearer ${token}` } })
+      adminFetch(apiUrl(`/api/admin/products?search=${encodeURIComponent(productSearch)}&limit=15`), { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json())
         .then(d => setProducts(d.data || []))
         .catch(() => {});
@@ -283,7 +284,7 @@ export default function DiscountsPage() {
   };
 
   const openEditForm = async (rule: any) => {
-    const res = await fetch(`${API}/discounts/${rule.id}`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await adminFetch(`${API}/discounts/${rule.id}`, { headers: { Authorization: `Bearer ${token}` } });
     const { data: full } = await res.json();
 
     const action = full.discount_actions?.[0];
@@ -324,7 +325,7 @@ export default function DiscountsPage() {
       // Fetch actual names
       if (productIds.length > 0) {
         Promise.all(productIds.map((id: number) => 
-          fetch(apiUrl(`/api/admin/products/${id}`), { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
+          adminFetch(apiUrl(`/api/admin/products/${id}`), { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
         )).then(results => {
           setSelectedProducts(results.map((p: any, idx: number) => ({
             id: productIds[idx],
@@ -418,7 +419,7 @@ export default function DiscountsPage() {
 
       const method = editingRuleId ? 'PUT' : 'POST';
       const url = editingRuleId ? `${API}/discounts/${editingRuleId}` : `${API}/discounts`;
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
@@ -443,7 +444,7 @@ export default function DiscountsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this discount rule? This cannot be undone.')) return;
     try {
-      const res = await fetch(`${API}/discounts/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/discounts/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { toast.success('Rule deleted'); fetchData(); }
     } catch { toast.error('Error deleting rule'); }
   };

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2, CheckCircle2, XCircle, Save, Mail, Search } from 'lucide-react';
 import { apiUrl } from '@/lib/cart';
+import { adminFetch } from '@/lib/api';
 import SeoFormBlock from '@/components/SeoFormBlock';
 import { toast } from 'react-hot-toast';
 
@@ -25,7 +26,7 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch(apiUrl('/api/admin/settings'), {
+      const res = await adminFetch(apiUrl('/api/admin/settings'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }
@@ -72,7 +73,7 @@ export default function SettingsPage() {
     setSaving(true);
 
     try {
-      const res = await fetch(apiUrl('/api/admin/settings'), {
+      const res = await adminFetch(apiUrl('/api/admin/settings'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

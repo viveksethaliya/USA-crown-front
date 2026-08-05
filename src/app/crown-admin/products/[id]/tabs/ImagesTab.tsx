@@ -7,6 +7,7 @@ import MediaPickerModal from '../../../../../components/media/MediaPickerModal';
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function ImagesTab({ productId, images, setImages }: { productId: string, images: any[], setImages: React.Dispatch<React.SetStateAction<any[]>> }) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -15,7 +16,7 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
   const handleUploaded = async (url: string, storagePath: string) => {
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/products/${productId}/images`, {
+      const res = await adminFetch(`${API}/products/${productId}/images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ url, alt_text: '', position: images.length })
@@ -35,7 +36,7 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
   const handleMediaSelected = async (url: string, path: string) => {
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/products/${productId}/images`, {
+      const res = await adminFetch(`${API}/products/${productId}/images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ url, alt_text: '', position: images.length })
@@ -56,7 +57,7 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
     setIsDeleting(image.id);
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/products/${productId}/images/${image.id}`, {
+      const res = await adminFetch(`${API}/products/${productId}/images/${image.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ position: 0 })
@@ -83,11 +84,11 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
     setIsDeleting(image.id);
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/products/${productId}/images/${image.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/products/${productId}/images/${image.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       if (!res.ok) throw new Error('Failed to remove image');
       
       if (image._storagePath || image.storage_path) {
-        await fetch(`${API}/upload`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ path: image._storagePath || image.storage_path }) });
+        await adminFetch(`${API}/upload`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ path: image._storagePath || image.storage_path }) });
       }
       setImages(prev => prev.filter(img => img.id !== image.id));
     } catch (error: any) { 

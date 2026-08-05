@@ -7,6 +7,7 @@ import MediaPickerModal from '../../../../../components/media/MediaPickerModal';
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 // ── Helper: label for a variation (e.g. "14K Yellow Gold / Size 7") ──────────
 function variationLabel(variation: any, productAttributes: any[]) {
@@ -55,7 +56,7 @@ export default function VariationsTab({ productId, productType, variations, setV
     const load = async () => {
       setIsLoadingPAs(true);
       try {
-        const res = await fetch(`${API}/products/${productId}/attributes`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        const res = await adminFetch(`${API}/products/${productId}/attributes`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
         if (res.ok) setProductAttributes(await res.json());
       } catch (e) { console.error(e); }
       finally { setIsLoadingPAs(false); }
@@ -67,7 +68,7 @@ export default function VariationsTab({ productId, productType, variations, setV
     if (productAttributes.find(pa => pa.attribute_id === parseInt(attributeId))) return;
     setIsLinkingAttr(true);
     try {
-      const res = await fetch(`${API}/products/${productId}/attributes`, {
+      const res = await adminFetch(`${API}/products/${productId}/attributes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ attribute_id: parseInt(attributeId), position: productAttributes.length })
@@ -89,7 +90,7 @@ export default function VariationsTab({ productId, productType, variations, setV
   const handleUnlinkAttribute = async (attributeId: number) => {
     if (!confirm('Remove this attribute from this product? Existing variations will lose this dimension.')) return;
     try {
-      const res = await fetch(`${API}/products/${productId}/attributes/${attributeId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await adminFetch(`${API}/products/${productId}/attributes/${attributeId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
       if (!res.ok) throw new Error('Failed to unlink attribute');
       setProductAttributes(prev => prev.filter(pa => pa.attribute_id !== attributeId));
     } catch (e: any) { 
@@ -119,14 +120,14 @@ export default function VariationsTab({ productId, productType, variations, setV
         attribute_values
       };
 
-      const res = await fetch(`${API}/products/${productId}/variations`, {
+      const res = await adminFetch(`${API}/products/${productId}/variations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify(payload)
       });
 
       if (res.ok) {
-        const refetch = await fetch(`${API}/products/${productId}/variations`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        const refetch = await adminFetch(`${API}/products/${productId}/variations`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
         if (refetch.ok) setVariations(await refetch.json());
         setNewVar({ sku: '', regular_price: '', sale_price: '', stock_quantity: '', stock_status: 'instock', is_published: true, image_url: '', weight_g: '', length_in: '', width_in: '', height_in: '', position: '', selectedValues: {} });
         setShowAddForm(false);
@@ -157,13 +158,13 @@ export default function VariationsTab({ productId, productType, variations, setV
         height_in: editVar.height_in !== '' && editVar.height_in !== null ? parseFloat(editVar.height_in) : null,
         position: editVar.position !== '' && editVar.position !== null ? parseInt(editVar.position) : 0,
       };
-      const res = await fetch(`${API}/products/${productId}/variations/${editingVarId}`, {
+      const res = await adminFetch(`${API}/products/${productId}/variations/${editingVarId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        const refetch = await fetch(`${API}/products/${productId}/variations`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        const refetch = await adminFetch(`${API}/products/${productId}/variations`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
         if (refetch.ok) setVariations(await refetch.json());
         setEditingVarId(null); setEditVar(null);
       } else {
@@ -180,7 +181,7 @@ export default function VariationsTab({ productId, productType, variations, setV
   const handleDeleteVariation = async (varId: number) => {
     if (!confirm('Delete this variation?')) return;
     try {
-      const res = await fetch(`${API}/products/${productId}/variations/${varId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await adminFetch(`${API}/products/${productId}/variations/${varId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
       if (!res.ok) throw new Error('Failed to delete variation');
       setVariations(prev => prev.filter(v => v.id !== varId));
     } catch (e: any) { 

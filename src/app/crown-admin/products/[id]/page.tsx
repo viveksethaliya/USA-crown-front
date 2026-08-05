@@ -13,6 +13,7 @@ import LinkedProductsTab from './tabs/LinkedProductsTab';
 import SeoFormBlock from '@/components/SeoFormBlock';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 const TABS = [
   { id: 'basic', label: 'Basic Info', icon: Package },
   { id: 'organization', label: 'Organization', icon: Tag },
@@ -58,12 +59,15 @@ export default function ProductEditorPage() {
     const token = localStorage.getItem('adminToken');
     const headers = { 'Authorization': `Bearer ${token}` };
     Promise.all([
-      fetch(`${API}/brands`, { headers }).then(r => r.json()),
-      fetch(`${API}/categories`, { headers }).then(r => r.json()),
-      fetch(`${API}/attributes`, { headers }).then(r => r.json()),
-      fetch(`${API}/tags`, { headers }).then(r => r.json()),
+      adminFetch(`${API}/brands`, { headers }).then(r => r.json()),
+      adminFetch(`${API}/categories`, { headers }).then(r => r.json()),
+      adminFetch(`${API}/attributes`, { headers }).then(r => r.json()),
+      adminFetch(`${API}/tags`, { headers }).then(r => r.json()),
     ]).then(([b, c, a, t]) => {
-      setBrands(b || []); setCategories(c || []); setAttributes(a || []); setTags(t || []);
+      setBrands(Array.isArray(b) ? b : []);
+      setCategories(Array.isArray(c) ? c : []);
+      setAttributes(Array.isArray(a) ? a : []);
+      setTags(Array.isArray(t) ? t : []);
     });
   }, []);
 
@@ -72,7 +76,7 @@ export default function ProductEditorPage() {
     const fetchProduct = async () => {
       const token = localStorage.getItem('adminToken');
       try {
-        const res = await fetch(`${API}/products/${idStr}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await adminFetch(`${API}/products/${idStr}`, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (!res.ok) { toast.error(`Backend error (${res.status}): ${data.error || JSON.stringify(data)}`); return; }
         if (!data || !data.name) { toast.error(`Product ${idStr} returned unexpected data`); return; }
@@ -136,7 +140,7 @@ export default function ProductEditorPage() {
       if (payload[f] === '' || payload[f] === null) payload[f] = null;
     });
     try {
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+      const res = await adminFetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || 'Failed to save product'); return; }
       toast.success(isNew ? 'Product created successfully' : 'Product updated successfully');

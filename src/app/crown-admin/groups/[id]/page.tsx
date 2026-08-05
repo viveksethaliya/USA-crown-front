@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Search, UserMinus, UserPlus, Save, Loader2, UsersRound, Settings, Tags, Plus } from 'lucide-react';
 import { apiUrl } from '@/lib/cart';
+import { adminFetch } from '@/lib/api';
 import DiscountRulesPanel from './DiscountRulesPanel';
 
 interface Group {
@@ -46,7 +47,7 @@ export default function GroupDetailPage() {
 
   const fetchGroup = useCallback(async () => {
     try {
-      const res = await fetch(apiUrl(`/api/admin/groups/${id}`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${id}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to load group');
@@ -70,7 +71,7 @@ export default function GroupDetailPage() {
   const fetchAvailable = useCallback(async (search = '') => {
     setPickerLoading(true);
     try {
-      const res = await fetch(apiUrl(`/api/admin/groups/${id}/available-customers?search=${encodeURIComponent(search)}`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${id}/available-customers?search=${encodeURIComponent(search)}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -91,7 +92,7 @@ export default function GroupDetailPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch(apiUrl(`/api/admin/groups/${id}`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -115,7 +116,7 @@ export default function GroupDetailPage() {
   const addMember = async (userId: number) => {
     setAddingId(userId);
     try {
-      const res = await fetch(apiUrl(`/api/admin/groups/${id}/members`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${id}/members`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ user_id: userId })
@@ -134,7 +135,7 @@ export default function GroupDetailPage() {
     if (!confirm('Remove member from group?')) return;
     setRemovingId(userId);
     try {
-      const res = await fetch(apiUrl(`/api/admin/groups/${id}/members/${userId}`), {
+      const res = await adminFetch(apiUrl(`/api/admin/groups/${id}/members/${userId}`), {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

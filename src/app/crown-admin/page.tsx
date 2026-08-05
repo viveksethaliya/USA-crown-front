@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 interface DashboardStats {
   revenue: {
@@ -73,7 +74,7 @@ export default function AdminDashboard() {
         const token = localStorage.getItem('adminToken');
         try {
           const endpoint = reportType === 'sales' ? '/analytics/sales' : '/analytics/customers';
-          const res = await fetch(`${API}${endpoint}?startDate=${startDate}&endDate=${endDate}&interval=daily`, {
+          const res = await adminFetch(`${API}${endpoint}?startDate=${startDate}&endDate=${endDate}&interval=daily`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (res.ok) {
@@ -122,10 +123,15 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const token = localStorage.getItem('adminToken');
       try {
-        const res = await fetch(`${API}/dashboard/stats`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if (res.ok) setStats(await res.json());
+        const token = localStorage.getItem('adminToken');
+        const res = await adminFetch(`${API}/dashboard/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
       } catch (err) { console.error('Failed to load stats', err); }
       finally { setIsLoading(false); }
     };

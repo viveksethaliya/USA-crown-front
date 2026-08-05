@@ -6,6 +6,7 @@ import { Building2, Clock, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronR
 import { B2BApplication, Pagination } from '@/types/admin';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 const STATUS_TABS = [
   { id: '', label: 'All Applications' },
@@ -30,7 +31,7 @@ export default function B2BPage() {
       const token = localStorage.getItem('adminToken');
       const params = new URLSearchParams({ page: String(page), limit: String(25) });
       if (statusFilter) params.set('status', statusFilter);
-      const res = await fetch(`${API}/b2b?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/b2b?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
       const json = await res.json();
       setApplications(json.data || []);
       setPagination(json.pagination || { total: 0, page: 1, totalPages: 1 });
@@ -47,7 +48,7 @@ export default function B2BPage() {
     setIsActioning(true);
     const token = localStorage.getItem('adminToken');
     try {
-      const res = await fetch(`${API}/b2b/${appId}/${action}`, {
+      const res = await adminFetch(`${API}/b2b/${appId}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ notes: actionNotes })

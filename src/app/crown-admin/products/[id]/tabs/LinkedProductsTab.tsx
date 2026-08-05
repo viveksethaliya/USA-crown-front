@@ -6,6 +6,7 @@ import { Search, Loader2, Link as LinkIcon, Trash2, Package } from 'lucide-react
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function LinkedProductsTab({ productId, productRelations, setProductRelations }: { productId: string, productRelations: any[], setProductRelations: React.Dispatch<React.SetStateAction<any[]>> }) {
   const [search, setSearch] = useState('');
@@ -20,7 +21,7 @@ export default function LinkedProductsTab({ productId, productRelations, setProd
     if (!search.trim()) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`${API}/products?search=${encodeURIComponent(search)}&limit=10`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await adminFetch(`${API}/products?search=${encodeURIComponent(search)}&limit=10`, { headers: { 'Authorization': `Bearer ${getToken()}` } });
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data.data.filter((p: any) => p.id !== parseInt(productId)));
@@ -37,7 +38,7 @@ export default function LinkedProductsTab({ productId, productRelations, setProd
   const handleLinkProduct = async (relatedId: string) => {
     setIsLinking(relatedId);
     try {
-      const res = await fetch(`${API}/products/${productId}/relations`, {
+      const res = await adminFetch(`${API}/products/${productId}/relations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
         body: JSON.stringify({ related_product_id: relatedId, relation_type: relationType })
@@ -62,7 +63,7 @@ export default function LinkedProductsTab({ productId, productRelations, setProd
   const handleRemoveLink = async (relatedId: string, type: string) => {
     if (!confirm('Remove this product link?')) return;
     try {
-      const res = await fetch(`${API}/products/${productId}/relations/${relatedId}/${type}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
+      const res = await adminFetch(`${API}/products/${productId}/relations/${relatedId}/${type}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getToken()}` } });
       if (!res.ok) throw new Error('Failed to remove link');
       setProductRelations(prev => prev.filter(r => !(r.related_product_id === relatedId && r.relation_type === type)));
       toast.success('Product link removed');

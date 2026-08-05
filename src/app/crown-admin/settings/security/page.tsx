@@ -5,6 +5,7 @@ import { Loader2, Shield, ShieldAlert, ShieldCheck, ArrowLeft, QrCode } from 'lu
 import Link from 'next/link';
 import { apiUrl } from '@/lib/cart';
 import { toast } from 'react-hot-toast';
+import { adminFetch } from '@/lib/api';
 
 export default function SecuritySettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,7 @@ export default function SecuritySettingsPage() {
   const handleBeginSetup = async () => {
     setIsSettingUp(true);
     try {
-      const res = await fetch(apiUrl('/api/auth/2fa/generate'), {
+      const res = await adminFetch(apiUrl('/api/auth/2fa/generate'), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });
@@ -49,7 +50,7 @@ export default function SecuritySettingsPage() {
     if (!setupData) return;
     
     try {
-      const res = await fetch(apiUrl('/api/auth/2fa/verify-setup'), {
+      const res = await adminFetch(apiUrl('/api/auth/2fa/verify-setup'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -76,7 +77,7 @@ export default function SecuritySettingsPage() {
     if (!confirm('Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.')) return;
     
     try {
-      const res = await fetch(apiUrl('/api/auth/2fa/disable'), {
+      const res = await adminFetch(apiUrl('/api/auth/2fa/disable'), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       });

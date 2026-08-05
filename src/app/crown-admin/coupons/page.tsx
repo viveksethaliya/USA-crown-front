@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Ticket, Plus, Trash2, Loader2, Save, XCircle, ToggleLeft, ToggleRight, AlertCircle } from 'lucide-react';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 function ActionBadge({ rule }: { rule: any }) {
@@ -47,8 +48,8 @@ export default function CouponsPage() {
     setIsLoading(true);
     try {
       const [couponsRes, rulesRes] = await Promise.all([
-        fetch(`${API}/coupons`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/discounts`, { headers: { Authorization: `Bearer ${token}` } }),
+        adminFetch(`${API}/coupons`, { headers: { Authorization: `Bearer ${token}` } }),
+        adminFetch(`${API}/discounts`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setCoupons((await couponsRes.json()).data || []);
       setRules(((await rulesRes.json()).data || []).filter((r: any) => r.trigger_type === 'coupon'));
@@ -68,7 +69,7 @@ export default function CouponsPage() {
 
     setIsSaving(true);
     try {
-      const res = await fetch(`${API}/coupons`, {
+      const res = await adminFetch(`${API}/coupons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...newCoupon, code: newCoupon.code.toUpperCase() }),
@@ -92,7 +93,7 @@ export default function CouponsPage() {
   const handleToggleActive = async (coupon: any) => {
     setTogglingId(coupon.id);
     try {
-      const res = await fetch(`${API}/coupons/${coupon.id}`, {
+      const res = await adminFetch(`${API}/coupons/${coupon.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ is_active: !coupon.is_active }),
@@ -111,7 +112,7 @@ export default function CouponsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm('Are you sure you want to delete this coupon?')) return;
     try {
-      const res = await fetch(`${API}/coupons/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/coupons/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { toast.success('Coupon deleted'); fetchData(); }
     } catch { toast.error('Error deleting coupon'); }
   };

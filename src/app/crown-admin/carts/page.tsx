@@ -6,6 +6,7 @@ import { Loader2, ShoppingCart, ChevronRight, Search, Mail } from 'lucide-react'
 import { toast } from 'react-hot-toast';
 
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 export default function AdminCartsPage() {
   const [carts, setCarts] = useState<any[]>([]);
@@ -28,7 +29,7 @@ export default function AdminCartsPage() {
   const fetchCarts = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/carts`, {
+      const res = await adminFetch(`${API}/carts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch carts');
@@ -49,7 +50,7 @@ export default function AdminCartsPage() {
     setSendingReminder(userId);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`${API}/carts/${userId}/remind`, {
+      const res = await adminFetch(`${API}/carts/${userId}/remind`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Loader2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import SeoFormBlock from '@/components/SeoFormBlock';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 const emptyPage = {
   title: '',
@@ -37,7 +38,7 @@ export default function PageEditorPage() {
     const fetchPage = async () => {
       const token = localStorage.getItem('adminToken');
       try {
-        const res = await fetch(`${API}/pages/${idStr}`, {
+        const res = await adminFetch(`${API}/pages/${idStr}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) { toast.error('Page not found'); router.push('/crown-admin/pages'); return; }
@@ -83,7 +84,7 @@ export default function PageEditorPage() {
     const url = isNew ? `${API}/pages` : `${API}/pages/${idStr}`;
 
     try {
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(page)

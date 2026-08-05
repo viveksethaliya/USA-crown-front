@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, CreditCard, FileText, Loader2, Mail, PackagePlus, Printer, Save, Search, Send, Trash2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
+import { adminFetch } from '@/lib/api';
 
 const ORDER_STATUSES = ['pending', 'on-hold', 'processing', 'completed', 'cancelled', 'refunded', 'failed'];
 const PAYMENT_STATUSES = ['pending', 'partially_paid', 'paid', 'refunded', 'failed'];
@@ -48,7 +49,7 @@ export default function OrderDetailPage() {
   const [searching, setSearching] = useState(false);
 
   const request = async (path: string, options: RequestInit = {}) => {
-    const response = await fetch(`${API}/orders${path}`, {
+    const response = await adminFetch(`${API}/orders${path}`, {
       ...options,
       headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}`, 'Content-Type': 'application/json', ...(options.headers || {}) }
     });
@@ -90,7 +91,7 @@ export default function OrderDetailPage() {
     if (!customerSearch.trim()) return;
     try {
       setSearching(true);
-      const response = await fetch(`${API}/customers?search=${encodeURIComponent(customerSearch)}&limit=10`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+      const response = await adminFetch(`${API}/customers?search=${encodeURIComponent(customerSearch)}&limit=10`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || 'Customer search failed');
       setCustomers(json.data || []);
@@ -122,7 +123,7 @@ export default function OrderDetailPage() {
     if (!productSearch.trim()) return;
     try {
       setSearching(true);
-      const response = await fetch(`${API}/products?search=${encodeURIComponent(productSearch)}&limit=10`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+      const response = await adminFetch(`${API}/products?search=${encodeURIComponent(productSearch)}&limit=10`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || 'Product search failed');
       setProductResults(json.data || []);
@@ -132,7 +133,7 @@ export default function OrderDetailPage() {
   const chooseProduct = async (product: any) => {
     try {
       setSearching(true);
-      const response = await fetch(`${API}/products/${product.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+      const response = await adminFetch(`${API}/products/${product.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Unable to load product');
       setSelectedProduct(data);
