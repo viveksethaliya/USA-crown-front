@@ -15,6 +15,9 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
       headers.set(key, value);
     }
   });
+  
+  // Prevent ECONNRESET by disabling keep-alive for proxied backend requests
+  headers.set('Connection', 'close');
 
   const fetchOptions: RequestInit = {
     method: req.method,

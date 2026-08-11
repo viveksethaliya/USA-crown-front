@@ -251,8 +251,11 @@ export default function CheckoutPage() {
               Crown Findings will confirm final shipping, tax, and payment details.
             </p>
             <div className={styles.confirmationTotal}>
-              <span>Current subtotal</span>
+              <span>Current order total</span>
               <strong>{formatMoney(order.total_amount)}</strong>
+              <p style={{ fontSize: '0.85em', color: '#666', marginTop: '4px', textAlign: 'center' }}>
+                Note: Shipping and tax are pending and subject to staff review.
+              </p>
             </div>
             <Link href="/products" className={styles.primaryButton}>Continue Shopping</Link>
           </div>
@@ -285,15 +288,15 @@ export default function CheckoutPage() {
             <h2>Your cart is empty</h2>
             <Link href="/products" className={styles.primaryButton}>Shop Products</Link>
           </div>
-        ) : !cart.canCheckout ? (
-          <div className={styles.emptyState}>
-            <h2>Cart needs attention</h2>
-            <p>Review minimum order rules and item availability before checkout.</p>
-            <Link href="/cart" className={styles.primaryButton}>Review Cart</Link>
-          </div>
         ) : (
           <form className={styles.checkoutGrid} onSubmit={submitCheckout}>
             <div className={styles.formSections}>
+              {!cart.canCheckout && (
+                <div style={{ padding: '16px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', marginBottom: '24px' }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1em' }}>Cart needs attention</h3>
+                  <p style={{ margin: 0, fontSize: '0.9em' }}>Review minimum order rules and item availability before checkout. <Link href="/cart" style={{ textDecoration: 'underline' }}>Return to Cart</Link></p>
+                </div>
+              )}
               <section className={styles.section}>
                 <h2>Billing Address</h2>
                 {savedAddresses.length > 0 && (
@@ -515,7 +518,7 @@ export default function CheckoutPage() {
                       </span>
                     )}
                   </div>
-                  <strong>{formatMoney(item.lineTotal)}</strong>
+                  <strong>{formatMoney(item.finalLineTotal)}</strong>
                 </div>
               ))}
               <div className={styles.summaryRow}>
@@ -523,9 +526,15 @@ export default function CheckoutPage() {
                 <strong>{formatMoney(cart.subtotal)}</strong>
               </div>
 
-              {cart.discountAmount !== null && cart.discountAmount > 0 && (
+              {cart.pricingSource && cart.pricingSource !== 'base' && (
                 <div className={`${styles.summaryRow} ${styles.discountRow}`}>
-                  <span>Discount {cart.discountTierName ? `(${cart.discountTierName})` : ''}</span>
+                  <span>
+                    Best available B2B price:
+                    <br/>
+                    <span style={{ fontSize: '0.85em', color: '#001f3f' }}>
+                      {cart.pricingSource === 'price_list' ? 'Contract pricing' : cart.pricingSourceName || 'Discount applied'}
+                    </span>
+                  </span>
                   <strong>-{formatMoney(cart.discountAmount)}</strong>
                 </div>
               )}
@@ -542,7 +551,7 @@ export default function CheckoutPage() {
                 <span>Total Estimate</span>
                 <strong>{formatMoney(cart.total)}</strong>
               </div>
-              <button type="submit" className={styles.primaryButton} disabled={placingOrder}>
+              <button type="submit" className={styles.primaryButton} disabled={placingOrder || !cart.canCheckout}>
                 {placingOrder ? 'Placing Order...' : 'Place Order'}
               </button>
             </aside>

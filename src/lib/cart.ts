@@ -11,8 +11,8 @@ export interface CartItem {
   unitPrice: number;
   regularPrice: number;
   lineTotal: number;
-  discountAmount?: number;
-  finalLineTotal?: number;
+  discountAmount: number;
+  finalLineTotal: number;
   available: boolean;
   availabilityMessage: string | null;
 }
@@ -23,9 +23,13 @@ export interface CartSummary {
   itemCount: number;
   subtotal: number;
   discountAmount: number;
-  discountTierName: string | null;
   total: number;
   canCheckout: boolean;
+  pricingSource: string | null;
+  pricingSourceName: string | null;
+  submittedCouponCodes: string[];
+  selectedCouponCode: string | null;
+  rejectedCouponMessages: { code: string; reason: string }[];
 }
 
 export interface CartApiResponse {

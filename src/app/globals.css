@@ -45,6 +45,10 @@
   --selection-text: #182955;
 }
 
+html {
+  font-size: 14px;
+}
+
 body {
   background-color: var(--color-secondary);
   color: #444444;

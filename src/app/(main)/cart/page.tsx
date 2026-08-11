@@ -16,6 +16,8 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const loadCart = async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('storeToken') : null;
@@ -89,6 +91,47 @@ export default function CartPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to remove item');
     } finally {
       setBusyItemId(null);
+    }
+  };
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    setApplyingCoupon(true);
+
+    try {
+      const response = await cartFetch('/api/store/cart/coupons', {
+        method: 'POST',
+        body: JSON.stringify({ code: couponCode.trim() })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to apply coupon');
+      
+      setCouponCode('');
+      await loadCart();
+      toast.success('Coupon submitted');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to apply coupon');
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = async (code: string) => {
+    setApplyingCoupon(true);
+    try {
+      const response = await cartFetch(`/api/store/cart/coupons/${encodeURIComponent(code)}`, {
+        method: 'DELETE'
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to remove coupon');
+      
+      await loadCart();
+      toast.success('Coupon removed');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove coupon');
+    } finally {
+      setApplyingCoupon(false);
     }
   };
 
@@ -268,6 +311,61 @@ export default function CartPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Coupon Section */}
+          <div className="mt-8 border border-[#e0e0e0] bg-[#fdfdfd] p-6 rounded-none">
+            <h3 className="text-lg font-semibold text-[#001f3f] mb-4">Promotional Code</h3>
+            
+            {/* Existing Submitted Coupons */}
+            {cart.submittedCouponCodes && cart.submittedCouponCodes.length > 0 && (
+              <div className="mb-6 space-y-3">
+                {cart.submittedCouponCodes.map((code) => {
+                  const isWinner = cart.pricingSource === 'coupon' && cart.selectedCouponCode === code;
+                  const isLoser = !isWinner;
+                  
+                  return (
+                    <div key={code} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 border ${isWinner ? 'border-[#d4af37] bg-[#fffaf0]' : 'border-[#e0e0e0] bg-gray-50'}`}>
+                      <div className="flex-1">
+                        <span className="font-semibold text-[#333] uppercase">{code}</span>
+                        {isWinner && <span className="ml-3 text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">APPLIED</span>}
+                        {isLoser && (
+                          <p className="text-sm text-[#666] mt-1">
+                            Your existing B2B pricing gives you a better price, so this code was not applied.
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleRemoveCoupon(code)}
+                        disabled={applyingCoupon}
+                        className="text-sm text-red-600 hover:text-red-800 mt-2 sm:mt-0 ml-4 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <form onSubmit={handleApplyCoupon} className="flex gap-2 max-w-sm">
+              <input
+                type="text"
+                placeholder="Enter code"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                disabled={applyingCoupon}
+                className="flex-1 px-4 py-2 border border-[#ccc] focus:border-[#001f3f] focus:outline-none uppercase"
+              />
+              <button
+                type="submit"
+                disabled={!couponCode.trim() || applyingCoupon}
+                className="px-6 py-2 bg-[#333] text-white font-medium hover:bg-[#000] disabled:opacity-50 transition-colors"
+              >
+                {applyingCoupon ? 'Applying...' : 'Apply'}
+              </button>
+            </form>
+            <p className="text-xs text-[#666] mt-2">Only one code can be active at a time. The best available discount will be automatically selected.</p>
+          </div>
         </div>
 
         {/* Order Summary (Right side) */}
@@ -281,9 +379,15 @@ export default function CartPage() {
                 <span className="font-medium">{formatMoney(cart.subtotal)}</span>
               </div>
 
-              {cart.discountAmount > 0 && (
+              {cart.pricingSource && cart.pricingSource !== 'base' && (
                 <div className="flex justify-between items-center text-[#d4af37]">
-                  <span>Total Saved</span>
+                  <span>
+                    Best available B2B price:
+                    <br/>
+                    <span className="text-xs font-medium text-[#001f3f]">
+                      {cart.pricingSource === 'price_list' ? 'Contract pricing' : cart.pricingSourceName || 'Discount applied'}
+                    </span>
+                  </span>
                   <span className="font-medium">-{formatMoney(cart.discountAmount)}</span>
                 </div>
               )}
@@ -303,13 +407,19 @@ export default function CartPage() {
               <span className="text-2xl font-semibold text-[#001f3f]">{formatMoney(cart.total)}</span>
             </div>
 
-            <Link
-              href="/checkout"
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#fa9531] text-[#001f3f] font-bold uppercase tracking-wider hover:bg-[#e0852b] hover:text-[#001f3f] transition-colors group rounded-[4px]"
-            >
-              Proceed to Checkout
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            {cart.canCheckout ? (
+              <Link
+                href="/checkout"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#fa9531] text-[#001f3f] font-bold uppercase tracking-wider hover:bg-[#e0852b] hover:text-[#001f3f] transition-colors group rounded-[4px]"
+              >
+                Proceed to Checkout
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            ) : (
+              <div className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#e0e0e0] text-[#666666] font-bold uppercase tracking-wider rounded-[4px] cursor-not-allowed text-center">
+                Cart Needs Attention
+              </div>
+            )}
           </div>
         </div>
       </div>

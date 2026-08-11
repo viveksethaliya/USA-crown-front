@@ -80,7 +80,7 @@ export default function CustomerDetailPage() {
   const fetchAddresses = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await adminFetch(`${API}/customers/${id}/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await adminFetch(`${API}/customers/${id}/addresses`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         setAddresses(await res.json());
       }
