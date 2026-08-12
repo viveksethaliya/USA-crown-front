@@ -28,7 +28,7 @@ export default function PricingGroupDetail() {
   const id = params.id as string;
   
   const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'customers' | 'access' | 'base' | 'promotions' | 'campaigns' | 'preview' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'customers' | 'access' | 'rules' | 'campaigns' | 'preview' | 'history'>('overview');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
