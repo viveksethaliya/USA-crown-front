@@ -25,6 +25,7 @@ export default function OrderDetailPage() {
   const creating = id === 'new';
   const [order, setOrder] = useState<any>(null);
   const [draftItems, setDraftItems] = useState<any[]>([]);
+  const [checkoutFields, setCheckoutFields] = useState<any[]>([]);
   const [loading, setLoading] = useState(!creating);
   const [saving, setSaving] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -61,7 +62,16 @@ export default function OrderDetailPage() {
   const loadOrder = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await request(`/${id}`);
+      const [data, fieldsRes] = await Promise.all([
+        request(`/${id}`),
+        adminFetch(`${API}/checkout-fields`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+        })
+      ]);
+      
+      const fieldsData = await fieldsRes.json().catch(() => []);
+      setCheckoutFields(Array.isArray(fieldsData) ? fieldsData : []);
+      
       setOrder(data);
       setStatus(data.status);
       setPaymentStatus(data.payment_status);
@@ -255,16 +265,20 @@ export default function OrderDetailPage() {
               </p>
             ) : (
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {entries.map(([key, value]) => (
-                  <div key={key} className="rounded-xl border border-[#312f2c]/10 bg-white/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#312f2c]/40">{key.replace(/_/g, ' ')}</p>
-                    <p className="mt-1 text-sm font-medium text-[#312f2c]">
-                      {value === true || value === 'true' ? 'Yes'
-                        : value === false || value === 'false' ? 'No'
-                        : String(value || '—')}
-                    </p>
-                  </div>
-                ))}
+                {entries.map(([key, value]) => {
+                  const fieldDef = checkoutFields.find(f => f.field_key === key);
+                  const displayLabel = fieldDef ? fieldDef.label : key.replace(/_/g, ' ');
+                  return (
+                    <div key={key} className="rounded-xl border border-[#312f2c]/10 bg-white/60 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#312f2c]/40">{displayLabel}</p>
+                      <p className="mt-1 text-sm font-medium text-[#312f2c]">
+                        {value === true || value === 'true' ? 'Yes'
+                          : value === false || value === 'false' ? 'No'
+                          : String(value || '—')}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>

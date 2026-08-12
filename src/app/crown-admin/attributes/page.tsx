@@ -40,8 +40,11 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
   const [newImageUrl, setNewImageUrl] = useState<string>('');
   const [editingValueId, setEditingValueId] = useState<number | null>(null);
   const [editText, setEditText] = useState<string>('');
+  const [editColorHex, setEditColorHex] = useState<string>('#d1a054');
+  const [editImageUrl, setEditImageUrl] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(false);
+  const [showEditImageUploader, setShowEditImageUploader] = useState<boolean>(false);
 
   const getToken = (): string | null => localStorage.getItem('adminToken');
 
@@ -82,11 +85,20 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
       const res = await adminFetch(`${API}/values/${valueId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-        body: JSON.stringify({ value: editText })
+        body: JSON.stringify({ 
+          value: editText,
+          color_hex: attribute.type === 'color' ? editColorHex : null,
+          image_url: attribute.type === 'image' ? editImageUrl : null
+        })
       });
       const data = await res.json();
       if (res.ok) {
-        setValues(prev => prev.map(v => v.id === valueId ? { ...v, value: editText } : v));
+        setValues(prev => prev.map(v => v.id === valueId ? { 
+          ...v, 
+          value: editText,
+          color_hex: attribute.type === 'color' ? editColorHex : null,
+          image_url: attribute.type === 'image' ? editImageUrl : null
+        } : v));
         setEditingValueId(null);
         toast.success('Value updated');
       } else {
@@ -126,6 +138,30 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
               <div key={v.id} className="flex items-center gap-1 group">
                 {editingValueId === v.id ? (
                   <div className="flex items-center gap-1">
+                    {attribute.type === 'color' && (
+                      <input
+                        type="color"
+                        value={editColorHex}
+                        onChange={(e) => setEditColorHex(e.target.value)}
+                        className="w-7 h-7 rounded-lg cursor-pointer border border-[#312f2c]/12 bg-white p-0.5"
+                        title="Pick color"
+                      />
+                    )}
+                    {attribute.type === 'image' && (
+                      <button
+                        type="button"
+                        onClick={() => setShowEditImageUploader(!showEditImageUploader)}
+                        className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-colors ${editImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
+                        title={editImageUrl ? 'Image selected' : 'Upload image'}
+                      >
+                        {editImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={editImageUrl} alt="Swatch" className="w-full h-full rounded-md object-cover p-0.5" />
+                        ) : (
+                          <ImageIcon className="w-3 h-3" />
+                        )}
+                      </button>
+                    )}
                     <input
                       type="text"
                       value={editText}
@@ -139,7 +175,7 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
                       className="px-2 py-1 bg-[#d1a054] text-[#f0ede5] rounded text-xs font-medium"
                     >✓</button>
                     <button
-                      onClick={() => setEditingValueId(null)}
+                      onClick={() => { setEditingValueId(null); setShowEditImageUploader(false); }}
                       className="px-2 py-1 bg-[#312f2c]/8 text-[#312f2c]/60 rounded text-xs"
                     >✕</button>
                   </div>
@@ -161,7 +197,13 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
                     )}
                     {v.value}
                     <button
-                      onClick={() => { setEditingValueId(v.id); setEditText(v.value); }}
+                      onClick={() => { 
+                        setEditingValueId(v.id); 
+                        setEditText(v.value);
+                        setEditColorHex(v.color_hex || '#d1a054');
+                        setEditImageUrl(v.image_url || '');
+                        setShowEditImageUploader(false);
+                      }}
                       className="ml-1 opacity-0 group-hover:opacity-100 text-[#312f2c]/35 hover:text-[#d1a054] transition-opacity"
                     >
                       <Pencil className="w-3 h-3" />
@@ -238,6 +280,25 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
               onUploaded={(url) => {
                 setNewImageUrl(url);
                 setShowImageUploader(false);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Render Edit Image Uploader Dropdown if open */}
+        {attribute.type === 'image' && showEditImageUploader && (
+          <div className="mt-3 p-4 bg-white border border-[#312f2c]/10 rounded-xl shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-semibold text-[#312f2c]/50">Update Swatch Image</span>
+              <button onClick={() => setShowEditImageUploader(false)} className="text-[#312f2c]/40 hover:text-[#312f2c]">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <ImageUploader
+              folder="attributes"
+              onUploaded={(url) => {
+                setEditImageUrl(url);
+                setShowEditImageUploader(false);
               }}
             />
           </div>

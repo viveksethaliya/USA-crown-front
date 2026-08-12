@@ -1,9 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { adminFetch } from '@/lib/api';
-import { Activity, Clock, User, ArrowRight } from 'lucide-react';
+import { Activity, Clock, User, ArrowRight, HelpCircle } from 'lucide-react';
+import HelpDrawer from './HelpDrawer';
 
 export default function GroupHistory({ group }: { group: any }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,11 +45,22 @@ export default function GroupHistory({ group }: { group: any }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-[#312f2c]">Audit History</h2>
-        <p className="text-[#312f2c]/50 text-sm mt-1">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-[#312f2c]">Audit History</h2>
+            <button 
+              onClick={() => setHelpOpen(true)}
+              className="p-1.5 text-[#312f2c]/50 hover:bg-[#312f2c]/10 rounded-full transition-colors"
+              title="Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-[#312f2c]/50 text-sm mt-1">
           Detailed log of lifecycle changes for rules and campaigns in this group.
-        </p>
+          </p>
+        </div>
       </div>
 
       <div className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-sm overflow-hidden">
@@ -110,6 +123,24 @@ export default function GroupHistory({ group }: { group: any }) {
           </div>
         )}
       </div>
+
+      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="History Tab Help">
+        <p>The <strong>History</strong> tab provides a read-only audit log of critical changes made to this Pricing Group&apos;s configuration.</p>
+        
+        <h3>What is Tracked?</h3>
+        <ul>
+          <li><strong>Rules:</strong> Creating, updating, or deleting discount rules.</li>
+          <li><strong>Campaigns:</strong> Creating, pausing, activating, or deleting campaigns.</li>
+        </ul>
+
+        <h3>How to Read the Log</h3>
+        <p>Each entry shows:</p>
+        <ul>
+          <li><strong>Who:</strong> Which admin user performed the action.</li>
+          <li><strong>When:</strong> The exact timestamp of the change.</li>
+          <li><strong>What:</strong> A JSON diff showing the exact &quot;Before&quot; and &quot;After&quot; state of the database record so you can trace exactly what a user modified.</li>
+        </ul>
+      </HelpDrawer>
     </div>
   );
 }

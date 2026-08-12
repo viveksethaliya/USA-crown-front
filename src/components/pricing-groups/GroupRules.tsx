@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Edit2, Copy, PauseCircle, Archive, AlertCircle, PlayCircle } from 'lucide-react';
+import { Plus, Edit2, Copy, PauseCircle, Trash2, AlertCircle, PlayCircle, HelpCircle } from 'lucide-react';
 import RuleEditor from './RuleEditor';
+import HelpDrawer from './HelpDrawer';
 
-export default function GroupRules({ group, ruleType }: { group: any, ruleType: 'group_pricing' | 'promotion' }) {
+export default function GroupRules({ group }: { group: any }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const [rules, setRules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingRule, setEditingRule] = useState<any | null>(null);
@@ -13,7 +15,7 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
 
   useEffect(() => {
     fetchRules();
-  }, [group.id, ruleType]);
+  }, [group.id]);
 
   const fetchRules = async () => {
     setLoading(true);
@@ -24,9 +26,7 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
       });
       if (res.ok) {
         const data = await res.json();
-        // Filter rules based on the active tab (Base Pricing vs Promotions)
-        const filtered = (data.rules || []).filter((r: any) => r.source_kind === ruleType);
-        setRules(filtered);
+        setRules(data.rules || []);
       }
     } catch (err) {
       toast.error('Failed to load rules');
@@ -47,14 +47,31 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json' 
         },
-        // In this system, PUT expects the full payload for the rule, but since we are just updating status,
-        // we can pass the existing rule data with the modified status.
         body: JSON.stringify({ ...currentRule, status: newStatus })
       });
       
       if (!res.ok) throw new Error('Failed to update status');
       
       toast.success(`Rule marked as ${newStatus}`);
+      fetchRules();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDeleteRule = async (ruleId: number) => {
+    if (!window.confirm('Are you sure you want to delete this rule? This cannot be undone.')) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await adminFetch(`/api/admin/pricing-groups/${group.id}/rules/${ruleId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error('Failed to delete rule');
+      
+      toast.success('Rule deleted successfully');
       fetchRules();
     } catch (err: any) {
       toast.error(err.message);
@@ -101,14 +118,18 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
     <div className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-sm p-8 flex flex-col h-full">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-xl font-bold text-[#312f2c]">
-            {ruleType === 'group_pricing' ? 'Base Pricing Rules' : 'Promotions'}
-          </h3>
+          <div className="flex items-center gap-4">
+            <h3 className="text-xl font-bold text-[#312f2c]">Discount Rules</h3>
+            <button 
+              onClick={() => setHelpOpen(true)}
+              className="p-1.5 text-[#312f2c]/50 hover:bg-[#312f2c]/10 rounded-full transition-colors"
+              title="Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+          </div>
           <p className="text-[#312f2c]/50 text-sm mt-1 max-w-2xl">
-            {ruleType === 'group_pricing' 
-              ? 'These rules define the fundamental catalog pricing for this group. They replace the standard catalog price.'
-              : 'These rules apply percentage discounts on top of the base price, controlled by stacking priority.'
-            }
+            Configure custom pricing, percentage discounts, volume tiers, and specific promotions for this group.
           </p>
         </div>
         <button 
@@ -126,9 +147,9 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
         ) : rules.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-[#312f2c]/10 rounded-lg bg-[#312f2c]/5 flex flex-col items-center">
             <AlertCircle className="w-8 h-8 text-[#312f2c]/40 mb-3" />
-            <h4 className="text-lg font-medium text-[#312f2c]">No {ruleType === 'group_pricing' ? 'Base Rules' : 'Promotions'}</h4>
+            <h4 className="text-lg font-medium text-[#312f2c]">No Discount Rules</h4>
             <p className="text-[#312f2c]/50 mt-1 mb-4 text-sm max-w-sm">
-              You haven't defined any {ruleType === 'group_pricing' ? 'base pricing rules' : 'promotions'} for this group yet.
+              You haven't defined any discount rules for this group yet.
             </p>
             <button 
               onClick={() => { setEditingRule(null); setIsEditorOpen(true); }}
@@ -170,14 +191,12 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
                     
                     <div className="text-xs text-[#312f2c]/50 flex items-center gap-3 mt-3">
                       <span>Type: <strong className="text-[#312f2c]/80">{rule.trigger_type}</strong></span>
-                      {ruleType === 'promotion' && (
-                        <>
-                          <span>•</span>
-                          <span>Priority: <strong className="text-[#312f2c]/80">{rule.priority}</strong></span>
-                          <span>•</span>
-                          <span>Stacking: <strong className="text-[#312f2c]/80">{rule.stacking_mode}</strong></span>
-                        </>
-                      )}
+                      <>
+                        <span>•</span>
+                        <span>Priority: <strong className="text-[#312f2c]/80">{rule.priority}</strong></span>
+                        <span>•</span>
+                        <span>Stacking: <strong className="text-[#312f2c]/80">{rule.stacking_mode}</strong></span>
+                      </>
                       {rule.campaign_id && (
                         <>
                           <span>•</span>
@@ -213,11 +232,11 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
                       </button>
                     )}
                     <button 
-                      onClick={() => handleUpdateStatus(rule.id, 'archived')}
+                      onClick={() => handleDeleteRule(rule.id)}
                       className="p-2 text-[#312f2c]/50 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Archive"
+                      title="Delete"
                     >
-                      <Archive className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -230,7 +249,6 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
       {isEditorOpen && (
         <RuleEditor 
           group={group}
-          ruleType={ruleType}
           initialRule={editingRule}
           onClose={() => { setIsEditorOpen(false); setEditingRule(null); }}
           onSaved={() => {
@@ -240,6 +258,29 @@ export default function GroupRules({ group, ruleType }: { group: any, ruleType: 
           }}
         />
       )}
+
+      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Discount Rules Help">
+        <p>The <strong>Discount Rules</strong> tab is the core pricing engine for this group. It unifies what used to be Base Pricing and Promotions into one powerful system.</p>
+        
+        <h3>How Rules Are Evaluated</h3>
+        <p>When a customer in this group adds an item to their cart, the system looks at all Active rules and finds the best eligible discount based on two factors:</p>
+        <ul>
+          <li><strong>Priority:</strong> Rules with a higher Priority number (e.g. 100) take precedence over lower priority rules (e.g. 10).</li>
+          <li><strong>Stacking Mode:</strong>
+            <ul>
+              <li><em>Exclusive:</em> If an exclusive rule applies, the engine stops evaluating and applies only this rule.</li>
+              <li><em>Stackable:</em> If a stackable rule applies, the engine continues to evaluate other stackable rules and combines the discounts (up to a limit).</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h3>Rule Components</h3>
+        <ul>
+          <li><strong>Actions:</strong> What happens when the rule matches? (e.g. 10% Off, Fixed Price of $50, $10 Off per Unit, Tiered Pricing based on Quantity).</li>
+          <li><strong>Targets:</strong> What items does this apply to? You can target the entire catalog, or restrict it by adding <em>Inclusions</em> (e.g. Category = Widgets) and <em>Exclusions</em> (e.g. Product = Golden Widget).</li>
+          <li><strong>Conditions:</strong> What must be true for the rule to trigger? (e.g. Minimum Line Quantity = 50, Minimum Cart Subtotal = $1000, New Customer only).</li>
+        </ul>
+      </HelpDrawer>
     </div>
   );
 }

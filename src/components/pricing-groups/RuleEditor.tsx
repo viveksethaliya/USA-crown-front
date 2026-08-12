@@ -157,9 +157,8 @@ function DynamicTargetSelect({
   );
 }
 
-export default function RuleEditor({ group, ruleType, initialRule, onClose, onSaved }: { 
+export default function RuleEditor({ group, initialRule, onClose, onSaved }: { 
   group: any, 
-  ruleType: 'group_pricing' | 'promotion', 
   initialRule: any, 
   onClose: () => void,
   onSaved: () => void
@@ -169,14 +168,41 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
   // Flatten initial rule into form state
   const action = initialRule?.discount_actions?.[0];
   const target = initialRule?.discount_targets?.[0];
-  const condition = initialRule?.discount_conditions?.[0];
+  const initConditions = initialRule?.discount_conditions || [];
   
   // Infer preset from action/rule
-  let initialPreset = ruleType === 'group_pricing' ? 'base_percent' : 'promo_percent';
+  let initialPreset = 'promo_percent';
+  if (action?.action_type === 'percent_off') initialPreset = 'promo_percent';
   if (action?.action_type === 'fixed_price') initialPreset = 'fixed_price';
   if (action?.action_type === 'fixed_amount_off') initialPreset = 'promo_amount';
   if (action?.action_type === 'tier_price') initialPreset = 'quantity_tier';
-  if (initialRule?.requires_min_cart_subtotal) initialPreset = 'spend_threshold';
+
+  // For backward compatibility: if subtotal threshold is used and action is percent_off, could be spend_threshold
+  if (initialRule?.requires_min_cart_subtotal || initConditions.some((c: any) => c.condition_type === 'cart_subtotal_min')) {
+    if (action?.action_type === 'percent_off') initialPreset = 'spend_threshold';
+  }
+
+  // Convert old DB formats and existing conditions array into UI state
+  const startingConditions = initConditions.map((c: any) => ({
+    type: c.condition_type,
+    value: c.value_number !== null ? String(c.value_number) : (c.value_text || '')
+  }));
+  
+  // Backwards compatibility for root columns
+  if (initialRule?.requires_min_cart_qty && !startingConditions.find((c: any) => c.type === 'quantity_min')) {
+    startingConditions.push({ type: 'quantity_min', value: String(initialRule.requires_min_cart_qty) });
+  }
+  if (initialRule?.requires_min_cart_subtotal && !startingConditions.find((c: any) => c.type === 'cart_subtotal_min')) {
+    startingConditions.push({ type: 'cart_subtotal_min', value: String(initialRule.requires_min_cart_subtotal) });
+  }
+
+  const initTargets = initialRule?.discount_targets?.length > 0 
+    ? initialRule.discount_targets.map((t: any) => ({
+        type: t.target_type,
+        id: t.target_id || '',
+        is_exclusion: t.is_exclusion || false
+      }))
+    : [{ type: 'all', id: '', is_exclusion: false }];
 
   const [formData, setFormData] = useState({
     preset: initialPreset,
@@ -186,9 +212,7 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
     starts_at: initialRule?.starts_at ? initialRule.starts_at.substring(0, 16) : '',
     ends_at: initialRule?.ends_at ? initialRule.ends_at.substring(0, 16) : '',
     priority: initialRule?.priority || 10,
-    stacking_mode: initialRule?.stacking_mode || (ruleType === 'promotion' ? 'stackable' : 'best_of_group'),
-    requires_min_cart_qty: initialRule?.requires_min_cart_qty || '',
-    requires_min_cart_subtotal: initialRule?.requires_min_cart_subtotal || '',
+    stacking_mode: initialRule?.stacking_mode || 'stackable',
     max_total_uses: initialRule?.max_total_uses || '',
     max_uses_per_user: initialRule?.max_uses_per_user || '',
     campaign_id: initialRule?.campaign_id || '',
@@ -197,21 +221,14 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
     discount_value: action?.percent_value || action?.fixed_value || '',
     max_discount_amount: action?.max_discount_amount || '',
     
-    // Target
-    target_type: target?.target_type || 'all',
-    target_id: target?.target_id || '',
-    is_exclusion: target?.is_exclusion || false,
-    
-    // Condition
-    condition_type: condition?.condition_type || 'none',
-    condition_value: condition?.value_number || condition?.value_text || '',
-    
-    // Measurement specific
+    // Measurement specific (applies if any target is 'measurement')
     meas_type: initialRule?.metadata?.legacy_measurement?.type || 'inch',
     meas_min: initialRule?.metadata?.legacy_measurement?.min || '',
     meas_max: initialRule?.metadata?.legacy_measurement?.max || '',
   });
 
+  const [targets, setTargets] = useState<{ type: string, id: string, is_exclusion: boolean }[]>(initTargets);
+  const [conditions, setConditions] = useState<{ type: string, value: string }[]>(startingConditions);
   const [tiers, setTiers] = useState<any[]>(action?.action_type === 'tier_price' && action.tiers ? action.tiers : [{ min_quantity: 1, max_quantity: '', percent_value: '' }]);
   const [saving, setSaving] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -270,15 +287,13 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
     try {
       const payload: any = {
         name: formData.name,
-        source_kind: ruleType,
+        source_kind: 'promotion', // All rules are unified as promotion type for standard evaluation
         trigger_type: formData.trigger_type,
         status: formData.status,
         starts_at: formData.starts_at || null,
         ends_at: formData.ends_at || null,
         priority: parseInt(formData.priority.toString()) || 10,
         stacking_mode: formData.stacking_mode,
-        requires_min_cart_qty: formData.requires_min_cart_qty ? parseInt(formData.requires_min_cart_qty.toString()) : null,
-        requires_min_cart_subtotal: formData.requires_min_cart_subtotal ? parseFloat(formData.requires_min_cart_subtotal.toString()) : null,
         max_total_uses: formData.max_total_uses ? parseInt(formData.max_total_uses.toString()) : null,
         max_uses_per_user: formData.max_uses_per_user ? parseInt(formData.max_uses_per_user.toString()) : null,
         campaign_id: formData.campaign_id ? parseInt(formData.campaign_id.toString()) : null,
@@ -308,16 +323,8 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
       }
       payload.actions.push(actionObj);
 
-      // Rank mapping for group pricing
-      if (ruleType === 'group_pricing') {
-        if (formData.target_type === 'variation') payload.specificity_rank = 4;
-        else if (formData.target_type === 'product') payload.specificity_rank = 3;
-        else if (formData.target_type === 'measurement') payload.specificity_rank = 2;
-        else if (formData.target_type === 'category' || formData.target_type === 'brand' || formData.target_type === 'tag' || formData.target_type === 'attribute_value') payload.specificity_rank = 1;
-        else payload.specificity_rank = 0; // global
-      }
-
-      if (formData.target_type === 'measurement') {
+      const hasMeasurement = targets.some(t => t.type === 'measurement');
+      if (hasMeasurement) {
         payload.metadata = {
           legacy_measurement: {
             type: formData.meas_type,
@@ -325,19 +332,26 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
             max: formData.meas_max ? parseFloat(formData.meas_max.toString()) : null
           }
         };
-      } else if (formData.target_type !== 'all') {
-        payload.targets.push({
-          target_type: formData.target_type,
-          target_id: formData.target_id,
-          is_exclusion: formData.is_exclusion
-        });
       }
 
-      if (formData.condition_type !== 'none') {
-        payload.conditions.push({
-          condition_type: formData.condition_type,
-          value_number: formData.condition_value ? parseFloat(formData.condition_value.toString()) : null
-        });
+      for (const t of targets) {
+        if (t.type !== 'all' && t.type !== 'measurement') {
+          payload.targets.push({
+            target_type: t.type,
+            target_id: t.id,
+            is_exclusion: t.is_exclusion
+          });
+        }
+      }
+
+      // Map dynamic conditions
+      for (const cond of conditions) {
+        if (cond.type !== 'none') {
+          payload.conditions.push({
+            condition_type: cond.type,
+            value_number: cond.value ? parseFloat(cond.value.toString()) : null
+          });
+        }
       }
 
       const token = localStorage.getItem('adminToken');
@@ -370,7 +384,7 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
       <div className="bg-white shadow-2xl w-full max-w-4xl flex flex-col h-full animate-in slide-in-from-right duration-300">
         <div className="flex justify-between items-center px-6 py-4 border-b border-[#312f2c]/10 bg-[#312f2c]/5 shrink-0">
           <h3 className="text-xl font-bold text-[#312f2c]">
-            {isEditing ? 'Edit Rule' : `Create ${ruleType === 'group_pricing' ? 'Base Rule' : 'Promotion'}`}
+            {isEditing ? 'Edit Rule' : 'Create Discount Rule'}
           </h3>
           <button onClick={onClose} className="text-[#312f2c]/40 hover:text-[#312f2c]/60 p-1">
             <X className="w-5 h-5" />
@@ -384,43 +398,31 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
             <div>
               <label className="block text-sm font-medium text-[#312f2c]/80 mb-2">Rule Preset</label>
               <div className="grid grid-cols-3 gap-3">
-                {ruleType === 'group_pricing' ? (
-                  <>
-                    <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'base_percent' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                      <input type="radio" name="preset" value="base_percent" checked={formData.preset === 'base_percent'} onChange={handleChange} className="sr-only" />
-                      <div className="font-semibold text-[#312f2c] text-sm">Percentage Discount</div>
-                      <div className="text-xs text-[#312f2c]/50 mt-1">Scale off base price</div>
-                    </label>
-                    <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'fixed_price' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                      <input type="radio" name="preset" value="fixed_price" checked={formData.preset === 'fixed_price'} onChange={handleChange} className="sr-only" />
-                      <div className="font-semibold text-[#312f2c] text-sm">Fixed Contract Price</div>
-                      <div className="text-xs text-[#312f2c]/50 mt-1">Exact unit price override</div>
-                    </label>
-                    <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'quantity_tier' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                      <input type="radio" name="preset" value="quantity_tier" checked={formData.preset === 'quantity_tier'} onChange={handleChange} className="sr-only" />
-                      <div className="font-semibold text-[#312f2c] text-sm">Quantity Tiers</div>
-                      <div className="text-xs text-[#312f2c]/50 mt-1">Volume-based discounts</div>
-                    </label>
-                  </>
-                ) : (
-                  <>
-                    <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'promo_percent' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                      <input type="radio" name="preset" value="promo_percent" checked={formData.preset === 'promo_percent'} onChange={handleChange} className="sr-only" />
-                      <div className="font-semibold text-[#312f2c] text-sm">Percentage Off</div>
-                      <div className="text-xs text-[#312f2c]/50 mt-1">Extra discount %</div>
-                    </label>
-                    <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'promo_amount' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                      <input type="radio" name="preset" value="promo_amount" checked={formData.preset === 'promo_amount'} onChange={handleChange} className="sr-only" />
-                      <div className="font-semibold text-[#312f2c] text-sm">Amount Off</div>
-                      <div className="text-xs text-[#312f2c]/50 mt-1">Fixed $ discount per item</div>
-                    </label>
-                    <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'spend_threshold' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                      <input type="radio" name="preset" value="spend_threshold" checked={formData.preset === 'spend_threshold'} onChange={handleChange} className="sr-only" />
-                      <div className="font-semibold text-[#312f2c] text-sm">Spend Threshold</div>
-                      <div className="text-xs text-[#312f2c]/50 mt-1">Unlock with cart total</div>
-                    </label>
-                  </>
-                )}
+                <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'promo_percent' || formData.preset === 'base_percent' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
+                  <input type="radio" name="preset" value="promo_percent" checked={formData.preset === 'promo_percent' || formData.preset === 'base_percent'} onChange={handleChange} className="sr-only" />
+                  <div className="font-semibold text-[#312f2c] text-sm">Percentage Off</div>
+                  <div className="text-xs text-[#312f2c]/50 mt-1">Extra discount % or scale</div>
+                </label>
+                <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'promo_amount' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
+                  <input type="radio" name="preset" value="promo_amount" checked={formData.preset === 'promo_amount'} onChange={handleChange} className="sr-only" />
+                  <div className="font-semibold text-[#312f2c] text-sm">Amount Off</div>
+                  <div className="text-xs text-[#312f2c]/50 mt-1">Fixed $ discount per item</div>
+                </label>
+                <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'fixed_price' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
+                  <input type="radio" name="preset" value="fixed_price" checked={formData.preset === 'fixed_price'} onChange={handleChange} className="sr-only" />
+                  <div className="font-semibold text-[#312f2c] text-sm">Fixed Contract Price</div>
+                  <div className="text-xs text-[#312f2c]/50 mt-1">Exact unit price override</div>
+                </label>
+                <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'quantity_tier' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
+                  <input type="radio" name="preset" value="quantity_tier" checked={formData.preset === 'quantity_tier'} onChange={handleChange} className="sr-only" />
+                  <div className="font-semibold text-[#312f2c] text-sm">Quantity Tiers</div>
+                  <div className="text-xs text-[#312f2c]/50 mt-1">Volume-based discounts</div>
+                </label>
+                <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'spend_threshold' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
+                  <input type="radio" name="preset" value="spend_threshold" checked={formData.preset === 'spend_threshold'} onChange={handleChange} className="sr-only" />
+                  <div className="font-semibold text-[#312f2c] text-sm">Spend Threshold</div>
+                  <div className="text-xs text-[#312f2c]/50 mt-1">Unlock with cart total</div>
+                </label>
               </div>
             </div>
 
@@ -499,174 +501,257 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
             {/* Targeting */}
             <div>
               <h4 className="font-semibold text-[#312f2c] mb-4 border-b pb-2">Targeting & Conditions</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Apply To</label>
-                  <select name="target_type" value={formData.target_type} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2">
-                    <option value="all">Entire Catalog</option>
-                    <option value="category">Specific Category</option>
-                    <option value="product">Specific Product</option>
-                    <option value="variation">Specific Variation</option>
-                    <option value="tag">Specific Tag</option>
-                    <option value="brand">Specific Brand</option>
-                    <option value="attribute_value">Attribute Value</option>
-                    {ruleType === 'group_pricing' && <option value="measurement">Custom Measurement</option>}
-                  </select>
-                </div>
-
-                {formData.target_type !== 'all' && formData.target_type !== 'measurement' && formData.target_type !== 'attribute_value' && (
-                  <div className="flex gap-2 items-end">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-[#312f2c]/80 mb-1 capitalize">Select {formData.target_type}</label>
-                      <DynamicTargetSelect
-                        type={formData.target_type}
-                        value={formData.target_id}
-                        onChange={(val) => setFormData(prev => ({ ...prev, target_id: val }))}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 mb-2 ml-2">
-                      <input type="checkbox" id="is_exclusion" name="is_exclusion" checked={formData.is_exclusion} onChange={handleChange} className="rounded border-[#312f2c]/20 text-[#d1a054] focus:ring-[#d1a054]/40 w-4 h-4" />
-                      <label htmlFor="is_exclusion" className="text-sm text-[#312f2c]/80">Exclude</label>
-                    </div>
-                  </div>
-                )}
-
-                {formData.target_type === 'attribute_value' && (
-                  <div className="flex gap-2 items-end col-span-2">
-                    <div className="flex-1 grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                {targets.map((target, tIdx) => (
+                  <div key={tIdx} className="bg-white p-4 rounded-lg border border-[#312f2c]/10 shadow-sm relative">
+                    {targets.length > 1 && (
+                      <button 
+                        type="button" 
+                        onClick={() => setTargets(targets.filter((_, i) => i !== tIdx))} 
+                        className="absolute top-4 right-4 text-red-500 hover:bg-red-50 p-1 rounded transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    
+                    <div className="grid grid-cols-2 gap-4 mr-8">
                       <div>
-                        <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Attribute</label>
+                        <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Apply To</label>
                         <select 
-                          className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
+                          value={target.type} 
                           onChange={(e) => {
-                            // Find the attribute to set the default target_id to its first value to prevent invalid states
-                            const attr = attributes.find(a => String(a.id) === e.target.value);
-                            if (attr && attr.attribute_values && attr.attribute_values.length > 0) {
-                                setFormData(prev => ({...prev, target_id: String(attr.attribute_values[0].id)}));
-                            } else {
-                                setFormData(prev => ({...prev, target_id: ''}));
-                            }
-                          }}
-                          value={
-                            attributes.find(a => 
-                              a.attribute_values?.some((v: any) => String(v.id) === String(formData.target_id))
-                            )?.id || ""
-                          }
-                        >
-                          <option value="" disabled>Select Attribute...</option>
-                          {attributes.map(attr => (
-                            <option key={attr.id} value={attr.id}>{attr.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Value</label>
-                        <select 
-                          required
-                          name="target_id"
-                          value={formData.target_id}
-                          onChange={handleChange}
+                            const newTargets = [...targets];
+                            newTargets[tIdx].type = e.target.value;
+                            newTargets[tIdx].id = '';
+                            setTargets(newTargets);
+                          }} 
                           className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
                         >
-                          <option value="" disabled>Select Value...</option>
-                          {(() => {
-                            const selectedAttr = attributes.find(a => 
-                              a.attribute_values?.some((v: any) => String(v.id) === String(formData.target_id))
-                            );
-                            if (!selectedAttr) return null;
-                            return selectedAttr.attribute_values.map((v: any) => (
-                              <option key={v.id} value={v.id}>{v.value}</option>
-                            ));
-                          })()}
+                          <option value="all">Entire Catalog</option>
+                          <option value="category">Specific Category</option>
+                          <option value="product">Specific Product</option>
+                          <option value="variation">Specific Variation</option>
+                          <option value="tag">Specific Tag</option>
+                          <option value="brand">Specific Brand</option>
+                          <option value="attribute_value">Attribute Value</option>
+                          <option value="measurement">Custom Measurement</option>
                         </select>
                       </div>
+
+                      {target.type !== 'all' && target.type !== 'measurement' && target.type !== 'attribute_value' && (
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-[#312f2c]/80 mb-1 capitalize">Select {target.type}</label>
+                            <DynamicTargetSelect
+                              type={target.type}
+                              value={target.id}
+                              onChange={(val) => {
+                                const newTargets = [...targets];
+                                newTargets[tIdx].id = val;
+                                setTargets(newTargets);
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2 mb-2 ml-2">
+                            <input 
+                              type="checkbox" 
+                              id={`is_exclusion_${tIdx}`} 
+                              checked={target.is_exclusion} 
+                              onChange={(e) => {
+                                const newTargets = [...targets];
+                                newTargets[tIdx].is_exclusion = e.target.checked;
+                                setTargets(newTargets);
+                              }} 
+                              className="rounded border-[#312f2c]/20 text-[#d1a054] focus:ring-[#d1a054]/40 w-4 h-4" 
+                            />
+                            <label htmlFor={`is_exclusion_${tIdx}`} className="text-sm text-[#312f2c]/80">Exclude</label>
+                          </div>
+                        </div>
+                      )}
+
+                      {target.type === 'attribute_value' && (
+                        <div className="flex gap-2 items-end col-span-2">
+                          <div className="flex-1 grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Attribute</label>
+                              <select 
+                                className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
+                                onChange={(e) => {
+                                  const attr = attributes.find(a => String(a.id) === e.target.value);
+                                  const newTargets = [...targets];
+                                  if (attr && attr.attribute_values && attr.attribute_values.length > 0) {
+                                      newTargets[tIdx].id = String(attr.attribute_values[0].id);
+                                  } else {
+                                      newTargets[tIdx].id = '';
+                                  }
+                                  setTargets(newTargets);
+                                }}
+                                value={
+                                  attributes.find(a => 
+                                    a.attribute_values?.some((v: any) => String(v.id) === String(target.id))
+                                  )?.id || ""
+                                }
+                              >
+                                <option value="" disabled>Select Attribute...</option>
+                                {attributes.map(attr => (
+                                  <option key={attr.id} value={attr.id}>{attr.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Value</label>
+                              <select 
+                                required
+                                value={target.id}
+                                onChange={(e) => {
+                                  const newTargets = [...targets];
+                                  newTargets[tIdx].id = e.target.value;
+                                  setTargets(newTargets);
+                                }}
+                                className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
+                              >
+                                <option value="" disabled>Select Value...</option>
+                                {(() => {
+                                  const selectedAttr = attributes.find(a => 
+                                    a.attribute_values?.some((v: any) => String(v.id) === String(target.id))
+                                  );
+                                  if (!selectedAttr) return null;
+                                  return selectedAttr.attribute_values.map((v: any) => (
+                                    <option key={v.id} value={v.id}>{v.value}</option>
+                                  ));
+                                })()}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mb-2 ml-4">
+                            <input 
+                              type="checkbox" 
+                              id={`is_exclusion_attr_${tIdx}`} 
+                              checked={target.is_exclusion} 
+                              onChange={(e) => {
+                                const newTargets = [...targets];
+                                newTargets[tIdx].is_exclusion = e.target.checked;
+                                setTargets(newTargets);
+                              }} 
+                              className="rounded border-[#312f2c]/20 text-[#d1a054] focus:ring-[#d1a054]/40 w-4 h-4" 
+                            />
+                            <label htmlFor={`is_exclusion_attr_${tIdx}`} className="text-sm text-[#312f2c]/80">Exclude</label>
+                          </div>
+                        </div>
+                      )}
+
+                      {target.type === 'measurement' && (
+                        <div className="col-span-2 bg-amber-50 border border-amber-200 rounded-xl p-4 mt-2">
+                          <p className="text-xs text-amber-700 font-semibold mb-3 uppercase tracking-wide">Custom Measurement Settings</p>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Dimension Type</label>
+                              <select name="meas_type" value={formData.meas_type} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 bg-white">
+                                <option value="inch">By the Inch (Wire / Linear)</option>
+                                <option value="plate">By Area (Height × Width — Plates)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">
+                                Min {formData.meas_type === 'inch' ? 'Length (in)' : 'Area (in²)'} <span className="text-[#312f2c]/40">(optional)</span>
+                              </label>
+                              <input
+                                type="number" min="0" step="0.01"
+                                name="meas_min" value={formData.meas_min}
+                                onChange={handleChange}
+                                placeholder={formData.meas_type === 'inch' ? 'e.g. 6' : 'e.g. 10'}
+                                className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">
+                                Max {formData.meas_type === 'inch' ? 'Length (in)' : 'Area (in²)'} <span className="text-[#312f2c]/40">(optional)</span>
+                              </label>
+                              <input
+                                type="number" min="0" step="0.01"
+                                name="meas_max" value={formData.meas_max}
+                                onChange={handleChange}
+                                placeholder={formData.meas_type === 'inch' ? 'e.g. 36' : 'e.g. 100'}
+                                className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 mb-2 ml-4">
-                      <input type="checkbox" id="is_exclusion_attr" name="is_exclusion" checked={formData.is_exclusion} onChange={handleChange} className="rounded border-[#312f2c]/20 text-[#d1a054] focus:ring-[#d1a054]/40 w-4 h-4" />
-                      <label htmlFor="is_exclusion_attr" className="text-sm text-[#312f2c]/80">Exclude</label>
-                    </div>
                   </div>
-                )}
-
-                {formData.target_type === 'measurement' && (
-                  <div className="col-span-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <p className="text-xs text-amber-700 font-semibold mb-3 uppercase tracking-wide">Custom Measurement Settings</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Dimension Type</label>
-                        <select name="meas_type" value={formData.meas_type} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 bg-white">
-                          <option value="inch">By the Inch (Wire / Linear)</option>
-                          <option value="plate">By Area (Height × Width — Plates)</option>
-                        </select>
-                        <p className="text-xs text-[#312f2c]/40 mt-1">
-                          {formData.meas_type === 'inch'
-                            ? 'Price × Qty × Length (inches). e.g. channel wire, round wire.'
-                            : 'Price × Qty × Height × Width (inches). e.g. sheet metal plates.'}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">
-                          Min {formData.meas_type === 'inch' ? 'Length (in)' : 'Area (in²)'} <span className="text-[#312f2c]/40">(optional)</span>
-                        </label>
-                        <input
-                          type="number" min="0" step="0.01"
-                          name="meas_min" value={formData.meas_min}
-                          onChange={handleChange}
-                          placeholder={formData.meas_type === 'inch' ? 'e.g. 6' : 'e.g. 10'}
-                          className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">
-                          Max {formData.meas_type === 'inch' ? 'Length (in)' : 'Area (in²)'} <span className="text-[#312f2c]/40">(optional)</span>
-                        </label>
-                        <input
-                          type="number" min="0" step="0.01"
-                          name="meas_max" value={formData.meas_max}
-                          onChange={handleChange}
-                          placeholder={formData.meas_type === 'inch' ? 'e.g. 36' : 'e.g. 100'}
-                          className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs text-amber-600 mt-3">
-                      💡 Leave min/max blank to apply to <strong>all</strong> lengths. Set a range to apply only within that bracket (e.g. 0–12 in for small orders).
-                    </p>
-                  </div>
-                )}
-
-                {/* Additional Conditions */}
-                {formData.preset === 'spend_threshold' && (
-                  <div>
-                    <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Min Cart Subtotal ($)</label>
-                    <input required type="number" min="0" step="0.01" name="requires_min_cart_subtotal" value={formData.requires_min_cart_subtotal} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="e.g. 500" />
-                  </div>
-                )}
-
-                {formData.preset !== 'quantity_tier' && (
-                  <div>
-                    <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Min Line Quantity</label>
-                    <input type="number" min="1" name="requires_min_cart_qty" value={formData.requires_min_cart_qty} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="e.g. 5" />
-                  </div>
-                )}
-
-                <div>
-                   <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Account Eligibility</label>
-                   <select name="condition_type" value={formData.condition_type} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2">
-                     <option value="none">All Members</option>
-                     <option value="first_purchase">First Purchase Only</option>
-                     <option value="repeat_customer">Repeat Customers Only</option>
-                     <option value="ltv_min">Minimum Lifetime Spend</option>
-                   </select>
-                </div>
+                ))}
                 
-                {formData.condition_type === 'ltv_min' && (
-                  <div>
-                    <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Min Spend ($)</label>
-                    <input required type="number" min="0" name="condition_value" value={formData.condition_value} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="e.g. 10000" />
-                  </div>
-                )}
+                <button 
+                  type="button" 
+                  onClick={() => setTargets([...targets, { type: 'all', id: '', is_exclusion: false }])} 
+                  className="text-sm text-[#d1a054] font-medium hover:text-[#312f2c] flex items-center gap-1 mt-2"
+                >
+                  <Plus className="w-4 h-4" /> Add Target
+                </button>
               </div>
+                
+                {/* Dynamic Conditions Builder */}
+                <div className="col-span-2 mt-4 pt-4 border-t border-[#312f2c]/10">
+                  <h5 className="font-semibold text-[#312f2c] mb-3">Requirements & Eligibility</h5>
+                  
+                  <div className="space-y-3">
+                    {conditions.map((cond, idx) => (
+                      <div key={idx} className="flex gap-3 items-start bg-white p-3 rounded-lg border border-[#312f2c]/10 shadow-sm">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">Condition Type</label>
+                          <select 
+                            value={cond.type} 
+                            onChange={e => {
+                              const newConds = [...conditions];
+                              newConds[idx].type = e.target.value;
+                              // Clear value when changing type if it doesn't make sense
+                              if (['first_purchase', 'repeat_customer'].includes(e.target.value)) {
+                                newConds[idx].value = '';
+                              }
+                              setConditions(newConds);
+                            }}
+                            className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm"
+                          >
+                            <option value="none">-- Select Condition --</option>
+                            <option value="quantity_min">Minimum Line Quantity</option>
+                            <option value="cart_subtotal_min">Minimum Cart Subtotal ($)</option>
+                            <option value="first_purchase">First Purchase Only</option>
+                            <option value="repeat_customer">Repeat Customers Only</option>
+                            <option value="ltv_min">Minimum Lifetime Spend ($)</option>
+                          </select>
+                        </div>
+                        
+                        {!['none', 'first_purchase', 'repeat_customer'].includes(cond.type) && (
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">
+                              Value
+                            </label>
+                            <input 
+                              type="number" min="0" step="0.01" required
+                              value={cond.value} 
+                              onChange={e => {
+                                const newConds = [...conditions];
+                                newConds[idx].value = e.target.value;
+                                setConditions(newConds);
+                              }}
+                              className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm" 
+                              placeholder={cond.type.includes('quantity') ? 'e.g. 5' : 'e.g. 100'} 
+                            />
+                          </div>
+                        )}
+                        
+                        <button type="button" onClick={() => setConditions(conditions.filter((_, i) => i !== idx))} className="mt-6 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <button type="button" onClick={() => setConditions([...conditions, { type: 'none', value: '' }])} className="text-sm text-[#d1a054] font-medium hover:text-[#312f2c] flex items-center gap-1 mt-2">
+                      <Plus className="w-4 h-4" /> Add Condition
+                    </button>
+                  </div>
+                </div>
             </div>
 
             {/* Advanced & Campaign */}
@@ -682,22 +767,18 @@ export default function RuleEditor({ group, ruleType, initialRule, onClose, onSa
                   <input type="datetime-local" name="ends_at" value={formData.ends_at} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
                 </div>
                 
-                {ruleType === 'promotion' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Priority (1-100)</label>
-                      <input type="number" min="1" max="100" name="priority" value={formData.priority} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Stacking Mode</label>
-                      <select name="stacking_mode" value={formData.stacking_mode} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2">
-                        <option value="stackable">Stackable</option>
-                        <option value="best_of_group">Best of Group</option>
-                        <option value="exclusive">Exclusive (stops evaluation)</option>
-                      </select>
-                    </div>
-                  </>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Priority (1-100)</label>
+                  <input type="number" min="1" max="100" name="priority" value={formData.priority} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Stacking Mode</label>
+                  <select name="stacking_mode" value={formData.stacking_mode} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2">
+                    <option value="stackable">Stackable</option>
+                    <option value="best_of_group">Best of Group</option>
+                    <option value="exclusive">Exclusive (stops evaluation)</option>
+                  </select>
+                </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Max Total Uses</label>

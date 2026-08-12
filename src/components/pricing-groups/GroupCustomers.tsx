@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Search, Plus, Trash2 } from 'lucide-react';
+import { Search, Plus, Trash2, HelpCircle } from 'lucide-react';
+import HelpDrawer from './HelpDrawer';
 
 export default function GroupCustomers({ group }: { group: any }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,7 +103,16 @@ export default function GroupCustomers({ group }: { group: any }) {
     <div className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-sm p-8 flex flex-col h-full">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-xl font-bold text-[#312f2c]">Group Customers</h3>
+          <div className="flex items-center gap-4">
+            <h3 className="text-xl font-bold text-[#312f2c]">Group Customers</h3>
+            <button 
+              onClick={() => setHelpOpen(true)}
+              className="p-1.5 text-[#312f2c]/50 hover:bg-[#312f2c]/10 rounded-full transition-colors"
+              title="Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+          </div>
           <p className="text-[#312f2c]/50 text-sm mt-1 max-w-2xl">
             A business account can only belong to one pricing group at a time. 
             Sub-users automatically inherit the group of their parent account.
@@ -217,6 +228,18 @@ export default function GroupCustomers({ group }: { group: any }) {
           </div>
         )}
       </div>
+
+      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Customers Tab Help">
+        <p>The <strong>Customers</strong> tab allows you to manage which users (and by extension, their sub-accounts) belong to this Pricing Group.</p>
+        
+        <h3>Key Principles</h3>
+        <ul>
+          <li><strong>One Group Per User:</strong> A business account (or customer) can only belong to a single Pricing Group at a time. If you add a user who is currently in another group, they will automatically be moved to this one.</li>
+          <li><strong>Inheritance:</strong> If a customer has sub-users or employee accounts under their main company account, all those sub-users automatically inherit the Pricing Group of their parent account. You do not need to add sub-users individually.</li>
+          <li><strong>Search &amp; Add:</strong> Use the search bar to find users by their name, email, or phone number. Click &quot;Add&quot; to assign them to this group.</li>
+          <li><strong>Live Evaluation:</strong> Once a user is added to an Active group, their storefront experience (including product visibility and cart pricing) is immediately evaluated against this group&apos;s rules.</li>
+        </ul>
+      </HelpDrawer>
     </div>
   );
 }

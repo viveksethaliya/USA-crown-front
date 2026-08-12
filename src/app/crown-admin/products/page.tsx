@@ -679,7 +679,21 @@ export default function ProductsPage() {
                           {product.sku || '-'}
                         </td>
                         <td className="p-4 hidden lg:table-cell">
-                          {product.sale_price ? (
+                          {product.type === 'variable' && product.product_variations && product.product_variations.length > 0 ? (
+                            (() => {
+                              const prices = product.product_variations.map((v: any) => parseFloat(v.sale_price || v.regular_price || '0')).filter((p: number) => p > 0);
+                              if (prices.length > 0) {
+                                const min = Math.min(...prices);
+                                const max = Math.max(...prices);
+                                return (
+                                  <span className="text-[#312f2c] font-bold text-sm">
+                                    ${min.toFixed(2)} {min !== max && `- $${max.toFixed(2)}`}
+                                  </span>
+                                );
+                              }
+                              return <span className="text-[#312f2c] font-bold text-sm">—</span>;
+                            })()
+                          ) : product.sale_price ? (
                             <div className="flex flex-col">
                               <span className="text-[#312f2c] font-bold text-sm">${product.sale_price}</span>
                               <span className="text-[#312f2c]/40 line-through text-xs font-medium">${product.regular_price}</span>

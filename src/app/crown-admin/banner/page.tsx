@@ -51,6 +51,10 @@ export default function BannerPage() {
     }
   };
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 

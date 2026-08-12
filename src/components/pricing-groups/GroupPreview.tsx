@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Play, ShoppingCart, Tag, CheckCircle2, ChevronRight, Calculator } from 'lucide-react';
+import { Play, ShoppingCart, Tag, CheckCircle2, ChevronRight, Calculator, HelpCircle } from 'lucide-react';
+import HelpDrawer from './HelpDrawer';
 
 export default function GroupPreview({ group }: { group: any }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const [itemsStr, setItemsStr] = useState('[{"productId": 101, "quantity": 1, "basePrice": 100, "categoryIds": ["1"]}]');
   const [couponsStr, setCouponsStr] = useState('[]');
   const [userCtxStr, setUserCtxStr] = useState('{"orderCount": 0, "ltv": 0}');
@@ -42,7 +44,16 @@ export default function GroupPreview({ group }: { group: any }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-[#312f2c]">Calculation Preview</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-bold text-[#312f2c]">Calculation Preview</h2>
+            <button 
+              onClick={() => setHelpOpen(true)}
+              className="p-1.5 text-[#312f2c]/50 hover:bg-[#312f2c]/10 rounded-full transition-colors"
+              title="Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+          </div>
           <p className="text-[#312f2c]/50 text-sm mt-1">
             Simulate the exact pricing resolution engine against a mock cart.
           </p>
@@ -160,6 +171,20 @@ export default function GroupPreview({ group }: { group: any }) {
           )}
         </div>
       </div>
+
+      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Preview Tab Help">
+        <p>The <strong>Preview</strong> tab is a powerful simulator. It allows you to test exactly how the pricing engine will evaluate a shopping cart for a member of this Pricing Group without having to log in as a customer.</p>
+        
+        <h3>Inputs</h3>
+        <ul>
+          <li><strong>Mock Cart Items:</strong> Provide an array of items representing the cart. Each item needs a &quot;productId&quot;, &quot;quantity&quot;, &quot;basePrice&quot;, and optionally tags, categories, or attributes for targeting matching.</li>
+          <li><strong>Coupons:</strong> Provide an array of string coupon codes to test if coupon-triggered rules activate successfully.</li>
+          <li><strong>User Context:</strong> Pass in customer variables like &quot;orderCount&quot; or &quot;ltv&quot; (Lifetime Value) to test rules that depend on customer history (e.g., &quot;First Purchase&quot; conditions).</li>
+        </ul>
+
+        <h3>Understanding the Trace</h3>
+        <p>When you click &quot;Run Live Evaluator&quot;, the system runs the exact same code the storefront uses. The right pane will output a line-by-line trace showing exactly which rules were considered, which were rejected, and the final calculated discounts.</p>
+      </HelpDrawer>
     </div>
   );
 }

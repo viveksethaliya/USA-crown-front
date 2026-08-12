@@ -7,30 +7,28 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
   const url = new URL(req.url);
   const targetUrl = `${BACKEND_URL}/api/${path}${url.search}`;
 
-  // Forward all headers except host and content-length (will be recalculated)
+  // Forward all headers except host
   const headers = new Headers();
   req.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
-    if (lower !== 'host' && lower !== 'content-length') {
+    if (lower !== 'host') {
       headers.set(key, value);
     }
   });
-  
-  // Prevent ECONNRESET by disabling keep-alive for proxied backend requests
-  headers.set('Connection', 'close');
 
-  const fetchOptions: RequestInit = {
+  const fetchOptions: RequestInit & { duplex?: string } = {
     method: req.method,
     headers,
+    cache: 'no-store',
+    duplex: 'half',
   };
 
   // Forward body for non-GET/HEAD requests
-  // Use arrayBuffer() instead of text() so binary multipart/form-data
-  // (file uploads) are forwarded without corruption.
+  // Use Buffer to ensure fetch calculates content-length properly and sends without chunking issues
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     const buffer = await req.arrayBuffer();
     if (buffer.byteLength > 0) {
-      fetchOptions.body = buffer;
+      fetchOptions.body = Buffer.from(buffer);
     }
   }
 

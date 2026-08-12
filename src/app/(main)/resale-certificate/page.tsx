@@ -102,7 +102,16 @@ export default function ResaleCertificatePage() {
       const template = await fetch(TEMPLATE_URL).then(response => response.arrayBuffer());
       const pdf = await PDFDocument.load(template);
       const form = pdf.getForm();
-      Object.entries(PDF_FIELD_NAMES).forEach(([key, pdfName]) => form.getTextField(pdfName).setText(values[key as TextFieldName]));
+      Object.entries(PDF_FIELD_NAMES).forEach(([key, pdfName]) => {
+        const field = form.getTextField(pdfName);
+        const value = values[key as TextFieldName] || '';
+        
+        // Some official PDF fields (like State) have strict max lengths.
+        // We remove the max length constraint so the full text can be rendered.
+        field.setMaxLength(1000);
+        
+        field.setText(value);
+      });
       if (values.certificateType) form.getRadioGroup('single-use certificate').select(values.certificateType === 'single' ? 'Yes' : 'No');
       if (values.vendorType) form.getRadioGroup('I certify that I am').select(values.vendorType === 'vendor' ? 'Yes' : 'No');
       (['a', 'b', 'c', 'd', 'e'] as const).forEach((letter, index) => {

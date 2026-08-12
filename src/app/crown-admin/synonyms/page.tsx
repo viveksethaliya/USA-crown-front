@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, X, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { ADMIN_API as API } from "@/lib/config";
 import { adminFetch } from "@/lib/api";
@@ -21,6 +21,12 @@ export default function SynonymsPage() {
 
   const [formTerm, setFormTerm] = useState("");
   const [formSynonyms, setFormSynonyms] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredSynonyms = synonymsList.filter(item => 
+    item.term.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.synonyms.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const fetchSynonyms = async () => {
     try {
@@ -179,11 +185,27 @@ export default function SynonymsPage() {
         </div>
       )}
 
+      {/* Search Bar */}
+      {!isAdding && synonymsList.length > 0 && (
+        <div className="flex items-center bg-white/60 p-1.5 border border-white/60 rounded-xl shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#d1a054]/40 max-w-md">
+          <Search className="w-5 h-5 text-[#312f2c]/40 ml-3 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Search by base term or synonym..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-transparent border-none focus:ring-0 text-[#312f2c] font-medium placeholder:text-[#312f2c]/40 px-3 py-1.5 w-full outline-none text-sm"
+          />
+        </div>
+      )}
+
       <div className="bg-white/60 border border-white/60 rounded-3xl shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-black/50">Loading...</div>
         ) : synonymsList.length === 0 ? (
           <div className="p-8 text-center text-black/50">No synonym rules defined yet.</div>
+        ) : filteredSynonyms.length === 0 ? (
+          <div className="p-8 text-center text-black/50">No synonyms match your search.</div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
@@ -194,7 +216,7 @@ export default function SynonymsPage() {
               </tr>
             </thead>
             <tbody>
-              {synonymsList.map(item => (
+              {filteredSynonyms.map(item => (
                 <tr key={item.id} className="border-b border-black/5 last:border-0 hover:bg-white/40">
                   <td className="p-4 font-medium">{item.term}</td>
                   <td className="p-4 text-black/70">

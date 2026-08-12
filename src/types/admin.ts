@@ -100,4 +100,5 @@ export interface Product {
   brands?: { id: string; name: string };
   product_tags?: any[];
   product_images?: { url: string; position?: number }[];
+  product_variations?: any[];
 }

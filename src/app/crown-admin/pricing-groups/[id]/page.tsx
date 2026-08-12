@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { UsersRound, Layout, Shield, Tag, Calendar, Activity, Eye, FileText, ArrowLeft } from 'lucide-react';
+import { UsersRound, Layout, Shield, Tag, Calendar, Activity, Eye, FileText, ArrowLeft, Info } from 'lucide-react';
 import { adminFetch } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -99,8 +99,7 @@ export default function PricingGroupDetail() {
               { id: 'overview', icon: Layout, label: 'Overview' },
               { id: 'customers', icon: UsersRound, label: 'Customers' },
               { id: 'access', icon: Shield, label: 'Product Access' },
-              { id: 'base', icon: FileText, label: 'Base Pricing' },
-              { id: 'promotions', icon: Tag, label: 'Promotions' },
+              { id: 'rules', icon: Tag, label: 'Discount Rules' },
               { id: 'campaigns', icon: Calendar, label: 'Campaigns' },
               { id: 'preview', icon: Eye, label: 'Preview' },
               { id: 'history', icon: Activity, label: 'History' },
@@ -135,11 +134,8 @@ export default function PricingGroupDetail() {
           {activeTab === 'access' && (
             <GroupAccess group={selectedGroup} />
           )}
-          {activeTab === 'base' && (
-            <GroupRules group={selectedGroup} ruleType="group_pricing" />
-          )}
-          {activeTab === 'promotions' && (
-            <GroupRules group={selectedGroup} ruleType="promotion" />
+          {activeTab === 'rules' && (
+            <GroupRules group={selectedGroup} />
           )}
           {activeTab === 'campaigns' && (
             <GroupCampaigns group={selectedGroup} />

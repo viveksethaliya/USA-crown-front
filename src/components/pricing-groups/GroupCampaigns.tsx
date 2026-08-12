@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Edit2, PlayCircle, PauseCircle, Archive, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, PlayCircle, PauseCircle, Archive, AlertCircle, HelpCircle } from 'lucide-react';
 import CampaignEditor from './CampaignEditor';
+import HelpDrawer from './HelpDrawer';
 
 export default function GroupCampaigns({ group }: { group: any }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCampaign, setEditingCampaign] = useState<any | null>(null);
@@ -61,7 +63,16 @@ export default function GroupCampaigns({ group }: { group: any }) {
     <div className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-sm p-8 flex flex-col h-full">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-xl font-bold text-[#312f2c]">Promotional Campaigns</h3>
+          <div className="flex items-center gap-4">
+            <h3 className="text-xl font-bold text-[#312f2c]">Promotional Campaigns</h3>
+            <button 
+              onClick={() => setHelpOpen(true)}
+              className="p-1.5 text-[#312f2c]/50 hover:bg-[#312f2c]/10 rounded-full transition-colors"
+              title="Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+          </div>
           <p className="text-[#312f2c]/50 text-sm mt-1 max-w-2xl">
             Group rules into a campaign to manage their lifecycle together. 
             All rules attached to a campaign will inherit its activation boundaries if applicable.
@@ -179,6 +190,17 @@ export default function GroupCampaigns({ group }: { group: any }) {
           }}
         />
       )}
+
+      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Campaigns Tab Help">
+        <p>The <strong>Campaigns</strong> tab allows you to organize multiple discount rules under a single umbrella initiative.</p>
+        
+        <h3>Why use Campaigns?</h3>
+        <ul>
+          <li><strong>Organization:</strong> If you have a &quot;Black Friday Sale&quot; that requires 10 different discount rules (e.g. 20% off widgets, 15% off gadgets, free shipping on bulk orders), you can attach all those rules to a &quot;Black Friday&quot; campaign.</li>
+          <li><strong>Shared Scheduling:</strong> By setting a <em>Start Date</em> and <em>End Date</em> on a campaign, all rules attached to it will automatically become active or inactive at those specific times. This saves you from having to update dates on 10 different rules individually.</li>
+          <li><strong>Easy Toggles:</strong> Pausing a campaign instantly pauses all of its associated rules. Activating the campaign brings them all back.</li>
+        </ul>
+      </HelpDrawer>
     </div>
   );
 }

@@ -2,8 +2,11 @@
 import React, { useState } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { HelpCircle } from 'lucide-react';
+import HelpDrawer from './HelpDrawer';
 
 export default function GroupOverview({ group, onUpdate }: { group: any, onUpdate: (data: any) => void }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: group.name || '',
     description: group.description || '',
@@ -80,7 +83,16 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
 
   return (
     <div className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-sm p-8">
-      <h3 className="text-xl font-bold text-[#312f2c] mb-6">Group Overview</h3>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold text-[#312f2c]">Group Overview</h3>
+        <button 
+          onClick={() => setHelpOpen(true)}
+          className="p-2 text-[#312f2c]/50 hover:bg-[#312f2c]/10 rounded-full transition-colors"
+          title="Help"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -213,6 +225,25 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
           </div>
         </div>
       )}
+
+      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Overview Tab Help">
+        <p>The <strong>Overview</strong> tab acts as the central control panel for this Pricing Group. From here you manage its core identity, status, and high-level behavioral settings.</p>
+        
+        <h3>Key Fields Explained</h3>
+        <ul>
+          <li><strong>Group Name:</strong> The internal name used to identify the group. A URL-friendly slug is automatically generated from this.</li>
+          <li><strong>Type:</strong> The broad categorization of the group (e.g. Wholesale, Retail, Distributor). This helps organize groups in your list.</li>
+          <li><strong>Lifecycle Status:</strong>
+            <ul>
+              <li><em>Draft:</em> The group is inactive. Rules and assignments are safely ignored by the pricing engine.</li>
+              <li><em>Active:</em> The group is live. Customers assigned to it will immediately receive its rules and benefits.</li>
+              <li><em>Archived:</em> The group is retired. It preserves historical data but is no longer applied.</li>
+            </ul>
+          </li>
+          <li><strong>Valid Dates:</strong> Optional start and end times for the entire group. If set, the group will automatically activate or deactivate across these dates.</li>
+          <li><strong>Internal Notes:</strong> A private memo field for staff members.</li>
+        </ul>
+      </HelpDrawer>
     </div>
   );
 }

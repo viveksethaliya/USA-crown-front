@@ -124,9 +124,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const user = localStorage.getItem('adminUser');
     if (user) { try { setAdminUser(JSON.parse(user)); } catch (e) { } }
 
-    if (!token && pathname !== '/crown-admin/login') {
+    let isExpired = false;
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          isExpired = true;
+        }
+      } catch (e) {
+        isExpired = true; // Invalid token format
+      }
+    }
+
+    if ((!token || isExpired) && pathname !== '/crown-admin/login') {
+      if (isExpired) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+      }
       router.push('/crown-admin/login');
-    } else if (token) {
+    } else if (token && !isExpired) {
       setIsAuthenticated(true);
       if (pathname === '/crown-admin/login') router.push('/crown-admin');
     }

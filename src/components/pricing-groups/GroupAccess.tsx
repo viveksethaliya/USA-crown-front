@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Search, Save, X } from 'lucide-react';
+import { Search, Save, X, HelpCircle } from 'lucide-react';
+import HelpDrawer from './HelpDrawer';
 
 export default function GroupAccess({ group }: { group: any }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const [restrictedProducts, setRestrictedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,7 +98,16 @@ export default function GroupAccess({ group }: { group: any }) {
     <div className="bg-white/40 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-sm p-8 flex flex-col h-full">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="text-xl font-bold text-[#312f2c]">Product Access Control</h3>
+          <div className="flex items-center gap-4">
+            <h3 className="text-xl font-bold text-[#312f2c]">Product Access Control</h3>
+            <button 
+              onClick={() => setHelpOpen(true)}
+              className="p-1.5 text-[#312f2c]/50 hover:bg-[#312f2c]/10 rounded-full transition-colors"
+              title="Help"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+          </div>
           <p className="text-[#312f2c]/50 text-sm mt-1 max-w-2xl">
             Control which products are visible to this group. 
             <strong> Note: This does not affect pricing or discounts.</strong> If the list is empty, 
@@ -214,6 +225,18 @@ export default function GroupAccess({ group }: { group: any }) {
           </div>
         </div>
       </div>
+
+      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Product Access Tab Help">
+        <p>The <strong>Product Access Control</strong> tab allows you to restrict the catalog visibility for customers in this Pricing Group.</p>
+        
+        <h3>How It Works</h3>
+        <ul>
+          <li><strong>Default Visibility:</strong> By default, if the Access List is empty, customers in this group will see all standard public products on the storefront.</li>
+          <li><strong>Restricted Visibility:</strong> The moment you add even one product to the Access List, the system switches to an <em>&quot;Allowlist&quot;</em> mode for this group. Customers will ONLY see the products explicitly listed here. Every other product in the catalog becomes hidden from them.</li>
+          <li><strong>Use Case:</strong> This is highly useful for B2B portal implementations where a specific distributor or vendor is only permitted to buy a specific subset of customized products.</li>
+          <li><strong>Note on Pricing:</strong> This tab ONLY controls visibility. It does not apply discounts. To apply discounts to these specific products, you must create rules in the <em>Discount Rules</em> tab.</li>
+        </ul>
+      </HelpDrawer>
     </div>
   );
 }
