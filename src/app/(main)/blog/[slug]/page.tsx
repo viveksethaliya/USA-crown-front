@@ -14,6 +14,7 @@ interface BlogDetail {
   seo_description: string | null;
   seo_title: string | null;
   seo_keywords: string | null;
+  seo_og_image: string | null;
   users?: { first_name: string; last_name: string } | null;
 }
 
@@ -62,10 +63,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getBlogPost(resolvedParams.slug);
 
   if (post) {
+    const title = post.seo_title || `${post.title} | Crown Findings Blog`;
+    const description = post.seo_description || post.excerpt || `Read ${post.title} on the Crown Findings Blog.`;
+    const imageUrl = post.seo_og_image || post.featured_image || undefined;
+
     return {
-      title: post.seo_title || `${post.title} | Crown Findings Blog`,
-      description: post.seo_description || post.excerpt || `Read ${post.title} on the Crown Findings Blog.`,
+      title,
+      description,
       keywords: post.seo_keywords || undefined,
+      openGraph: {
+        title,
+        description,
+        type: 'article',
+        publishedTime: post.created_at,
+        images: imageUrl ? [{ url: imageUrl, alt: title }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: imageUrl ? [imageUrl] : [],
+      }
     };
   }
 
