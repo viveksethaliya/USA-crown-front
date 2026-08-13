@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (post) {
     return {
       title: post.seo_title || `${post.title} | Crown Findings Blog`,
-      description: post.seo_description || post.excerpt || '',
+      description: post.seo_description || post.excerpt || `Read ${post.title} on the Crown Findings Blog.`,
       keywords: post.seo_keywords || undefined,
     };
   }
@@ -96,7 +96,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
 
           {post.featured_image && (
-            <img src={post.featured_image} alt={post.title} className={styles.postHeroImage} />
+            <img src={post.featured_image} alt={post.title} className={styles.postHeroImage} fetchPriority="high" />
           )}
 
           <div
