@@ -20,6 +20,7 @@ const outfit = Outfit({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || "https://usa-crown-front.vercel.app"),
   title: "Crown Findings",
   description: "B2B Wholesale Jewelry",
 };
