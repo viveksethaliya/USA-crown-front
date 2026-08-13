@@ -34,7 +34,7 @@ interface RelatedData {
 async function getBlogPost(slug: string): Promise<BlogDetail | null> {
   try {
     const res = await fetch(apiUrl(`/api/store/pages/${encodeURIComponent(slug)}`), {
-      cache: 'no-store'
+      next: { revalidate: 60 }
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -47,7 +47,7 @@ async function getBlogPost(slug: string): Promise<BlogDetail | null> {
 async function getRelatedPosts(slug: string): Promise<RelatedData | null> {
   try {
     const res = await fetch(apiUrl(`/api/blogs/${slug}/related`), {
-      cache: 'no-store'
+      next: { revalidate: 60 }
     });
     if (!res.ok) return null;
     const data = await res.json();
