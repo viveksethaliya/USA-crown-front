@@ -8,7 +8,8 @@ interface SeoFormBlockProps {
   seoTitle: string;
   seoDescription: string;
   seoOgImage: string;
-  onChange: (field: 'seo_title' | 'seo_description' | 'seo_og_image', value: string) => void;
+  seoKeywords?: string;
+  onChange: (field: 'seo_title' | 'seo_description' | 'seo_og_image' | 'seo_keywords', value: string) => void;
   titlePlaceholder?: string;
   descriptionPlaceholder?: string;
 }
@@ -17,6 +18,7 @@ export default function SeoFormBlock({
   seoTitle,
   seoDescription,
   seoOgImage,
+  seoKeywords = '',
   onChange,
   titlePlaceholder = 'Leave blank to use the entity name',
   descriptionPlaceholder = 'Leave blank to use the site default description',
@@ -90,6 +92,25 @@ export default function SeoFormBlock({
             />
             <p className="text-xs text-[#312f2c]/40 font-medium">
               Ideal length: under 160 characters. This appears as the snippet under your page title in Google results.
+            </p>
+          </div>
+
+          {/* SEO Keywords */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">
+                SEO Keywords
+              </label>
+            </div>
+            <input
+              type="text"
+              value={seoKeywords}
+              onChange={(e) => onChange('seo_keywords', e.target.value)}
+              placeholder="e.g. jewelry, rings, diamond, wholesale (comma separated)"
+              className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all placeholder:text-[#312f2c]/30"
+            />
+            <p className="text-xs text-[#312f2c]/40 font-medium">
+              Comma separated keywords. While less critical for modern Google, they are still used by some search engines and site search tools.
             </p>
           </div>
 

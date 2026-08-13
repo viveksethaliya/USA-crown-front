@@ -344,6 +344,25 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
         }
       }
 
+      // Keep the stored rank aligned with the most specific inclusion target.
+      // The evaluator also infers this for pre-existing rows, but persisting it
+      // makes ordering deterministic for all newly-created rules.
+      const rankByTarget: Record<string, number> = {
+        category: 1,
+        measurement: 2,
+        product: 3,
+        brand: 3,
+        tag: 3,
+        attribute_value: 3,
+        variation: 4,
+      };
+      payload.specificity_rank = Math.max(
+        0,
+        ...targets
+          .filter(t => !t.is_exclusion)
+          .map(t => rankByTarget[t.type] || 0)
+      );
+
       // Map dynamic conditions
       for (const cond of conditions) {
         if (cond.type !== 'none') {
@@ -465,11 +484,11 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                       </div>
                       <div className="flex-1">
                         <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">Max Qty</label>
-                        <input type="number" min="1" value={tier.max_quantity} onChange={e => handleTierChange(index, 'max_quantity', e.target.value)} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm" placeholder="Infinity" />
+                        <input type="number" min="1" value={tier.max_quantity ?? ''} onChange={e => handleTierChange(index, 'max_quantity', e.target.value)} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm" placeholder="Infinity" />
                       </div>
                       <div className="flex-1">
                         <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">% Off</label>
-                        <input type="number" step="0.01" value={tier.percent_value} onChange={e => handleTierChange(index, 'percent_value', e.target.value)} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm" required />
+                        <input type="number" step="0.01" value={tier.percent_value ?? ''} onChange={e => handleTierChange(index, 'percent_value', e.target.value)} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm" required />
                       </div>
                       <button type="button" onClick={() => removeTier(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                         <Trash2 className="w-4 h-4" />

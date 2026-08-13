@@ -52,7 +52,8 @@ interface CheckoutOrder {
   id: string;
   order_number?: string | null;
   status: string;
-  total_amount: number;
+  total_amount?: number;
+  total?: number;
 }
 
 interface CheckoutResponse {
@@ -252,7 +253,7 @@ export default function CheckoutPage() {
             </p>
             <div className={styles.confirmationTotal}>
               <span>Current order total</span>
-              <strong>{formatMoney(order.total_amount)}</strong>
+              <strong>{formatMoney(order.total ?? order.total_amount)}</strong>
               <p style={{ fontSize: '0.85em', color: '#666', marginTop: '4px', textAlign: 'center' }}>
                 Note: Shipping and tax are pending and subject to staff review.
               </p>

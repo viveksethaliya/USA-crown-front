@@ -94,7 +94,11 @@ export default function GroupRules({ group }: { group: any }) {
     let summary = `Get ${action?.percent_value || 0}% off`;
     
     if (target) {
-      summary += ` on ${target.target_type} #${target.target_id}`;
+      if (target.target_name) {
+        summary += ` on ${target.target_name}`;
+      } else {
+        summary += ` on ${target.target_type} #${target.target_id}`;
+      }
     } else if (rule.source_kind === 'group_pricing' && rule.specificity_rank === 0) {
       summary += ` across the entire catalog`;
     }

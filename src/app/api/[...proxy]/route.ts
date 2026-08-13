@@ -32,8 +32,27 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
     }
   }
 
+  let response;
   try {
-    const response = await fetch(targetUrl, fetchOptions);
+    response = await fetch(targetUrl, fetchOptions);
+  } catch (error: any) {
+    if (error.cause?.code === 'ECONNRESET' || error.code === 'ECONNRESET') {
+      console.log(`[Proxy] Retrying request to ${targetUrl} due to ECONNRESET`);
+      // Add a tiny delay to let backend finish restarting
+      await new Promise(resolve => setTimeout(resolve, 300));
+      try {
+        response = await fetch(targetUrl, fetchOptions);
+      } catch (retryError) {
+        console.error('Proxy retry failed:', retryError);
+        return NextResponse.json({ error: 'Backend server is restarting or unavailable (ECONNREFUSED)' }, { status: 502 });
+      }
+    } else {
+      console.error('Proxy fetch failed:', error);
+      return NextResponse.json({ error: 'Proxy fetch failed: ' + (error.message || 'Unknown error') }, { status: 502 });
+    }
+  }
+
+  try {
     const responseHeaders = new Headers();
     response.headers.forEach((value, key) => {
       // Skip hop-by-hop headers and compression headers since fetch auto-decompresses

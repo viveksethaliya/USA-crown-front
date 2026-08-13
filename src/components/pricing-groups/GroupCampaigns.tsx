@@ -116,9 +116,9 @@ export default function GroupCampaigns({ group }: { group: any }) {
                         Active
                       </span>
                     )}
-                    {camp.status === 'paused' && (
+                    {camp.status === 'cancelled' && (
                       <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-700">
-                        Paused
+                        Cancelled
                       </span>
                     )}
                     {camp.status === 'draft' && (
@@ -149,9 +149,9 @@ export default function GroupCampaigns({ group }: { group: any }) {
                   </button>
                   {camp.status === 'active' ? (
                     <button 
-                      onClick={() => handleUpdateStatus(camp.id, 'paused')}
+                      onClick={() => handleUpdateStatus(camp.id, 'cancelled')}
                       className="p-2 text-[#312f2c]/50 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                      title="Pause"
+                      title="Cancel"
                     >
                       <PauseCircle className="w-4 h-4" />
                     </button>

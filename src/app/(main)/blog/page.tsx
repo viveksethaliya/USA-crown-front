@@ -8,11 +8,12 @@ import { apiUrl } from '@/lib/api';
 import ScrollReveal from "@/components/animations/ScrollReveal";
 
 interface BlogPost {
+  id: number;
   slug: string;
   title: string;
   excerpt: string;
-  published_at: string;
-  cover_image: string | null;
+  created_at: string;
+  featured_image: string | null;
   category?: string | null;
 }
 
@@ -34,10 +35,11 @@ export default function BlogPage() {
       if (search) params.set('search', search);
       if (category) params.set('category', category);
 
-      const res = await fetch(apiUrl(`/api/blogs?${params.toString()}`));
+      // Using the new store pages endpoint
+      const res = await fetch(apiUrl(`/api/store/pages?page_type=blog&limit=50`), { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        setPosts(data.blogs || []);
+        setPosts(data.data || []);
       }
     } catch {
       // keep existing posts
@@ -52,15 +54,8 @@ export default function BlogPage() {
 
     // Fetch categories
     async function fetchCategories() {
-      try {
-        const res = await fetch(apiUrl('/api/blogs/categories'));
-        if (res.ok) {
-          const data = await res.json();
-          setCategories(data.categories || []);
-        }
-      } catch {
-        // silent
-      }
+      // Categories not yet implemented on new pages table, leaving empty for now.
+      setCategories([]);
     }
     fetchCategories();
   }, [fetchPosts]);
@@ -180,14 +175,14 @@ export default function BlogPage() {
               )}
               <div className={styles.blogGrid}>
                 {posts.map((post, index) => {
-                  const dateStr = new Date(post.published_at).toLocaleDateString('en-US', {
+                  const dateStr = new Date(post.created_at).toLocaleDateString('en-US', {
                     month: 'long', day: 'numeric', year: 'numeric'
                   });
                   return (
                     <ScrollReveal key={post.slug} animation="fade-up" delay={(index % 3) * 100 as 0|100|200} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                       <Link href={`/blog/${post.slug}`} className={styles.blogCard} style={{ width: '100%' }}>
-                        {post.cover_image && (
-                          <img src={post.cover_image} alt={post.title} className={styles.blogImage} />
+                        {post.featured_image && (
+                          <img src={post.featured_image} alt={post.title} className={styles.blogImage} />
                         )}
                         <div className={styles.blogCardContent}>
                           {post.category && (

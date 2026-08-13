@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Eye, EyeOff, Image as ImageIcon, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import SeoFormBlock from '@/components/SeoFormBlock';
+import MediaPickerModal from '@/components/media/MediaPickerModal';
 import { ADMIN_API as API } from '@/lib/config';
 import { adminFetch } from '@/lib/api';
 
@@ -15,11 +16,12 @@ const emptyPage = {
   content: '',
   excerpt: '',
   is_published: false,
-  page_type: 'page',
+  page_type: 'blog',
   featured_image: '',
   seo_title: '',
   seo_description: '',
   seo_og_image: '',
+  seo_keywords: '',
 };
 
 export default function PageEditorPage() {
@@ -32,6 +34,7 @@ export default function PageEditorPage() {
   const [isLoading, setIsLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'seo'>('content');
+  const [mediaOpen, setMediaOpen] = useState(false);
 
   useEffect(() => {
     if (isNew) return;
@@ -49,11 +52,12 @@ export default function PageEditorPage() {
           content: data.content || '',
           excerpt: data.excerpt || '',
           is_published: data.is_published || false,
-          page_type: data.page_type || 'page',
+          page_type: 'blog',
           featured_image: data.featured_image || '',
           seo_title: data.seo_title || '',
           seo_description: data.seo_description || '',
           seo_og_image: data.seo_og_image || '',
+          seo_keywords: data.seo_keywords || '',
         });
       } catch (err: any) {
         toast.error(err.message);
@@ -119,9 +123,9 @@ export default function PageEditorPage() {
           </Link>
           <div>
             <h2 className="text-xl font-bold text-[#312f2c]">
-              {isNew ? 'Create New Page' : (page.title || 'Edit Page')}
+              {isNew ? 'Create New Blog Post' : (page.title || 'Edit Blog Post')}
             </h2>
-            <p className="text-[#312f2c]/45 text-sm capitalize">{page.page_type === 'blog' ? 'Blog Post' : 'Static Page'}</p>
+            <p className="text-[#312f2c]/45 text-sm capitalize">Blog Post</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -142,7 +146,7 @@ export default function PageEditorPage() {
             className="flex items-center gap-2 px-5 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg font-medium transition-all disabled:opacity-50 shadow-sm"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isNew ? 'Create Page' : 'Save Changes'}
+            {isNew ? 'Create Post' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -198,17 +202,6 @@ export default function PageEditorPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Type</label>
-                <select
-                  value={page.page_type}
-                  onChange={e => handleChange('page_type', e.target.value)}
-                  className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] shadow-sm"
-                >
-                  <option value="page">Static Page</option>
-                  <option value="blog">Blog Post</option>
-                </select>
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -227,22 +220,47 @@ export default function PageEditorPage() {
               <textarea
                 value={page.content}
                 onChange={e => handleChange('content', e.target.value)}
-                rows={16}
+                rows={35}
                 placeholder="Write your page content here. HTML is supported."
-                className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] shadow-sm resize-y font-mono"
+                className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] shadow-sm resize-y font-mono min-h-[600px]"
               />
               <p className="text-xs text-[#312f2c]/40">HTML is supported. A rich-text editor can be integrated here later.</p>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Featured Image URL</label>
-              <input
-                type="text"
-                value={page.featured_image}
-                onChange={e => handleChange('featured_image', e.target.value)}
-                placeholder="https://... or pick from media library"
-                className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] shadow-sm"
-              />
+              <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Featured Image</label>
+              <div className="flex items-center gap-3">
+                {page.featured_image ? (
+                  <div className="relative group w-32 h-20 rounded-xl overflow-hidden border border-white shadow-sm shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={page.featured_image} alt="Featured Preview" className="object-cover w-full h-full" />
+                    <button
+                      type="button"
+                      onClick={() => handleChange('featured_image', '')}
+                      className="absolute inset-0 bg-[#312f2c]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                      title="Remove image"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-20 rounded-xl border-2 border-dashed border-[#312f2c]/20 flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-6 h-6 text-[#312f2c]/25" />
+                  </div>
+                )}
+                <div className="flex-1 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setMediaOpen(true)}
+                    className="px-4 py-2.5 bg-white/70 hover:bg-white border border-white/80 rounded-xl text-sm font-bold text-[#312f2c] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    {page.featured_image ? 'Change Image' : 'Select from Media Library'}
+                  </button>
+                  {page.featured_image && (
+                    <p className="text-xs text-[#312f2c]/40 font-medium truncate max-w-xs">{page.featured_image}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -253,11 +271,22 @@ export default function PageEditorPage() {
           seoTitle={page.seo_title}
           seoDescription={page.seo_description}
           seoOgImage={page.seo_og_image}
+          seoKeywords={page.seo_keywords}
           onChange={(field, value) => handleChange(field, value)}
           titlePlaceholder={`Leave blank to use: "${page.title || 'Page Title'}"`}
           descriptionPlaceholder={`Leave blank to use: "${page.excerpt || 'Page excerpt or site default'}"`}
         />
       )}
+
+      <MediaPickerModal
+        isOpen={mediaOpen}
+        onClose={() => setMediaOpen(false)}
+        onSelect={(url) => {
+          handleChange('featured_image', url);
+          setMediaOpen(false);
+        }}
+        title="Select Featured Image"
+      />
     </div>
   );
 }

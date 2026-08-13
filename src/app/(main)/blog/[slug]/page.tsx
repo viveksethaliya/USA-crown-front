@@ -8,12 +8,13 @@ import { apiUrl } from '@/lib/api';
 interface BlogDetail {
   title: string;
   content: string;
-  cover_image: string | null;
-  published_at: string;
+  featured_image: string | null;
+  created_at: string;
   excerpt: string;
-  meta_description: string | null;
-  author: string;
-  tags: string[];
+  seo_description: string | null;
+  seo_title: string | null;
+  seo_keywords: string | null;
+  users?: { first_name: string; last_name: string } | null;
 }
 
 interface RelatedPost {
@@ -32,12 +33,12 @@ interface RelatedData {
 
 async function getBlogPost(slug: string): Promise<BlogDetail | null> {
   try {
-    const res = await fetch(apiUrl(`/api/blogs/${slug}`), {
+    const res = await fetch(apiUrl(`/api/store/pages/${encodeURIComponent(slug)}`), {
       cache: 'no-store'
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data.blog || null;
+    return data || null;
   } catch {
     return null;
   }
@@ -62,8 +63,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (post) {
     return {
-      title: `${post.title} | Crown Findings`,
-      description: post.meta_description || post.excerpt || ''
+      title: post.seo_title || `${post.title} | Crown Findings Blog`,
+      description: post.seo_description || post.excerpt || '',
+      keywords: post.seo_keywords || undefined,
     };
   }
 
@@ -79,7 +81,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
-  const dateStr = new Date(post.published_at).toLocaleDateString('en-US', {
+  const dateStr = new Date(post.created_at).toLocaleDateString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric'
   });
 
@@ -93,8 +95,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <h1 className={styles.postTitle}>{post.title}</h1>
           </div>
 
-          {post.cover_image && (
-            <img src={post.cover_image} alt={post.title} className={styles.postHeroImage} />
+          {post.featured_image && (
+            <img src={post.featured_image} alt={post.title} className={styles.postHeroImage} />
           )}
 
           <div

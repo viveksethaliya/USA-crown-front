@@ -96,7 +96,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const [basePrice, setBasePrice] = useState<number | null>(null);
 
   interface Discount {
-    id: number;
+    id: string | number;
     scope: string;
     min_quantity: number;
     max_quantity: number | null;
@@ -306,14 +306,14 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         );
         if (res.ok) {
           const data = await res.json();
-          setDiscounts(data);
+          setDiscounts(Array.isArray(data) ? data : []);
         }
       } catch (e) {
         console.error(e);
       }
     }
     fetchDiscounts();
-  }, [productSlug]);
+  }, [productSlug, isAuthenticated]);
 
   useEffect(() => {
     async function fetchPrice() {
@@ -439,6 +439,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   const isPlateProduct = product.measurement_type === 'plate' || categoryName.toLowerCase().includes('plate') || subcategoryName.toLowerCase().includes('plate') || product.name.toLowerCase().includes('plate');
   const isMillProduct = product.measurement_type === 'inch' || (categoryName.toLowerCase() === 'mill products' && !isPlateProduct);
+  const quantityDiscounts = [...discounts].sort((a, b) => a.min_quantity - b.min_quantity);
 
   // Get other visible attributes for the info table (exclude variation attributes)
   const visibleAttrs = product.attributes.filter(a =>
@@ -802,9 +803,12 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                           {appliedDiscountPct}% discount applied - you save ${appliedDiscountAmount.toFixed(2)} per unit
                         </div>
                       )}
-                      {discounts.length > 0 && (
-                        <div style={{ marginTop: '1rem' }}>
-                          <p style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem', color: 'var(--color-inkblue)' }}>Bulk Order Discounts:</p>
+                      {quantityDiscounts.length > 0 && (
+                        <div style={{ marginTop: '1rem', border: '1px solid #e3e7ed', borderRadius: '6px', overflow: 'hidden' }}>
+                          <div style={{ padding: '0.65rem 0.8rem', background: '#f4f7fa', borderBottom: '1px solid #e3e7ed' }}>
+                            <p style={{ fontWeight: 700, fontSize: '0.9rem', margin: 0, color: 'var(--color-inkblue)' }}>Quantity Discounts</p>
+                            <p style={{ fontSize: '0.76rem', margin: '0.15rem 0 0', color: '#667085' }}>Your best eligible group tier is applied automatically.</p>
+                          </div>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                             <thead>
                               <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
@@ -813,18 +817,27 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                               </tr>
                             </thead>
                             <tbody>
-                              {discounts.map(d => (
-                                <tr key={d.id} style={{ borderBottom: '1px solid #eee' }}>
-                                  <td style={{ padding: '0.4rem 0' }}>
+                              {quantityDiscounts.map((d, index) => {
+                                const isSelectedTier = quantity >= d.min_quantity && (d.max_quantity === null || quantity <= d.max_quantity);
+                                return (
+                                <tr key={d.id} style={{ borderBottom: index === quantityDiscounts.length - 1 ? 'none' : '1px solid #eee', background: isSelectedTier ? '#effaf2' : '#fff' }}>
+                                  <td style={{ padding: '0.5rem 0.8rem', fontWeight: isSelectedTier ? 700 : 400 }}>
                                     {d.max_quantity ? `${d.min_quantity} - ${d.max_quantity}` : `${d.min_quantity}+`}
                                     {d.measurement_type ? ` ${d.measurement_type === 'plate' ? 'sq. in.' : 'in.'}` : ''}
                                   </td>
-                                  <td style={{ padding: '0.4rem 0', color: 'green', fontWeight: 600 }}>
-                                    {d.type === 'percentage' ? `${d.amount}% off` : `$${d.amount} off`}
-                                    <span style={{ color: '#777', fontWeight: 400 }}> ({d.scope})</span>
+                                  <td style={{ padding: '0.5rem 0.8rem', color: 'green', fontWeight: 600 }}>
+                                    {d.type === 'percentage' ? `${d.amount}% off` : d.type === 'fixed_price' ? `$${d.amount.toFixed(2)} each` : `$${d.amount} off`}
+                                    {d.type === 'percentage' && basePrice !== null && (
+                                      <span style={{ color: '#555', fontSize: '0.8rem', marginLeft: '6px' }}>
+                                        (Save ${ (basePrice * (d.amount / 100)).toFixed(2) }/ea)
+                                      </span>
+                                    )}
+                                    <span style={{ color: '#777', fontWeight: 400, marginLeft: '4px' }}>({d.scope})</span>
+                                    {isSelectedTier && <span style={{ color: '#18794e', fontSize: '0.75rem', marginLeft: '7px', fontWeight: 700 }}>APPLIES TO YOUR QTY</span>}
                                   </td>
                                 </tr>
-                              ))}
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>

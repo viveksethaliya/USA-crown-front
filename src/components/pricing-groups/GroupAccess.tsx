@@ -109,10 +109,10 @@ export default function GroupAccess({ group }: { group: any }) {
             </button>
           </div>
           <p className="text-[#312f2c]/50 text-sm mt-1 max-w-2xl">
-            Control which products are visible to this group. 
+            Control which products are hidden from this group. 
             <strong> Note: This does not affect pricing or discounts.</strong> If the list is empty, 
             members can view all default public products. If products are added here, members will 
-            ONLY see these specific products when logged in.
+            NOT see these specific products when logged in (they will be hidden).
           </p>
         </div>
         <button 
@@ -121,7 +121,7 @@ export default function GroupAccess({ group }: { group: any }) {
           className="bg-[#312f2c] hover:bg-[#312f2c]/85 text-white px-5 py-2 rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          {saving ? 'Saving...' : 'Save Access List'}
+          {saving ? 'Saving...' : 'Save Hidden List'}
         </button>
       </div>
 
@@ -152,7 +152,7 @@ export default function GroupAccess({ group }: { group: any }) {
           <div className="flex-1 overflow-y-auto bg-white border border-[#312f2c]/10 rounded-lg">
             {searchResults.length === 0 ? (
               <div className="p-4 text-center text-[#312f2c]/50 text-sm">
-                Search for products to add them to the access list.
+                Search for products to hide them from this group.
               </div>
             ) : (
               <ul className="divide-y divide-[#312f2c]/5">
@@ -166,7 +166,7 @@ export default function GroupAccess({ group }: { group: any }) {
                       onClick={() => addProduct(product)}
                       className="text-[#d1a054] hover:text-[#312f2c] text-sm font-medium px-2 py-1 rounded hover:bg-[#d1a054]/10 transition-colors"
                     >
-                      Add
+                      Hide
                     </button>
                   </li>
                 ))}
@@ -178,11 +178,11 @@ export default function GroupAccess({ group }: { group: any }) {
         {/* Right Side: Restricted List */}
         <div className="border border-[#312f2c]/10 rounded-lg p-4 flex flex-col">
           <div className="flex justify-between items-center mb-3">
-            <h4 className="font-semibold text-[#312f2c]/80">Access List ({restrictedProducts.length})</h4>
+            <h4 className="font-semibold text-[#312f2c]/80">Hidden Products ({restrictedProducts.length})</h4>
             {restrictedProducts.length > 0 && (
               <button 
                 onClick={() => {
-                  if (window.confirm('Clear all access rules? This will restore default visibility.')) {
+                  if (window.confirm('Clear all hidden products? This will restore default visibility.')) {
                     setRestrictedProducts([]);
                   }
                 }}
@@ -231,9 +231,9 @@ export default function GroupAccess({ group }: { group: any }) {
         
         <h3>How It Works</h3>
         <ul>
-          <li><strong>Default Visibility:</strong> By default, if the Access List is empty, customers in this group will see all standard public products on the storefront.</li>
-          <li><strong>Restricted Visibility:</strong> The moment you add even one product to the Access List, the system switches to an <em>&quot;Allowlist&quot;</em> mode for this group. Customers will ONLY see the products explicitly listed here. Every other product in the catalog becomes hidden from them.</li>
-          <li><strong>Use Case:</strong> This is highly useful for B2B portal implementations where a specific distributor or vendor is only permitted to buy a specific subset of customized products.</li>
+          <li><strong>Default Visibility:</strong> By default, if the Hidden Products list is empty, customers in this group will see all standard public products on the storefront.</li>
+          <li><strong>Restricted Visibility:</strong> By adding a product to this list, the system will hide that specific product from this group's catalog view.</li>
+          <li><strong>Use Case:</strong> This is highly useful for B2B portal implementations where a specific distributor or vendor is restricted from buying certain product lines.</li>
           <li><strong>Note on Pricing:</strong> This tab ONLY controls visibility. It does not apply discounts. To apply discounts to these specific products, you must create rules in the <em>Discount Rules</em> tab.</li>
         </ul>
       </HelpDrawer>
