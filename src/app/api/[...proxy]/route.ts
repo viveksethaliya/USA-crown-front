@@ -11,7 +11,8 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
   const headers = new Headers();
   req.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
-    if (lower !== 'host') {
+    // Do not forward host, or content-length (since we are streaming the body and fetch will handle it)
+    if (lower !== 'host' && lower !== 'content-length') {
       headers.set(key, value);
     }
   });
@@ -23,13 +24,10 @@ async function proxyRequest(req: NextRequest, params: { proxy: string[] }) {
     duplex: 'half',
   };
 
-  // Forward body for non-GET/HEAD requests
-  // Use Buffer to ensure fetch calculates content-length properly and sends without chunking issues
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    const buffer = await req.arrayBuffer();
-    if (buffer.byteLength > 0) {
-      fetchOptions.body = Buffer.from(buffer);
-    }
+  // Forward body stream directly for non-GET/HEAD requests
+  // This prevents memory bloat and avoids Next.js body parser limits crashing the proxy
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+    fetchOptions.body = req.body;
   }
 
   let response;
