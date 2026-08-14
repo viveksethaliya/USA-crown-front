@@ -34,6 +34,9 @@ export default function OrderDetailPage() {
   const [status, setStatus] = useState('pending');
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [shippingTotal, setShippingTotal] = useState('0');
+  const [subtotalOverride, setSubtotalOverride] = useState('');
+  const [subtotalDiscountType, setSubtotalDiscountType] = useState('');
+  const [subtotalDiscountValue, setSubtotalDiscountValue] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [noteContent, setNoteContent] = useState('');
@@ -76,6 +79,9 @@ export default function OrderDetailPage() {
       setStatus(data.status);
       setPaymentStatus(data.payment_status);
       setShippingTotal(String(data.shipping_total || 0));
+      setSubtotalOverride(data.subtotal_override !== null && data.subtotal_override !== undefined ? String(data.subtotal_override) : '');
+      setSubtotalDiscountType(data.subtotal_discount_type || '');
+      setSubtotalDiscountValue(data.subtotal_discount_value !== null && data.subtotal_discount_value !== undefined ? String(data.subtotal_discount_value) : '');
       setPaymentMethod(data.payment_method || '');
       setCustomerNote(data.customer_note || '');
     } catch (error: any) {
@@ -92,10 +98,23 @@ export default function OrderDetailPage() {
   }, [creating, loadOrder]);
 
   const currentItems = useMemo(() => creating ? draftItems : (order?.items || []), [creating, draftItems, order]);
-  const previewTotal = useMemo(() => currentItems.reduce((sum, item) => {
-    const multiplier = (Number(item.custom_length) || 1) * (Number(item.custom_width) || 1);
-    return sum + Math.max(0, Number(item.unit_price || 0) * Number(item.quantity || 0) * multiplier - Number(item.discount_amount || 0));
-  }, 0) + Number(shippingTotal || 0), [currentItems, shippingTotal]);
+  const previewTotal = useMemo(() => {
+    const computedSubtotal = currentItems.reduce((sum, item) => {
+      const multiplier = (Number(item.custom_length) || 1) * (Number(item.custom_width) || 1);
+      return sum + Number(item.unit_price || 0) * Number(item.quantity || 0) * multiplier;
+    }, 0);
+    const itemDiscounts = currentItems.reduce((sum, item) => sum + Number(item.discount_amount || 0), 0);
+    const hasOverride = subtotalOverride !== '';
+    const subtotal = hasOverride ? Number(subtotalOverride) : computedSubtotal;
+    let subtotalDiscountAmount = 0;
+    if (subtotalDiscountType && subtotalDiscountValue !== '') {
+      if (subtotalDiscountType === 'percent_off') subtotalDiscountAmount = subtotal * (Number(subtotalDiscountValue) / 100);
+      else if (subtotalDiscountType === 'fixed_amount_off') subtotalDiscountAmount = Number(subtotalDiscountValue);
+      subtotalDiscountAmount = Math.min(subtotalDiscountAmount, subtotal);
+    }
+    const discountTotal = subtotalDiscountAmount + (hasOverride ? 0 : itemDiscounts);
+    return Math.max(0, subtotal - discountTotal + Number(shippingTotal || 0));
+  }, [currentItems, shippingTotal, subtotalOverride, subtotalDiscountType, subtotalDiscountValue]);
 
   const searchCustomers = async () => {
     if (!customerSearch.trim()) return;
@@ -112,7 +131,7 @@ export default function OrderDetailPage() {
     if (creating) return;
     try {
       setSaving(true);
-      const data = await request(`/${id}`, { method: 'PUT', body: JSON.stringify({ status, payment_status: paymentStatus, shipping_total: shippingTotal, payment_method: paymentMethod, customer_note: customerNote, updated_at: order?.updated_at }) });
+      const data = await request(`/${id}`, { method: 'PUT', body: JSON.stringify({ status, payment_status: paymentStatus, shipping_total: shippingTotal, payment_method: paymentMethod, customer_note: customerNote, subtotal_override: subtotalOverride === '' ? null : subtotalOverride, subtotal_discount_type: subtotalDiscountType === '' ? null : subtotalDiscountType, subtotal_discount_value: subtotalDiscountValue === '' ? null : subtotalDiscountValue, updated_at: order?.updated_at }) });
       setOrder(data);
       toast.success('Order details saved');
     } catch (error: any) { toast.error(error.message); } finally { setSaving(false); }
@@ -123,7 +142,7 @@ export default function OrderDetailPage() {
     if (!draftItems.length) return toast.error('Add at least one product');
     try {
       setSaving(true);
-      const data = await request('', { method: 'POST', body: JSON.stringify({ user_id: customer.id, status, payment_status: paymentStatus, payment_method: paymentMethod, shipping_total: shippingTotal, customer_note: customerNote, items: draftItems }) });
+      const data = await request('', { method: 'POST', body: JSON.stringify({ user_id: customer.id, status, payment_status: paymentStatus, payment_method: paymentMethod, shipping_total: shippingTotal, customer_note: customerNote, subtotal_override: subtotalOverride === '' ? null : subtotalOverride, subtotal_discount_type: subtotalDiscountType === '' ? null : subtotalDiscountType, subtotal_discount_value: subtotalDiscountValue === '' ? null : subtotalDiscountValue, items: draftItems }) });
       toast.success('Order created');
       router.replace(`/crown-admin/orders/${data.id}`);
     } catch (error: any) { toast.error(error.message); } finally { setSaving(false); }
@@ -226,10 +245,42 @@ export default function OrderDetailPage() {
 
       {creating && <section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Customer <span className="text-red-500">*</span></h2>{customer ? <div className="mt-3 flex items-center justify-between rounded-xl border border-[#d1a054]/25 bg-[#d1a054]/10 p-3"><div><p className="font-bold text-[#312f2c]">{customer.username}</p><p className="text-sm text-[#312f2c]/60">{customer.first_name} {customer.last_name} · {customer.email}</p></div><button onClick={() => setCustomer(null)} className="rounded-lg p-2 text-[#312f2c]/50 hover:bg-white"><X className="h-4 w-4" /></button></div> : <div className="mt-3 flex gap-2"><input value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && searchCustomers()} placeholder="Search by username, email, name, or phone" className="min-w-0 flex-1 rounded-xl border border-white/70 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#d1a054]/40" /><button onClick={searchCustomers} className="rounded-xl bg-[#312f2c] px-3 text-white"><Search className="h-4 w-4" /></button></div>}{!customer && customers.length > 0 && <div className="mt-2 divide-y divide-[#312f2c]/5 rounded-xl border border-white/60 bg-white">{customers.map((entry) => <button key={entry.id} onClick={() => { setCustomer(entry); setCustomers([]); }} className="flex w-full items-center justify-between p-3 text-left text-sm hover:bg-[#f0ede5]"><span><strong>{entry.username}</strong> <span className="text-[#312f2c]/55">{entry.first_name} {entry.last_name}</span></span><span className="text-xs text-[#312f2c]/50">{entry.email}</span></button>)}</div>}</section>}
 
-      <section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h2 className="font-bold text-[#312f2c]">Order details</h2>{!creating && <button onClick={saveHeader} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#312f2c] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes</button>}</div><div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5"><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Order status<select value={status} disabled={locked} onChange={(event) => setStatus(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60">{ORDER_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}</select></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Payment status<select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none">{PAYMENT_STATUSES.map((value) => <option key={value} value={value}>{value.replace('_', ' ')}</option>)}</select></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Shipping price<input type="number" min="0" step="0.01" value={shippingTotal} disabled={locked} onChange={(event) => setShippingTotal(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium text-[#312f2c] outline-none disabled:opacity-60" /></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Payment method<input value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} placeholder="e.g. Bank transfer" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium text-[#312f2c] outline-none" /></label><div className="rounded-xl bg-[#312f2c] p-3 text-[#f0ede5]"><p className="text-[10px] font-bold uppercase tracking-widest text-[#f0ede5]/60">Order total</p><p className="mt-1 text-xl font-bold">{money(creating ? previewTotal : order?.total)}</p></div></div><label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Customer-visible note<textarea value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} rows={2} placeholder="Shown to the customer with their order" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none" /></label></section>
+      <section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h2 className="font-bold text-[#312f2c]">Order details</h2>{!creating && <button onClick={saveHeader} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#312f2c] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes</button>}</div><div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5"><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Order status<select value={status} disabled={locked} onChange={(event) => setStatus(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60">{ORDER_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}</select></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Payment status<select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none">{PAYMENT_STATUSES.map((value) => <option key={value} value={value}>{value.replace('_', ' ')}</option>)}</select></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Shipping price<input type="number" min="0" step="0.01" value={shippingTotal} disabled={locked} onChange={(event) => setShippingTotal(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium text-[#312f2c] outline-none disabled:opacity-60" /></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Payment method<input value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} placeholder="e.g. Bank transfer" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium text-[#312f2c] outline-none" /></label><div className="rounded-xl bg-[#312f2c] p-3 text-[#f0ede5]"><p className="text-[10px] font-bold uppercase tracking-widest text-[#f0ede5]/60">Order total</p><p className="mt-1 text-xl font-bold">{money(creating ? previewTotal : order?.total)}</p></div></div>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal override<input type="number" min="0" step="0.01" disabled={locked} value={subtotalOverride} onChange={(event) => setSubtotalOverride(event.target.value)} placeholder="Leave blank to compute" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60" /></label>
+        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal discount type<select value={subtotalDiscountType} disabled={locked} onChange={(event) => setSubtotalDiscountType(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60"><option value="">None</option><option value="percent_off">Percentage (%)</option><option value="fixed_amount_off">Flat amount ($)</option></select></label>
+        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal discount value<input type="number" min="0" step="0.01" disabled={locked} value={subtotalDiscountValue} onChange={(event) => setSubtotalDiscountValue(event.target.value)} placeholder="0" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60" /></label>
+      </div>
+      <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Customer-visible note<textarea value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} rows={2} placeholder="Shown to the customer with their order" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none" /></label></section>
 
-      <section className="overflow-hidden rounded-2xl border border-white/60 bg-white/45 shadow-sm"><div className="flex items-center justify-between border-b border-[#312f2c]/10 p-5"><div><h2 className="font-bold text-[#312f2c]">Items</h2><p className="mt-1 text-sm text-[#312f2c]/55">Original price, discount, and final price are preserved per line item.</p></div>{!locked && <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#d1a054] px-3.5 py-2 text-sm font-bold text-white"><PackagePlus className="h-4 w-4" /> Add product</button>}</div><div className="overflow-x-auto"><table className="min-w-[960px] w-full text-left text-sm"><thead className="bg-[#312f2c]/4 text-[10px] font-bold uppercase tracking-widest text-[#312f2c]/45"><tr><th className="p-4 pl-5">Product</th><th className="p-4">Original price</th><th className="p-4">Quantity</th><th className="p-4">Price</th><th className="p-4">Discount</th><th className="p-4 text-right">Total price</th><th className="p-4 pr-5"></th></tr></thead><tbody className="divide-y divide-[#312f2c]/5">{currentItems.length === 0 ? <tr><td colSpan={7} className="p-10 text-center text-[#312f2c]/40">No products have been added.</td></tr> : currentItems.map((item) => { const multiplier = (Number(item.custom_length) || 1) * (Number(item.custom_width) || 1); const total = Math.max(0, Number(item.unit_price || 0) * Number(item.quantity || 0) * multiplier - Number(item.discount_amount || 0)); return <tr key={item.id}><td className="p-4 pl-5"><p className="font-bold text-[#312f2c]">{item.product_name}</p><p className="mt-1 text-xs text-[#312f2c]/50">{[item.sku, item.variation_label, item.custom_length && `L ${item.custom_length}`, item.custom_width && `W ${item.custom_width}`].filter(Boolean).join(' · ')}</p></td><td className="p-4 font-medium text-[#312f2c]/65">{money(item.original_unit_price)}</td><td className="p-4"><input type="number" min="1" disabled={locked} value={item.quantity} onChange={(event) => editLocalItem(item.id, 'quantity', Number(event.target.value || 1))} onBlur={() => saveItem(item)} className="w-20 rounded-lg border border-[#312f2c]/10 bg-white px-2 py-1.5 font-medium text-[#312f2c] outline-none disabled:opacity-60" /></td><td className="p-4"><input type="number" min="0" step="0.01" disabled={locked} value={item.unit_price} onChange={(event) => editLocalItem(item.id, 'unit_price', Number(event.target.value || 0))} onBlur={() => saveItem(item)} className="w-24 rounded-lg border border-[#312f2c]/10 bg-white px-2 py-1.5 font-medium text-[#312f2c] outline-none disabled:opacity-60" /><p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#d1a054]">{item.is_manual_price ? 'Manual' : 'Catalog'}</p></td><td className="p-4 font-medium text-[#312f2c]/65">{money(item.discount_amount)}</td><td className="p-4 text-right font-bold text-[#312f2c]">{money(total)}</td><td className="p-4 pr-5 text-right">{!locked && <button onClick={() => removeItem(item)} className="rounded-lg p-2 text-[#312f2c]/45 hover:bg-red-500/10 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>}</td></tr>; })}</tbody></table></div><div className="flex justify-end border-t border-[#312f2c]/10 p-5"><div className="w-64 space-y-2 text-sm"><div className="flex justify-between text-[#312f2c]/65"><span>Subtotal</span><span>{money(creating ? previewTotal - Number(shippingTotal || 0) : order?.subtotal)}</span></div><div className="flex justify-between text-[#312f2c]/65"><span>Discount</span><span>-{money(creating ? 0 : order?.discount_total)}</span></div><div className="flex justify-between text-[#312f2c]/65"><span>Shipping</span><span>{money(shippingTotal)}</span></div>    <div className="flex justify-between border-t border-[#312f2c]/10 pt-2 text-base font-bold text-[#312f2c]"><span>Total</span><span>{money(creating ? previewTotal : order?.total)}</span></div>
-    
+      <section className="overflow-hidden rounded-2xl border border-white/60 bg-white/45 shadow-sm"><div className="flex items-center justify-between border-b border-[#312f2c]/10 p-5"><div><h2 className="font-bold text-[#312f2c]">Items</h2><p className="mt-1 text-sm text-[#312f2c]/55">Original price, discount, and final price are preserved per line item.</p></div>{!locked && <button onClick={() => setAddOpen(true)} className="inline-flex items-center gap-2 rounded-xl bg-[#d1a054] px-3.5 py-2 text-sm font-bold text-white"><PackagePlus className="h-4 w-4" /> Add product</button>}</div><div className="overflow-x-auto"><table className="min-w-[960px] w-full text-left text-sm"><thead className="bg-[#312f2c]/4 text-[10px] font-bold uppercase tracking-widest text-[#312f2c]/45"><tr><th className="p-4 pl-5">Product</th><th className="p-4">Original price</th><th className="p-4">Quantity</th><th className="p-4">Price</th><th className="p-4">Discount</th><th className="p-4 text-right">Total price</th><th className="p-4 pr-5"></th></tr></thead><tbody className="divide-y divide-[#312f2c]/5">{currentItems.length === 0 ? <tr><td colSpan={7} className="p-10 text-center text-[#312f2c]/40">No products have been added.</td></tr> : currentItems.map((item) => { const multiplier = (Number(item.custom_length) || 1) * (Number(item.custom_width) || 1); const total = Math.max(0, Number(item.unit_price || 0) * Number(item.quantity || 0) * multiplier - Number(item.discount_amount || 0)); return <tr key={item.id}><td className="p-4 pl-5"><p className="font-bold text-[#312f2c]">{item.product_name}</p><p className="mt-1 text-xs text-[#312f2c]/50">{[item.sku, item.variation_label, item.custom_length && `L ${item.custom_length}`, item.custom_width && `W ${item.custom_width}`].filter(Boolean).join(' · ')}</p></td><td className="p-4 font-medium text-[#312f2c]/65">{money(item.original_unit_price)}</td><td className="p-4"><input type="number" min="1" disabled={locked} value={item.quantity} onChange={(event) => editLocalItem(item.id, 'quantity', Number(event.target.value || 1))} onBlur={() => saveItem(item)} className="w-20 rounded-lg border border-[#312f2c]/10 bg-white px-2 py-1.5 font-medium text-[#312f2c] outline-none disabled:opacity-60" /></td><td className="p-4"><input type="number" min="0" step="0.01" disabled={locked} value={item.unit_price} onChange={(event) => editLocalItem(item.id, 'unit_price', Number(event.target.value || 0))} onBlur={() => saveItem(item)} className="w-24 rounded-lg border border-[#312f2c]/10 bg-white px-2 py-1.5 font-medium text-[#312f2c] outline-none disabled:opacity-60" /><p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#d1a054]">{item.is_manual_price ? 'Manual' : 'Catalog'}</p></td><td className="p-4 font-medium text-[#312f2c]/65">{money(item.discount_amount)}</td><td className="p-4 text-right font-bold text-[#312f2c]">{money(total)}</td><td className="p-4 pr-5 text-right">{!locked && <button onClick={() => removeItem(item)} className="rounded-lg p-2 text-[#312f2c]/45 hover:bg-red-500/10 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>}</td></tr>; })}</tbody></table></div><div className="flex justify-end border-t border-[#312f2c]/10 p-5"><div className="w-72 space-y-2 text-sm">
+  {order?.subtotal_override !== null && order?.subtotal_override !== undefined && !creating ? (
+    <>
+      <div className="flex justify-between text-[#312f2c]/40 line-through"><span>Computed Subtotal</span><span>{money(order.computed_subtotal)}</span></div>
+      <div className="flex justify-between font-bold text-[#d1a054]"><span>Manual Subtotal</span><span>{money(order.subtotal_override)}</span></div>
+    </>
+  ) : subtotalOverride !== '' && creating ? (
+    <>
+      <div className="flex justify-between text-[#312f2c]/40 line-through"><span>Computed Subtotal</span><span>{money(currentItems.reduce((sum, item) => sum + Number(item.unit_price || 0) * Number(item.quantity || 0) * ((Number(item.custom_length) || 1) * (Number(item.custom_width) || 1)), 0))}</span></div>
+      <div className="flex justify-between font-bold text-[#d1a054]"><span>Manual Subtotal</span><span>{money(subtotalOverride)}</span></div>
+    </>
+  ) : (
+    <div className="flex justify-between text-[#312f2c]/65"><span>Subtotal</span><span>{money(creating ? currentItems.reduce((sum, item) => sum + Number(item.unit_price || 0) * Number(item.quantity || 0) * ((Number(item.custom_length) || 1) * (Number(item.custom_width) || 1)), 0) : order?.subtotal)}</span></div>
+  )}
+  <div className="flex justify-between text-[#312f2c]/65">
+    <span>Discount</span>
+    <span>-{money(creating ? (() => {
+      const computedSub = currentItems.reduce((sum, item) => sum + Number(item.unit_price || 0) * Number(item.quantity || 0) * ((Number(item.custom_length) || 1) * (Number(item.custom_width) || 1)), 0);
+      const sub = subtotalOverride !== '' ? Number(subtotalOverride) : computedSub;
+      const itemDisc = subtotalOverride !== '' ? 0 : currentItems.reduce((sum, item) => sum + Number(item.discount_amount || 0), 0);
+      let subDisc = 0;
+      if (subtotalDiscountType === 'percent_off') subDisc = sub * (Number(subtotalDiscountValue) / 100);
+      else if (subtotalDiscountType === 'fixed_amount_off') subDisc = Number(subtotalDiscountValue);
+      return Math.min(subDisc, sub) + itemDisc;
+    })() : order?.discount_total)}</span>
+  </div>
+  <div className="flex justify-between text-[#312f2c]/65"><span>Shipping</span><span>{money(shippingTotal)}</span></div>    
+  <div className="flex justify-between border-t border-[#312f2c]/10 pt-2 text-base font-bold text-[#312f2c]"><span>Total</span><span>{money(creating ? previewTotal : order?.total)}</span></div>
     {/* Phase 5: Original B2B Pricing Provenance */}
     {!creating && order?.discounts && order.discounts.length > 0 && (
       <div className="mt-4 border-t border-[#312f2c]/10 pt-4 text-xs">
@@ -255,27 +306,45 @@ export default function OrderDetailPage() {
       {!creating && (() => {
         const cf = order?.custom_fields;
         const entries = cf && typeof cf === 'object' ? Object.entries(cf) : [];
+        
+        const activeEntries = entries.filter(([key]) => {
+          const fieldDef = checkoutFields.find(f => f.field_key === key);
+          return fieldDef && fieldDef.is_active;
+        });
+
         return (
           <section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm">
             <h2 className="font-bold text-[#312f2c]">Checkout fields</h2>
             <p className="mt-1 text-sm text-[#312f2c]/45">Custom data submitted by the customer during checkout.</p>
-            {entries.length === 0 ? (
+            {activeEntries.length === 0 ? (
               <p className="mt-4 rounded-xl border border-dashed border-[#312f2c]/15 py-6 text-center text-sm text-[#312f2c]/35">
-                No custom field data was submitted with this order.
+                {entries.length > 0 ? 'No active custom field data was submitted with this order.' : 'No custom field data was submitted with this order.'}
               </p>
             ) : (
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {entries.map(([key, value]) => {
-                  const fieldDef = checkoutFields.find(f => f.field_key === key);
-                  const displayLabel = fieldDef ? fieldDef.label : key.replace(/_/g, ' ');
+                {activeEntries.map(([key, value]) => {
+                  const fieldDef = checkoutFields.find(f => f.field_key === key)!;
+                  const displayLabel = fieldDef.label;
+                  
+                  let displayValue = '—';
+                  if (value !== null && value !== undefined && value !== '') {
+                    if (fieldDef.field_type === 'checkbox') {
+                      displayValue = value === true || value === 'true' ? 'Yes' : (value === false || value === 'false' ? 'No' : String(value));
+                    } else if (typeof value === 'object') {
+                      if (Array.isArray(value)) {
+                        displayValue = value.map(v => typeof v === 'object' && v !== null ? ((v as any).label || (v as any).value || JSON.stringify(v)) : String(v)).join(', ');
+                      } else {
+                        displayValue = (value as any)?.label || (value as any)?.value || JSON.stringify(value);
+                      }
+                    } else {
+                      displayValue = String(value);
+                    }
+                  }
+
                   return (
                     <div key={key} className="rounded-xl border border-[#312f2c]/10 bg-white/60 p-3">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-[#312f2c]/40">{displayLabel}</p>
-                      <p className="mt-1 text-sm font-medium text-[#312f2c]">
-                        {value === true || value === 'true' ? 'Yes'
-                          : value === false || value === 'false' ? 'No'
-                          : String(value || '—')}
-                      </p>
+                      <p className="mt-1 text-sm font-medium text-[#312f2c]">{displayValue}</p>
                     </div>
                   );
                 })}

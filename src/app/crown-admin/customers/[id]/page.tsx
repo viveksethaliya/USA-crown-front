@@ -469,15 +469,26 @@ export default function CustomerDetailPage() {
                     <option value="suspended">Suspended</option>
                   </select>
                 </div>
-                {Number(formData.role_id) !== 5 && Number(formData.role_id) !== 1 && (
+                {Number(formData.role_id) !== 1 && (
                   <div>
                     <label className={labelCls}>Discount & Pricing Group</label>
-                    <select name="customer_group_id" value={formData.customer_group_id} onChange={handleInputChange} disabled={!isEditing} className={inputCls}>
-                      <option value="">No Group</option>
-                      {customerGroups.map(g => (
-                        <option key={g.id} value={g.id}>{g.name}</option>
-                      ))}
-                    </select>
+                    {Number(formData.role_id) === 5 ? (
+                      <div className="flex items-center gap-2">
+                        <input type="text" disabled className={inputCls} value={selectedUser?.parent_group ? `Inherits: ${selectedUser.parent_group.name} (from parent)` : 'Inherits from parent (No Group)'} />
+                        {selectedUser?.parent_user_id && (
+                          <Link href={`/crown-admin/customers/${selectedUser.parent_user_id}`} className="text-sm font-medium text-[#d1a054] hover:underline whitespace-nowrap" title="View Parent User">
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        )}
+                      </div>
+                    ) : (
+                      <select name="customer_group_id" value={formData.customer_group_id} onChange={handleInputChange} disabled={!isEditing} className={inputCls}>
+                        <option value="">No Group</option>
+                        {customerGroups.map(g => (
+                          <option key={g.id} value={g.id}>{g.name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 )}
                 {Number(formData.role_id) === 5 && (

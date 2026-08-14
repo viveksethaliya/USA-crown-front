@@ -46,9 +46,9 @@ export default function GroupCustomers({ group }: { group: any }) {
       });
       if (res.ok) {
         const data = await res.json();
-        // Filter out those who are already in this group
+        // Filter out those who are already in this group, and exclude sub-users
         const existingIds = new Set(members.map(m => m.id));
-        setSearchResults((data.data || []).filter((u: any) => !existingIds.has(u.id)));
+        setSearchResults((data.data || []).filter((u: any) => !existingIds.has(u.id) && u.level !== 1 && !u.parent_user_id));
       }
     } catch (err) {
       toast.error('Search failed');
