@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Plus, Edit2, PlayCircle, PauseCircle, Archive, AlertCircle, HelpCircle } from 'lucide-react';
+import { Plus, Edit2, PlayCircle, PauseCircle, Trash2, AlertCircle, HelpCircle } from 'lucide-react';
 import CampaignEditor from './CampaignEditor';
 import HelpDrawer from './HelpDrawer';
 
@@ -12,6 +12,7 @@ export default function GroupCampaigns({ group }: { group: any }) {
   const [loading, setLoading] = useState(true);
   const [editingCampaign, setEditingCampaign] = useState<any | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [deletingCampaignId, setDeletingCampaignId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCampaigns();
@@ -56,6 +57,27 @@ export default function GroupCampaigns({ group }: { group: any }) {
       fetchCampaigns();
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingCampaignId) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await adminFetch(`/api/admin/pricing-groups/${group.id}/campaigns/${deletingCampaignId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to delete campaign');
+      
+      toast.success('Campaign deleted permanently');
+      setDeletingCampaignId(null);
+      fetchCampaigns();
+    } catch (err: any) {
+      toast.error(err.message);
+      setDeletingCampaignId(null);
     }
   };
 
@@ -165,11 +187,11 @@ export default function GroupCampaigns({ group }: { group: any }) {
                     </button>
                   )}
                   <button 
-                    onClick={() => handleUpdateStatus(camp.id, 'archived')}
+                    onClick={() => setDeletingCampaignId(camp.id)}
                     className="p-2 text-[#312f2c]/50 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                    title="Archive"
+                    title="Delete"
                   >
-                    <Archive className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -189,6 +211,31 @@ export default function GroupCampaigns({ group }: { group: any }) {
             fetchCampaigns();
           }}
         />
+      )}
+
+      {deletingCampaignId && (
+        <div className="fixed inset-0 bg-[#312f2c]/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-red-600 mb-2">Delete Campaign?</h3>
+            <p className="text-[#312f2c]/60 mb-6">
+              This will permanently delete this campaign. This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setDeletingCampaignId(null)}
+                className="px-4 py-2 text-[#312f2c]/60 hover:bg-[#312f2c]/10 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="Campaigns Tab Help">

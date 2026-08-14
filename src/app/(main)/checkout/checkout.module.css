@@ -104,13 +104,78 @@
   padding: 0.7rem 0.8rem;
   background: var(--color-white);
   border: 1px solid var(--color-border);
+  border-radius: 6px;
   color: var(--color-text-main);
   font-size: 0.95rem;
   font-weight: 500;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(230, 141, 24, 0.2);
 }
 
 .field textarea {
   resize: vertical;
+}
+
+.requiredAsterisk {
+  color: var(--color-error);
+  margin-left: 0.25rem;
+}
+
+.segmentedToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  position: relative;
+}
+
+.segmentButton {
+  flex: 1;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-white);
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.segmentButton:hover {
+  border-color: var(--color-gray-300);
+  background: var(--color-bg-light);
+}
+
+.segmentActive {
+  background: var(--color-inkblue);
+  border-color: var(--color-inkblue);
+  color: var(--color-white);
+}
+
+.segmentActive:hover {
+  background: var(--color-inkblue);
+  border-color: var(--color-inkblue);
+}
+
+.hiddenCheckbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  left: 50%;
+  top: 50%;
 }
 
 .checkboxLabel,

@@ -118,7 +118,8 @@ export default function CampaignEditor({ group, initialCampaign, onClose, onSave
               >
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>
-                <option value="archived">Archived</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 

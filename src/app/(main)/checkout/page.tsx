@@ -336,10 +336,13 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className={styles.fieldGrid}>
-                  {addressFields.map((field) => (
-                    <label key={field.key} className={styles.field}>
-                      <span>{field.label}{field.required ? ' *' : ''}</span>
-                      <input
+                    {addressFields.map((field) => (
+                      <label key={field.key} className={styles.field}>
+                        <span>
+                          {field.label}
+                          {field.required && <span className={styles.requiredAsterisk}>*</span>}
+                        </span>
+                        <input
                         type={field.type || 'text'}
                         value={billingAddress[field.key]}
                         required={field.required}
@@ -403,7 +406,10 @@ export default function CheckoutPage() {
                   <div className={styles.fieldGrid}>
                     {addressFields.map((field) => (
                       <label key={field.key} className={styles.field}>
-                        <span>{field.label}{field.required ? ' *' : ''}</span>
+                        <span>
+                          {field.label}
+                          {field.required && <span className={styles.requiredAsterisk}>*</span>}
+                        </span>
                         <input
                           type={field.type || 'text'}
                           value={shippingAddress[field.key]}
@@ -459,8 +465,11 @@ export default function CheckoutPage() {
                   <h2>Additional Information</h2>
                   <div className={styles.fieldGrid}>
                     {checkoutFields.map((field) => (
-                      <label key={field.id} className={styles.field}>
-                        <span>{field.label}{field.is_required ? ' *' : ''}</span>
+                      <div key={field.id} className={styles.field}>
+                        <span className="font-bold">
+                          {field.label}
+                          {field.is_required && <span className={styles.requiredAsterisk}>*</span>}
+                        </span>
                         {field.field_type === 'textarea' ? (
                           <textarea
                             required={field.is_required}
@@ -481,14 +490,24 @@ export default function CheckoutPage() {
                             ))}
                           </select>
                         ) : field.field_type === 'checkbox' ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                            <input
-                              type="checkbox"
-                              required={field.is_required}
-                              checked={!!customFieldValues[field.field_key]}
-                              onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: e.target.checked }))}
-                            />
-                            <span style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>Yes</span>
+                          <div className={styles.segmentedToggle} role="radiogroup" aria-label={field.label}>
+                            <button
+                              type="button"
+                              className={`${styles.segmentButton} ${customFieldValues[field.field_key] === true ? styles.segmentActive : ''}`}
+                              onClick={() => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: true }))}
+                            >
+                              Yes
+                            </button>
+                            <button
+                              type="button"
+                              className={`${styles.segmentButton} ${customFieldValues[field.field_key] === false ? styles.segmentActive : ''}`}
+                              onClick={() => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: false }))}
+                            >
+                              No
+                            </button>
+                            {field.is_required && customFieldValues[field.field_key] === undefined && (
+                              <input type="checkbox" required className={styles.hiddenCheckbox} tabIndex={-1} aria-hidden="true" />
+                            )}
                           </div>
                         ) : (
                           <input
@@ -499,7 +518,7 @@ export default function CheckoutPage() {
                             onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.field_key]: e.target.value }))}
                           />
                         )}
-                      </label>
+                      </div>
                     ))}
                   </div>
                 </section>

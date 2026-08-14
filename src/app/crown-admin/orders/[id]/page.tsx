@@ -305,9 +305,11 @@ export default function OrderDetailPage() {
 
       {!creating && (() => {
         const cf = order?.custom_fields;
+        const definitions = cf?._definitions || {};
         const entries = cf && typeof cf === 'object' ? Object.entries(cf) : [];
         
         const activeEntries = entries.filter(([key]) => {
+          if (key === '_definitions') return false;
           const fieldDef = checkoutFields.find(f => f.field_key === key);
           return fieldDef && fieldDef.is_active;
         });
@@ -325,11 +327,31 @@ export default function OrderDetailPage() {
                 {activeEntries.map(([key, value]) => {
                   const fieldDef = checkoutFields.find(f => f.field_key === key)!;
                   const displayLabel = fieldDef.label;
+                  const definition = definitions[key];
                   
-                  let displayValue = '—';
-                  if (value !== null && value !== undefined && value !== '') {
+                  let displayValue: React.ReactNode = '—';
+                  
+                  if (definition && definition.display_value !== undefined && definition.display_value !== null) {
+                    // Use snapshot if available
                     if (fieldDef.field_type === 'checkbox') {
-                      displayValue = value === true || value === 'true' ? 'Yes' : (value === false || value === 'false' ? 'No' : String(value));
+                      const isYes = definition.display_value === 'Yes' || definition.display_value === true;
+                      displayValue = (
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isYes ? 'bg-green-100 text-green-700' : 'bg-[#312f2c]/10 text-[#312f2c]/50'}`}>
+                          {isYes ? 'Yes' : 'No'}
+                        </span>
+                      );
+                    } else {
+                      displayValue = String(definition.display_value);
+                    }
+                  } else if (value !== null && value !== undefined && value !== '') {
+                    // Fallback to legacy raw-value formatting
+                    if (fieldDef.field_type === 'checkbox') {
+                      const isYes = value === true || value === 'true';
+                      displayValue = (
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isYes ? 'bg-green-100 text-green-700' : 'bg-[#312f2c]/10 text-[#312f2c]/50'}`}>
+                          {isYes ? 'Yes' : 'No'}
+                        </span>
+                      );
                     } else if (typeof value === 'object') {
                       if (Array.isArray(value)) {
                         displayValue = value.map(v => typeof v === 'object' && v !== null ? ((v as any).label || (v as any).value || JSON.stringify(v)) : String(v)).join(', ');
@@ -344,7 +366,7 @@ export default function OrderDetailPage() {
                   return (
                     <div key={key} className="rounded-xl border border-[#312f2c]/10 bg-white/60 p-3">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-[#312f2c]/40">{displayLabel}</p>
-                      <p className="mt-1 text-sm font-medium text-[#312f2c]">{displayValue}</p>
+                      <div className="mt-1 text-sm font-medium text-[#312f2c]">{displayValue}</div>
                     </div>
                   );
                 })}
