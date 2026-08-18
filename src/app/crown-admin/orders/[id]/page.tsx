@@ -7,6 +7,7 @@ import { ArrowLeft, CreditCard, FileText, Loader2, Mail, PackagePlus, Printer, S
 import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
 import { adminFetch } from '@/lib/api';
+import PrintInvoice from '@/components/PrintInvoice';
 
 const ORDER_STATUSES = ['pending', 'on-hold', 'processing', 'completed', 'cancelled', 'refunded', 'failed'];
 const PAYMENT_STATUSES = ['pending', 'partially_paid', 'paid', 'refunded', 'failed'];
@@ -37,6 +38,7 @@ export default function OrderDetailPage() {
   const [subtotalOverride, setSubtotalOverride] = useState('');
   const [subtotalDiscountType, setSubtotalDiscountType] = useState('');
   const [subtotalDiscountValue, setSubtotalDiscountValue] = useState('');
+  const [taxTotal, setTaxTotal] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [noteContent, setNoteContent] = useState('');
@@ -79,6 +81,7 @@ export default function OrderDetailPage() {
       setStatus(data.status);
       setPaymentStatus(data.payment_status);
       setShippingTotal(String(data.shipping_total || 0));
+      setTaxTotal(data.tax_total !== null && data.tax_total !== undefined ? String(data.tax_total) : '0');
       setSubtotalOverride(data.subtotal_override !== null && data.subtotal_override !== undefined ? String(data.subtotal_override) : '');
       setSubtotalDiscountType(data.subtotal_discount_type || '');
       setSubtotalDiscountValue(data.subtotal_discount_value !== null && data.subtotal_discount_value !== undefined ? String(data.subtotal_discount_value) : '');
@@ -98,23 +101,28 @@ export default function OrderDetailPage() {
   }, [creating, loadOrder]);
 
   const currentItems = useMemo(() => creating ? draftItems : (order?.items || []), [creating, draftItems, order]);
-  const previewTotal = useMemo(() => {
+  const baseSubtotal = useMemo(() => {
     const computedSubtotal = currentItems.reduce((sum, item) => {
       const multiplier = (Number(item.custom_length) || 1) * (Number(item.custom_width) || 1);
       return sum + Number(item.unit_price || 0) * Number(item.quantity || 0) * multiplier;
     }, 0);
+    return subtotalOverride !== '' ? Number(subtotalOverride) : computedSubtotal;
+  }, [currentItems, subtotalOverride]);
+  
+  const discountExceedsSubtotal = subtotalDiscountType === 'fixed_amount_off' && Number(subtotalDiscountValue) > baseSubtotal;
+
+  const previewTotal = useMemo(() => {
     const itemDiscounts = currentItems.reduce((sum, item) => sum + Number(item.discount_amount || 0), 0);
     const hasOverride = subtotalOverride !== '';
-    const subtotal = hasOverride ? Number(subtotalOverride) : computedSubtotal;
     let subtotalDiscountAmount = 0;
     if (subtotalDiscountType && subtotalDiscountValue !== '') {
-      if (subtotalDiscountType === 'percent_off') subtotalDiscountAmount = subtotal * (Number(subtotalDiscountValue) / 100);
+      if (subtotalDiscountType === 'percent_off') subtotalDiscountAmount = baseSubtotal * (Number(subtotalDiscountValue) / 100);
       else if (subtotalDiscountType === 'fixed_amount_off') subtotalDiscountAmount = Number(subtotalDiscountValue);
-      subtotalDiscountAmount = Math.min(subtotalDiscountAmount, subtotal);
+      subtotalDiscountAmount = Math.min(subtotalDiscountAmount, baseSubtotal);
     }
     const discountTotal = subtotalDiscountAmount + (hasOverride ? 0 : itemDiscounts);
-    return Math.max(0, subtotal - discountTotal + Number(shippingTotal || 0));
-  }, [currentItems, shippingTotal, subtotalOverride, subtotalDiscountType, subtotalDiscountValue]);
+    return Math.max(0, baseSubtotal - discountTotal + Number(shippingTotal || 0) + Number(taxTotal || 0));
+  }, [currentItems, shippingTotal, taxTotal, subtotalOverride, subtotalDiscountType, subtotalDiscountValue, baseSubtotal]);
 
   const searchCustomers = async () => {
     if (!customerSearch.trim()) return;
@@ -129,9 +137,10 @@ export default function OrderDetailPage() {
 
   const saveHeader = async () => {
     if (creating) return;
+    if (discountExceedsSubtotal) return toast.error(`Discount cannot exceed the subtotal (${money(baseSubtotal)})`);
     try {
       setSaving(true);
-      const data = await request(`/${id}`, { method: 'PUT', body: JSON.stringify({ status, payment_status: paymentStatus, shipping_total: shippingTotal, payment_method: paymentMethod, customer_note: customerNote, subtotal_override: subtotalOverride === '' ? null : subtotalOverride, subtotal_discount_type: subtotalDiscountType === '' ? null : subtotalDiscountType, subtotal_discount_value: subtotalDiscountValue === '' ? null : subtotalDiscountValue, updated_at: order?.updated_at }) });
+      const data = await request(`/${id}`, { method: 'PUT', body: JSON.stringify({ status, payment_status: paymentStatus, shipping_total: shippingTotal, tax_total: taxTotal, payment_method: paymentMethod, customer_note: customerNote, subtotal_override: subtotalOverride === '' ? null : subtotalOverride, subtotal_discount_type: subtotalDiscountType === '' ? null : subtotalDiscountType, subtotal_discount_value: subtotalDiscountValue === '' ? null : subtotalDiscountValue, updated_at: order?.updated_at }) });
       setOrder(data);
       toast.success('Order details saved');
     } catch (error: any) { toast.error(error.message); } finally { setSaving(false); }
@@ -140,9 +149,10 @@ export default function OrderDetailPage() {
   const createOrder = async () => {
     if (!customer) return toast.error('Select a customer first');
     if (!draftItems.length) return toast.error('Add at least one product');
+    if (discountExceedsSubtotal) return toast.error(`Discount cannot exceed the subtotal (${money(baseSubtotal)})`);
     try {
       setSaving(true);
-      const data = await request('', { method: 'POST', body: JSON.stringify({ user_id: customer.id, status, payment_status: paymentStatus, payment_method: paymentMethod, shipping_total: shippingTotal, customer_note: customerNote, subtotal_override: subtotalOverride === '' ? null : subtotalOverride, subtotal_discount_type: subtotalDiscountType === '' ? null : subtotalDiscountType, subtotal_discount_value: subtotalDiscountValue === '' ? null : subtotalDiscountValue, items: draftItems }) });
+      const data = await request('', { method: 'POST', body: JSON.stringify({ user_id: customer.id, status, payment_status: paymentStatus, payment_method: paymentMethod, shipping_total: shippingTotal, tax_total: taxTotal, customer_note: customerNote, subtotal_override: subtotalOverride === '' ? null : subtotalOverride, subtotal_discount_type: subtotalDiscountType === '' ? null : subtotalDiscountType, subtotal_discount_value: subtotalDiscountValue === '' ? null : subtotalDiscountValue, items: draftItems }) });
       toast.success('Order created');
       router.replace(`/crown-admin/orders/${data.id}`);
     } catch (error: any) { toast.error(error.message); } finally { setSaving(false); }
@@ -221,6 +231,15 @@ export default function OrderDetailPage() {
     } catch (error: any) { toast.error(error.message); }
   };
 
+  const deleteNote = async (noteId: number) => {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    try {
+      const data = await request(`/${id}/notes/${noteId}`, { method: 'DELETE' });
+      setOrder(data);
+      toast.success('Note deleted');
+    } catch (error: any) { toast.error(error.message); }
+  };
+
   const cancelOrder = async () => {
     if (!confirm('Cancel this order? This cannot be undone.')) return;
     try { const data = await request(`/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason: 'Cancelled by administrator' }) }); setOrder(data); setStatus(data.status); toast.success('Order cancelled'); } catch (error: any) { toast.error(error.message); }
@@ -237,7 +256,9 @@ export default function OrderDetailPage() {
   const locked = !creating && isLocked(order?.status);
 
   return (
-    <div className="mx-auto flex max-w-[1500px] flex-col gap-6 pb-6">
+    <>
+      <PrintInvoice order={order} checkoutFields={checkoutFields} />
+      <div className="mx-auto flex max-w-[1500px] flex-col gap-6 pb-6 print:hidden">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3"><Link href="/crown-admin/orders" className="mt-1 rounded-lg p-2 text-[#312f2c]/55 transition-colors hover:bg-white hover:text-[#312f2c]"><ArrowLeft className="h-5 w-5" /></Link><div><h1 className="text-2xl font-bold text-[#312f2c]">{creating ? 'Create Order' : (order?.order_number || `Order #${order?.id}`)}</h1><p className="mt-1 text-sm text-[#312f2c]/55">{creating ? 'Create a manual order for an existing customer.' : `Placed ${new Date(order?.created_at).toLocaleString()}`}</p></div></div>
         {!creating && <div className="flex flex-wrap gap-2"><button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl border border-white/60 bg-white px-3 py-2 text-sm font-bold text-[#312f2c]/65 shadow-sm"><Printer className="h-4 w-4" /> Print</button><button onClick={remindPayment} disabled={order?.payment_status === 'paid'} className="inline-flex items-center gap-2 rounded-xl border border-[#d1a054]/25 bg-[#d1a054]/10 px-3 py-2 text-sm font-bold text-[#9b7132] disabled:opacity-40"><Mail className="h-4 w-4" /> Payment reminder</button>{!locked && <button onClick={cancelOrder} className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm font-bold text-red-600">Cancel order</button>}<button onClick={deleteOrder} className="rounded-xl border border-red-500/20 bg-red-500/10 p-2 text-red-600"><Trash2 className="h-4 w-4" /></button></div>}
@@ -246,10 +267,11 @@ export default function OrderDetailPage() {
       {creating && <section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Customer <span className="text-red-500">*</span></h2>{customer ? <div className="mt-3 flex items-center justify-between rounded-xl border border-[#d1a054]/25 bg-[#d1a054]/10 p-3"><div><p className="font-bold text-[#312f2c]">{customer.username}</p><p className="text-sm text-[#312f2c]/60">{customer.first_name} {customer.last_name} · {customer.email}</p></div><button onClick={() => setCustomer(null)} className="rounded-lg p-2 text-[#312f2c]/50 hover:bg-white"><X className="h-4 w-4" /></button></div> : <div className="mt-3 flex gap-2"><input value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && searchCustomers()} placeholder="Search by username, email, name, or phone" className="min-w-0 flex-1 rounded-xl border border-white/70 bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#d1a054]/40" /><button onClick={searchCustomers} className="rounded-xl bg-[#312f2c] px-3 text-white"><Search className="h-4 w-4" /></button></div>}{!customer && customers.length > 0 && <div className="mt-2 divide-y divide-[#312f2c]/5 rounded-xl border border-white/60 bg-white">{customers.map((entry) => <button key={entry.id} onClick={() => { setCustomer(entry); setCustomers([]); }} className="flex w-full items-center justify-between p-3 text-left text-sm hover:bg-[#f0ede5]"><span><strong>{entry.username}</strong> <span className="text-[#312f2c]/55">{entry.first_name} {entry.last_name}</span></span><span className="text-xs text-[#312f2c]/50">{entry.email}</span></button>)}</div>}</section>}
 
       <section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><div className="mb-4 flex items-center justify-between"><h2 className="font-bold text-[#312f2c]">Order details</h2>{!creating && <button onClick={saveHeader} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#312f2c] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save changes</button>}</div><div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5"><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Order status<select value={status} disabled={locked} onChange={(event) => setStatus(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60">{ORDER_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}</select></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Payment status<select value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none">{PAYMENT_STATUSES.map((value) => <option key={value} value={value}>{value.replace('_', ' ')}</option>)}</select></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Shipping price<input type="number" min="0" step="0.01" value={shippingTotal} disabled={locked} onChange={(event) => setShippingTotal(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium text-[#312f2c] outline-none disabled:opacity-60" /></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Payment method<input value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} placeholder="e.g. Bank transfer" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium text-[#312f2c] outline-none" /></label><div className="rounded-xl bg-[#312f2c] p-3 text-[#f0ede5]"><p className="text-[10px] font-bold uppercase tracking-widest text-[#f0ede5]/60">Order total</p><p className="mt-1 text-xl font-bold">{money(creating ? previewTotal : order?.total)}</p></div></div>
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
         <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal override<input type="number" min="0" step="0.01" disabled={locked} value={subtotalOverride} onChange={(event) => setSubtotalOverride(event.target.value)} placeholder="Leave blank to compute" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60" /></label>
-        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal discount type<select value={subtotalDiscountType} disabled={locked} onChange={(event) => setSubtotalDiscountType(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60"><option value="">None</option><option value="percent_off">Percentage (%)</option><option value="fixed_amount_off">Flat amount ($)</option></select></label>
-        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal discount value<input type="number" min="0" step="0.01" disabled={locked} value={subtotalDiscountValue} onChange={(event) => setSubtotalDiscountValue(event.target.value)} placeholder="0" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60" /></label>
+        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal discount type<select value={subtotalDiscountType} disabled={locked} onChange={(event) => setSubtotalDiscountType(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60"><option value="">None</option><option value="fixed_amount_off">Flat amount ($)</option></select></label>
+        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Subtotal discount value<input type="number" min="0" step="0.01" disabled={locked} value={subtotalDiscountValue} onChange={(event) => setSubtotalDiscountValue(event.target.value)} placeholder="0" className={`mt-1.5 w-full rounded-lg border ${discountExceedsSubtotal ? 'border-red-500 ring-1 ring-red-500' : 'border-[#312f2c]/10'} bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60`} />{discountExceedsSubtotal && <span className="text-red-500 text-[10px] mt-1 block normal-case">Discount cannot exceed the subtotal ({money(baseSubtotal)})</span>}</label>
+        <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Tax override<input type="number" min="0" step="0.01" disabled={locked} value={taxTotal} onChange={(event) => setTaxTotal(event.target.value)} placeholder="Leave blank for 0" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none disabled:opacity-60" /></label>
       </div>
       <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Customer-visible note<textarea value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} rows={2} placeholder="Shown to the customer with their order" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm font-medium normal-case text-[#312f2c] outline-none" /></label></section>
 
@@ -279,6 +301,7 @@ export default function OrderDetailPage() {
       return Math.min(subDisc, sub) + itemDisc;
     })() : order?.discount_total)}</span>
   </div>
+  <div className="flex justify-between text-[#312f2c]/65"><span>Tax</span><span>{money(creating ? taxTotal : order?.tax_total)}</span></div>
   <div className="flex justify-between text-[#312f2c]/65"><span>Shipping</span><span>{money(shippingTotal)}</span></div>    
   <div className="flex justify-between border-t border-[#312f2c]/10 pt-2 text-base font-bold text-[#312f2c]"><span>Total</span><span>{money(creating ? previewTotal : order?.total)}</span></div>
     {/* Phase 5: Original B2B Pricing Provenance */}
@@ -301,7 +324,7 @@ export default function OrderDetailPage() {
     )}
   </div></div></section>
 
-      {!creating && <div className="grid grid-cols-1 gap-6 xl:grid-cols-2"><section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Order notes</h2><div className="mt-4 flex gap-2"><select value={noteType} onChange={(event) => setNoteType(event.target.value)} className="rounded-lg border border-[#312f2c]/10 bg-white px-2 text-sm font-medium text-[#312f2c]"><option value="internal">Private</option><option value="customer">Customer note</option></select><input value={noteContent} onChange={(event) => setNoteContent(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && addNote()} placeholder="Add a note..." className="min-w-0 flex-1 rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm outline-none" /><button onClick={addNote} className="rounded-lg bg-[#312f2c] px-3 text-white"><Send className="h-4 w-4" /></button></div><div className="mt-4 space-y-3">{order?.notes?.length ? order.notes.map((note: any) => <div key={note.id} className={`rounded-xl border p-3 ${note.note_type === 'internal' ? 'border-[#312f2c]/10 bg-[#312f2c]/5' : 'border-[#d1a054]/20 bg-[#d1a054]/10'}`}><div className="flex justify-between gap-3 text-[10px] font-bold uppercase tracking-wide"><span className={note.note_type === 'internal' ? 'text-[#312f2c]/55' : 'text-[#9b7132]'}>{note.note_type === 'internal' ? 'Private note' : 'Customer note'}</span><span className="text-[#312f2c]/40">{new Date(note.created_at).toLocaleString()}</span></div><p className="mt-2 text-sm text-[#312f2c]/75">{note.content}</p></div>) : <p className="py-5 text-center text-sm text-[#312f2c]/40">No notes yet.</p>}</div></section><section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Customer & addresses</h2><div className="mt-4 rounded-xl border border-[#312f2c]/10 bg-white/45 p-4"><p className="font-bold text-[#312f2c]">{order?.customer?.username}</p><p className="mt-1 text-sm text-[#312f2c]/65">{order?.customer?.first_name} {order?.customer?.last_name} · {order?.customer?.email}</p><p className="mt-1 text-sm text-[#312f2c]/55">{order?.customer?.phone || 'No phone number'}</p></div><div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><Address title="Billing address" address={order?.billing_address} /><Address title="Shipping address" address={order?.shipping_address} /></div></section></div>}
+      {!creating && <div className="grid grid-cols-1 gap-6 xl:grid-cols-2"><section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Order notes</h2><div className="mt-4 flex gap-2"><select value={noteType} onChange={(event) => setNoteType(event.target.value)} className="rounded-lg border border-[#312f2c]/10 bg-white px-2 text-sm font-medium text-[#312f2c]"><option value="internal">Private</option><option value="customer">Customer note</option></select><input value={noteContent} onChange={(event) => setNoteContent(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && addNote()} placeholder="Add a note..." className="min-w-0 flex-1 rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm outline-none" /><button onClick={addNote} className="rounded-lg bg-[#312f2c] px-3 text-white"><Send className="h-4 w-4" /></button></div><div className="mt-4 space-y-3">{order?.notes?.length ? order.notes.map((note: any) => <div key={note.id} className={`rounded-xl border p-3 group relative ${note.note_type === 'internal' ? 'border-[#312f2c]/10 bg-[#312f2c]/5' : 'border-[#d1a054]/20 bg-[#d1a054]/10'}`}><div className="flex justify-between gap-3 text-[10px] font-bold uppercase tracking-wide"><span className={note.note_type === 'internal' ? 'text-[#312f2c]/55' : 'text-[#9b7132]'}>{note.note_type === 'internal' ? 'Private note' : 'Customer note'}</span><span className="text-[#312f2c]/40">{new Date(note.created_at).toLocaleString()}</span></div><p className="mt-2 text-sm text-[#312f2c]/75">{note.content}</p>{note.note_type === 'customer' && <button onClick={() => deleteNote(note.id)} className="absolute top-2 right-2 hidden group-hover:block rounded-md p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-3 w-3" /></button>}</div>) : <p className="py-5 text-center text-sm text-[#312f2c]/40">No notes yet.</p>}</div></section><section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Customer & addresses</h2><div className="mt-4 rounded-xl border border-[#312f2c]/10 bg-white/45 p-4"><p className="font-bold text-[#312f2c]">{order?.customer?.username}</p><p className="mt-1 text-sm text-[#312f2c]/65">{order?.customer?.first_name} {order?.customer?.last_name} · {order?.customer?.email}</p><p className="mt-1 text-sm text-[#312f2c]/55">{order?.customer?.phone || 'No phone number'}</p></div><div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><Address title="Billing address" address={order?.billing_address} /><Address title="Shipping address" address={order?.shipping_address} /></div></section></div>}
 
       {!creating && (() => {
         const cf = order?.custom_fields;
@@ -379,6 +402,7 @@ export default function OrderDetailPage() {
       {creating && <div className="flex justify-end"><button onClick={createOrder} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-[#312f2c] px-5 py-3 text-sm font-bold text-white shadow-sm disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Create order</button></div>}
 
       {addOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#312f2c]/45 p-4 backdrop-blur-sm"><div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/50 bg-[#f0ede5] shadow-2xl"><div className="flex items-center justify-between border-b border-[#312f2c]/10 bg-white/40 p-5"><h2 className="font-bold text-[#312f2c]">Add product to order</h2><button onClick={resetAdd} className="rounded-lg p-2 text-[#312f2c]/50 hover:bg-white"><X className="h-5 w-5" /></button></div><div className="p-5">{!selectedProduct ? <><div className="flex gap-2"><input value={productSearch} onChange={(event) => setProductSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && searchProducts()} placeholder="Search product name or SKU" className="min-w-0 flex-1 rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2.5 text-sm outline-none" /><button onClick={searchProducts} className="rounded-lg bg-[#d1a054] px-3 text-white">{searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}</button></div><div className="mt-3 space-y-2">{productResults.map((product) => <button key={product.id} onClick={() => chooseProduct(product)} className="flex w-full items-center justify-between rounded-xl border border-[#312f2c]/10 bg-white p-3 text-left transition-colors hover:border-[#d1a054]/40"><span><strong className="text-sm text-[#312f2c]">{product.name}</strong><small className="mt-1 block font-mono text-xs text-[#312f2c]/50">{product.sku || 'No SKU'}</small></span><span className="text-xs font-bold text-[#d1a054]">{product.type}</span></button>)}</div></> : <><button onClick={() => setSelectedProduct(null)} className="text-xs font-bold text-[#d1a054] hover:underline">← Change product</button><div className="mt-3 rounded-xl border border-[#312f2c]/10 bg-white p-3"><p className="font-bold text-[#312f2c]">{selectedProduct.name}</p><p className="mt-1 font-mono text-xs text-[#312f2c]/50">{selectedProduct.sku || 'No SKU'}</p></div>{selectedProduct.type === 'variable' && <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Variation<select value={variationId} onChange={(event) => setVariationId(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2.5 text-sm text-[#312f2c] outline-none"><option value="">Select variation</option>{selectedProduct.product_variations?.map((variation: any) => <option key={variation.id} value={variation.id}>{variation.variation_attribute_values?.map((entry: any) => entry.attribute_values?.value).filter(Boolean).join(' / ') || variation.sku} · {money(variation.sale_price || variation.regular_price)}</option>)}</select></label>}<div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Quantity<input type="number" min="1" value={quantity} onChange={(event) => setQuantity(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2.5 text-sm text-[#312f2c] outline-none" /></label><label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Manual price <span className="normal-case text-[#312f2c]/40">(optional)</span><input type="number" min="0" step="0.01" value={manualPrice} onChange={(event) => setManualPrice(event.target.value)} placeholder="Catalog price" className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2.5 text-sm text-[#312f2c] outline-none" /></label>{(selectedProduct.measurement_type === 'inch' || selectedProduct.measurement_type === 'plate') && <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Length<input type="number" min="0.01" step="0.01" value={customLength} onChange={(event) => setCustomLength(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2.5 text-sm text-[#312f2c] outline-none" /></label>}{selectedProduct.measurement_type === 'plate' && <label className="text-xs font-bold uppercase tracking-wide text-[#312f2c]/50">Width<input type="number" min="0.01" step="0.01" value={customWidth} onChange={(event) => setCustomWidth(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2.5 text-sm text-[#312f2c] outline-none" /></label>}</div><p className="mt-3 text-xs text-[#312f2c]/45">A manual price is final and records a $0 discount, per the order-pricing requirement.</p></>}</div><div className="flex justify-end gap-2 border-t border-[#312f2c]/10 bg-white/40 p-5"><button onClick={resetAdd} className="rounded-lg px-4 py-2 text-sm font-bold text-[#312f2c]/60">Cancel</button>{selectedProduct && <button onClick={addProduct} className="rounded-lg bg-[#d1a054] px-4 py-2 text-sm font-bold text-white">Add product</button>}</div></div></div>}
-    </div>
+      </div>
+    </>
   );
 }

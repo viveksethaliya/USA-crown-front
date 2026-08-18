@@ -21,7 +21,8 @@ export default function SettingsPage() {
     require_special_chars: false,
     seo_default_title: '',
     seo_default_description: '',
-    seo_default_og_image: ''
+    seo_default_og_image: '',
+    tax_rate_percent: ''
   });
 
   const fetchSettings = async () => {
@@ -43,7 +44,8 @@ export default function SettingsPage() {
           require_special_chars: data.require_special_chars || false,
           seo_default_title: data.seo_default_title || '',
           seo_default_description: data.seo_default_description || '',
-          seo_default_og_image: data.seo_default_og_image || ''
+          seo_default_og_image: data.seo_default_og_image || '',
+          tax_rate_percent: data.tax_rate_percent !== null && data.tax_rate_percent !== undefined ? data.tax_rate_percent : ''
         });
       }
     } catch (err) {
@@ -112,6 +114,36 @@ export default function SettingsPage() {
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8">
+                <div className="flex items-center gap-3 border-b border-[#312f2c]/10 pb-4 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center border border-blue-500/20 shadow-sm shrink-0">
+                    <Save className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[#312f2c] uppercase tracking-wider">Tax & Commerce</h2>
+                    <p className="text-xs font-bold text-[#312f2c]/50 uppercase tracking-wider mt-0.5">Global tax configurations applied to store orders.</p>
+                  </div>
+                </div>
+
+                <div className="max-w-xl space-y-2">
+                  <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Global Tax Rate (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    name="tax_rate_percent"
+                    value={formData.tax_rate_percent}
+                    onChange={handleInputChange}
+                    className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all"
+                    placeholder="e.g., 8.875"
+                    required
+                  />
+                  <p className="text-xs font-bold text-[#312f2c]/40 uppercase tracking-wider mt-2 leading-relaxed">
+                    Set the global flat tax rate for all taxable items. B2B customers with an approved Resale ID are automatically exempt.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8 mt-6">
                 <div className="flex items-center gap-3 border-b border-[#312f2c]/10 pb-4 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-[#d1a054]/10 text-[#d1a054] flex items-center justify-center border border-[#d1a054]/20 shadow-sm shrink-0">
                     <Mail className="w-5 h-5" />

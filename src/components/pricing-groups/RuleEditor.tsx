@@ -225,10 +225,15 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
     meas_type: initialRule?.metadata?.legacy_measurement?.type || 'inch',
     meas_min: initialRule?.metadata?.legacy_measurement?.min || '',
     meas_max: initialRule?.metadata?.legacy_measurement?.max || '',
+    
+    // Spend Threshold
+    spend_threshold_amount: startingConditions.find((c: any) => c.type === 'cart_subtotal_min')?.value || '',
   });
 
   const [targets, setTargets] = useState<{ type: string, id: string, is_exclusion: boolean }[]>(initTargets);
-  const [conditions, setConditions] = useState<{ type: string, value: string }[]>(startingConditions);
+  const [conditions, setConditions] = useState<{ type: string, value: string }[]>(
+    initialPreset === 'spend_threshold' ? startingConditions.filter((c: any) => c.type !== 'cart_subtotal_min') : startingConditions
+  );
   const [tiers, setTiers] = useState<any[]>(action?.action_type === 'tier_price' && action.tiers ? action.tiers : [{ min_quantity: 1, max_quantity: '', percent_value: '' }]);
   const [saving, setSaving] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -309,7 +314,7 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
       } else if (formData.preset === 'fixed_price') {
         actionObj = { action_type: 'fixed_price', fixed_value: parseFloat(formData.discount_value.toString()) };
       } else if (formData.preset === 'promo_amount') {
-        actionObj = { action_type: 'fixed_amount_off', fixed_value: parseFloat(formData.discount_value.toString()) };
+        actionObj = { action_type: 'fixed_amount_off', fixed_value: parseFloat(formData.discount_value.toString()), applies_to: 'cart_subtotal' };
       } else if (formData.preset === 'quantity_tier') {
         actionObj = { action_type: 'tier_price', tiers: tiers.map(t => ({
           min_quantity: parseInt(t.min_quantity),
@@ -371,6 +376,17 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
             value_number: cond.value ? parseFloat(cond.value.toString()) : null
           });
         }
+      }
+
+      // Explicitly append the spend threshold condition if preset requires it
+      if (formData.preset === 'spend_threshold') {
+        if (!formData.spend_threshold_amount) {
+           throw new Error('Minimum cart subtotal is required for a Spend Threshold rule');
+        }
+        payload.conditions.push({
+          condition_type: 'cart_subtotal_min',
+          value_number: parseFloat(formData.spend_threshold_amount.toString())
+        });
       }
 
       const token = localStorage.getItem('adminToken');
@@ -507,6 +523,12 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                     </label>
                     <input required type="number" step="0.01" min="0.01" name="discount_value" value={formData.discount_value} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
                   </div>
+                  {formData.preset === 'spend_threshold' && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Minimum Cart Subtotal ($)</label>
+                      <input required type="number" step="0.01" min="0.01" name="spend_threshold_amount" value={formData.spend_threshold_amount} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="e.g. 200" />
+                    </div>
+                  )}
                   {(formData.preset.includes('percent') || formData.preset === 'spend_threshold') && (
                     <div>
                       <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Max Discount Cap ($)</label>

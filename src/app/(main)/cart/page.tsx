@@ -398,7 +398,7 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between items-center text-[#666666]">
                 <span>Tax</span>
-                <span className="italic">Calculated later</span>
+                <span className={cart.taxAmount !== undefined ? "font-medium text-[#333333]" : "italic"}>{cart.taxAmount !== undefined ? formatMoney(cart.taxAmount) : 'Calculated later'}</span>
               </div>
             </div>
 

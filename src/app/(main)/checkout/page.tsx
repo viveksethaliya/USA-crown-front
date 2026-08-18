@@ -565,7 +565,7 @@ export default function CheckoutPage() {
               </div>
               <div className={styles.summaryRow}>
                 <span>Tax</span>
-                <strong>Review</strong>
+                <strong>{cart.taxAmount !== undefined ? formatMoney(cart.taxAmount) : 'Review'}</strong>
               </div>
               <div className={`${styles.summaryRow} ${styles.totalRow}`}>
                 <span>Total Estimate</span>

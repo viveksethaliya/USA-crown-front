@@ -80,7 +80,7 @@ export default function PriceListsPage() {
   const [productSearch, setProductSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [itemForm, setItemForm] = useState<{ product_id?: number; variation_id?: number; name: string; sku: string; regular_price?: number; fixed_price: string; min_qty: string }>({ name: '', sku: '', fixed_price: '', min_qty: '1' });
+  const [itemForm, setItemForm] = useState<{ product_id?: number; variation_id?: number | string; name: string; sku: string; regular_price?: number; fixed_price: string; min_qty: string; product_variations?: any[] }>({ name: '', sku: '', fixed_price: '', min_qty: '1' });
   const [isSavingItem, setIsSavingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [editItemValues, setEditItemValues] = useState<{ fixed_price: string; min_qty: string }>({ fixed_price: '', min_qty: '1' });
@@ -235,7 +235,7 @@ export default function PriceListsPage() {
     userSearchTimerRef.current = setTimeout(async () => {
       setIsSearchingUsers(true);
       try {
-        const res = await adminFetch(apiUrl(`/api/admin/customers?search=${encodeURIComponent(userSearch)}&limit=10`), { headers: authHdr() });
+        const res = await adminFetch(apiUrl(`/api/admin/customers?search=${encodeURIComponent(userSearch)}&limit=10&level=0`), { headers: authHdr() });
         const json = await res.json();
         setUserResults(json.data || []);
       } catch { } finally { setIsSearchingUsers(false); }
@@ -247,11 +247,14 @@ export default function PriceListsPage() {
     if (!detail) return;
     if (!itemForm.fixed_price || parseFloat(itemForm.fixed_price) < 0) return toast.error('Enter a valid price');
     if (!itemForm.product_id && !itemForm.variation_id) return toast.error('Select a product first');
+    if (itemForm.product_variations?.length && !itemForm.variation_id) return toast.error('Please select a specific variation or "All variations"');
+    
     setIsSavingItem(true);
     try {
+      const vId = itemForm.variation_id === 'all' ? null : itemForm.variation_id;
       const res = await adminFetch(`${API}/price-lists/${detail.id}/items`, {
         method: 'POST', headers: authHdr(),
-        body: JSON.stringify({ product_id: itemForm.product_id, variation_id: itemForm.variation_id, fixed_price: itemForm.fixed_price, min_qty: itemForm.min_qty })
+        body: JSON.stringify({ product_id: itemForm.product_id, variation_id: vId, fixed_price: itemForm.fixed_price, min_qty: itemForm.min_qty })
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
       toast.success('Item added');
@@ -261,6 +264,22 @@ export default function PriceListsPage() {
       openDetail(detail.id);
     } catch (err: any) { toast.error(err.message); }
     finally { setIsSavingItem(false); }
+  };
+
+  const chooseProduct = async (p: any) => {
+    setProductSearch('');
+    setSearchResults([]);
+    if (p.type === 'variable') {
+      try {
+        setIsSearching(true);
+        const res = await adminFetch(`${API}/products/${p.id}`, { headers: authHdr() });
+        const data = await res.json();
+        setItemForm(f => ({ ...f, product_id: p.id, variation_id: '', name: p.name, sku: p.sku, regular_price: p.regular_price, product_variations: data.product_variations || [] }));
+      } catch (error: any) { toast.error(error.message); }
+      finally { setIsSearching(false); }
+    } else {
+      setItemForm(f => ({ ...f, product_id: p.id, variation_id: '', name: p.name, sku: p.sku, regular_price: p.regular_price, product_variations: [] }));
+    }
   };
 
   // ── Update item inline ──
@@ -440,11 +459,7 @@ export default function PriceListsPage() {
                       <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-[#312f2c]/15 rounded-xl shadow-xl max-h-52 overflow-y-auto">
                         {searchResults.map(p => (
                           <div key={p.id}
-                            onClick={() => {
-                              setItemForm(f => ({ ...f, product_id: p.id, variation_id: undefined, name: p.name, sku: p.sku, regular_price: p.regular_price }));
-                              setProductSearch('');
-                              setSearchResults([]);
-                            }}
+                            onClick={() => chooseProduct(p)}
                             className="flex items-center gap-3 p-3 hover:bg-[#d1a054]/5 cursor-pointer border-b border-[#312f2c]/5 last:border-0">
                             {p.product_images?.[0]?.url ? (
                               <img src={p.product_images[0].url} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-[#312f2c]/10" />
@@ -467,6 +482,24 @@ export default function PriceListsPage() {
                         <p className="text-xs text-[#312f2c]/50">Regular price: ${itemForm.regular_price ?? '—'}</p>
                       </div>
                       <button onClick={() => setItemForm({ name: '', sku: '', fixed_price: '', min_qty: '1' })} className="p-1 hover:bg-red-50 rounded-lg text-red-400"><X className="w-4 h-4" /></button>
+                    </div>
+                  )}
+                  {itemForm.product_variations && itemForm.product_variations.length > 0 && (
+                    <div className="mb-3">
+                      <label className="block text-xs font-semibold text-[#312f2c]/60 mb-1">Select Variation *</label>
+                      <select
+                        value={itemForm.variation_id}
+                        onChange={e => setItemForm(f => ({ ...f, variation_id: e.target.value }))}
+                        className="w-full bg-white border border-[#312f2c]/15 focus:border-[#d1a054] rounded-xl px-3 py-2.5 outline-none text-sm"
+                      >
+                        <option value="" disabled>Select variation...</option>
+                        <option value="all">All variations / whole product</option>
+                        {itemForm.product_variations.map(v => (
+                          <option key={v.id} value={v.id}>
+                            {v.sku} - {v.variation_attribute_values?.map((attr: any) => attr.attribute_values?.value).filter(Boolean).join(' / ')} (${v.regular_price ?? itemForm.regular_price})
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-3">
@@ -520,8 +553,13 @@ export default function PriceListsPage() {
                                 <div className="flex items-center gap-3">
                                   {img ? <img src={img} alt="" className="w-9 h-9 rounded-lg object-cover border border-[#312f2c]/10 flex-shrink-0" /> : <div className="w-9 h-9 rounded-lg bg-[#312f2c]/5 flex items-center justify-center flex-shrink-0"><Package className="w-4 h-4 text-[#312f2c]/20" /></div>}
                                   <div>
-                                    <p className="font-semibold text-[#312f2c] leading-tight">{prod?.name || `#${item.product_id}`}</p>
-                                    <p className="text-[10px] text-[#312f2c]/40 font-mono mt-0.5">{prod?.sku}</p>
+                                    <p className="font-semibold text-[#312f2c] leading-tight">
+                                      {prod?.name || `#${item.product_id}`}
+                                      {item.variation_id && <span className="ml-2 text-xs font-normal text-[#d1a054] bg-[#d1a054]/10 px-1.5 py-0.5 rounded-md">Variation Override</span>}
+                                    </p>
+                                    <p className="text-[10px] text-[#312f2c]/40 font-mono mt-0.5">
+                                      {prod?.sku} {item.variation_id && item.product_variations && `· Variation SKU: ${item.product_variations.sku}`}
+                                    </p>
                                   </div>
                                 </div>
                               </td>

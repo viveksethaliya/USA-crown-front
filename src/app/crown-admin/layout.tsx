@@ -166,7 +166,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen bg-[#f0ede5] text-[#312f2c] font-sans overflow-hidden p-3 gap-3">
+    <div className="flex h-screen bg-[#f0ede5] text-[#312f2c] font-sans overflow-hidden p-3 gap-3 print:h-auto print:overflow-visible print:bg-white print:p-0 print:block">
       <Toaster position="top-right" toastOptions={{ style: { background: '#312f2c', color: '#f0ede5', border: '1px solid #4a473f' } }} />
 
       {/* ── Session Expired Modal ── */}
@@ -194,7 +194,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Sidebar */}
-      <aside className="w-[260px] bg-[#e8e4d8]/50 backdrop-blur-2xl border border-white/40 rounded-3xl flex flex-col flex-shrink-0 shadow-sm overflow-hidden">
+      <aside className="w-[260px] bg-[#e8e4d8]/50 backdrop-blur-2xl border border-white/40 rounded-3xl flex flex-col flex-shrink-0 shadow-sm overflow-hidden print:hidden">
         {/* Logo */}
         <div className="h-24 flex items-center justify-center shrink-0 mt-4 mb-2">
           <div className="bg-white/80 border border-white/60 shadow-[0_8px_16px_rgba(0,0,0,0.06)] rounded-2xl p-3.5 flex items-center justify-center transition-transform hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]">
@@ -247,11 +247,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Right Side */}
-      <div className="flex-1 flex flex-col gap-3 overflow-hidden">
+      <div className="flex-1 flex flex-col gap-3 overflow-hidden print:overflow-visible">
         {/* Main Content */}
-        <main className="flex-1 bg-[#ece9e1]/80 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-sm overflow-hidden relative">
-          <div className="h-full overflow-y-auto p-8" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <div key={pathname} className="animate-tab-switch h-full">
+        <main className="flex-1 bg-[#ece9e1]/80 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-sm overflow-hidden relative print:bg-transparent print:border-none print:shadow-none print:overflow-visible print:rounded-none">
+          <div className="h-full overflow-y-auto p-8 print:h-auto print:overflow-visible print:p-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div key={pathname} className="animate-tab-switch h-full print:h-auto">
               {children}
             </div>
           </div>
