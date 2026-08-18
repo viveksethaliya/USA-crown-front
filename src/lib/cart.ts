@@ -23,6 +23,7 @@ export interface CartSummary {
   itemCount: number;
   subtotal: number;
   discountAmount: number;
+  taxAmount?: number;
   total: number;
   canCheckout: boolean;
   pricingSource: string | null;
