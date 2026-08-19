@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Eye, UsersRound, Settings } from 'lucide-react';
+import { Plus, Search, Eye, UsersRound, Settings, Archive, ArchiveRestore, ChevronDown, ChevronRight } from 'lucide-react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -16,6 +16,9 @@ type GroupData = {
 
 export default function PricingGroupsList() {
   const [groups, setGroups] = useState<GroupData[]>([]);
+  const [archivedGroups, setArchivedGroups] = useState<GroupData[]>([]);
+  const [archivedCount, setArchivedCount] = useState(0);
+  const [isArchivedExpanded, setIsArchivedExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const router = useRouter();
@@ -33,12 +36,77 @@ export default function PricingGroupsList() {
       if (res.ok) {
         const data = await res.json();
         setGroups(data.groups || []);
+        setArchivedCount(data.archivedCount || 0);
       }
     } catch (error) {
       console.error('Failed to fetch groups', error);
       toast.error('Failed to load groups');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchArchivedGroups = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await adminFetch('/api/admin/pricing-groups?status=archived', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setArchivedGroups(data.groups || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch archived groups', error);
+      toast.error('Failed to load archived groups');
+    }
+  };
+
+  const toggleArchived = () => {
+    if (!isArchivedExpanded && archivedGroups.length === 0) {
+      fetchArchivedGroups();
+    }
+    setIsArchivedExpanded(!isArchivedExpanded);
+  };
+
+  const handleArchive = async (group: GroupData) => {
+    if (!window.confirm(`Archiving this group will immediately remove pricing for ${group.member_count || 0} assigned customer(s), effective on their next page load or cart request. This can be undone by unarchiving.`)) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await adminFetch(`/api/admin/pricing-groups/${group.id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'archived' })
+      });
+      if (!res.ok) throw new Error('Failed to archive group');
+      toast.success('Group archived');
+      setGroups(groups.filter(g => g.id !== group.id));
+      setArchivedCount(archivedCount + 1);
+      if (isArchivedExpanded || archivedGroups.length > 0) {
+        setArchivedGroups(prev => [...prev, { ...group, status: 'archived' }].sort((a, b) => a.name.localeCompare(b.name)));
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error archiving group');
+    }
+  };
+
+  const handleUnarchive = async (group: GroupData) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await adminFetch(`/api/admin/pricing-groups/${group.id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active' }) // Defaulting to active as per spec
+      });
+      if (!res.ok) throw new Error('Failed to unarchive group');
+      toast.success('Group unarchived');
+      setArchivedGroups(archivedGroups.filter(g => g.id !== group.id));
+      setArchivedCount(Math.max(0, archivedCount - 1));
+      setGroups(prev => [...prev, { ...group, status: 'active' }].sort((a, b) => a.name.localeCompare(b.name)));
+    } catch (err: any) {
+      toast.error(err.message || 'Error unarchiving group');
     }
   };
 
@@ -152,15 +220,77 @@ export default function PricingGroupsList() {
                         </span>
                       </td>
                       <td className="p-4 pr-6 text-right">
-                        <Link 
-                          href={`/crown-admin/pricing-groups/${group.id}`} 
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#312f2c]/65 shadow-sm transition-all hover:bg-[#d1a054] hover:text-white"
-                        >
-                          <Settings className="h-3.5 w-3.5" /> Manage
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <button 
+                            onClick={() => handleArchive(group)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-red-500 shadow-sm transition-all hover:bg-red-50"
+                            title="Archive"
+                          >
+                            <Archive className="h-3.5 w-3.5" /> Archive
+                          </button>
+                          <Link 
+                            href={`/crown-admin/pricing-groups/${group.id}`} 
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#312f2c] px-3 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#d1a054]"
+                          >
+                            <Settings className="h-3.5 w-3.5" /> Manage
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))
+                )}
+                {/* Archived Groups Section */}
+                {archivedCount > 0 && !search && (
+                  <>
+                    <tr className="bg-[#312f2c]/5 cursor-pointer hover:bg-[#312f2c]/10 transition-colors" onClick={toggleArchived}>
+                      <td colSpan={5} className="p-4 pl-6">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-[#312f2c]/70">
+                          {isArchivedExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          Archived ({archivedCount})
+                        </div>
+                      </td>
+                    </tr>
+                    {isArchivedExpanded && archivedGroups.map(group => (
+                      <tr key={`archived-${group.id}`} className="group transition-colors bg-white/30 hover:bg-white/50 opacity-80">
+                        <td className="p-4 pl-6">
+                          <span className="font-bold text-[#312f2c]/60 block line-through decoration-[#312f2c]/20">
+                            {group.name}
+                          </span>
+                        </td>
+                        <td className="p-4 text-xs font-medium text-[#312f2c]/50 capitalize">
+                          {group.group_type.replace('_', ' ')}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#312f2c]/5 text-xs font-bold text-[#312f2c]/50">
+                            {group.member_count || 0}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-200">
+                            <Archive className="w-3 h-3 opacity-50" />
+                            Archived
+                          </span>
+                        </td>
+                        <td className="p-4 pr-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button 
+                              onClick={() => handleUnarchive(group)}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-emerald-600 shadow-sm transition-all hover:bg-emerald-50"
+                              title="Unarchive"
+                            >
+                              <ArchiveRestore className="h-3.5 w-3.5" /> Restore
+                            </button>
+                            <Link 
+                              href={`/crown-admin/pricing-groups/${group.id}`} 
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#312f2c]/50 shadow-sm transition-all hover:bg-[#312f2c]/10"
+                            >
+                              View
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
                 )}
               </tbody>
             </table>

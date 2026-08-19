@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { adminFetch } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Archive, ArchiveRestore } from 'lucide-react';
 import HelpDrawer from './HelpDrawer';
 
 export default function GroupOverview({ group, onUpdate }: { group: any, onUpdate: (data: any) => void }) {
@@ -20,6 +20,7 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
   const [saving, setSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -79,6 +80,19 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
     setPendingStatus(null);
     // Revert select back to current status
     setFormData(prev => ({ ...prev, status: group.status }));
+  };
+
+  const confirmArchive = () => {
+    const newData = { ...formData, status: 'archived' };
+    setFormData(newData);
+    setShowArchiveConfirm(false);
+    handleSave(newData);
+  };
+
+  const handleUnarchive = () => {
+    const newData = { ...formData, status: 'active' };
+    setFormData(newData);
+    handleSave(newData);
   };
 
   return (
@@ -149,10 +163,11 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
             value={formData.status}
             onChange={handleChange}
             className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#d1a054]/40"
+            disabled={group.status === 'archived'}
           >
             <option value="draft">Draft</option>
             <option value="active">Active</option>
-            <option value="archived">Archived</option>
+            {group.status === 'archived' && <option value="archived">Archived</option>}
           </select>
         </div>
 
@@ -191,10 +206,29 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
         </div>
       </div>
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex justify-between items-center">
+        <div>
+          {group.status === 'archived' ? (
+            <button 
+              onClick={handleUnarchive}
+              disabled={saving}
+              className="inline-flex items-center gap-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-5 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              <ArchiveRestore className="w-4 h-4" /> Unarchive Group
+            </button>
+          ) : (
+            <button 
+              onClick={() => setShowArchiveConfirm(true)}
+              disabled={saving}
+              className="inline-flex items-center gap-2 border border-red-500 text-red-500 hover:bg-red-50 px-5 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              <Archive className="w-4 h-4" /> Archive Group
+            </button>
+          )}
+        </div>
         <button 
           onClick={() => handleSave()}
-          disabled={saving}
+          disabled={saving || group.status === 'archived'}
           className="bg-[#312f2c] hover:bg-[#312f2c]/85 text-white px-5 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Changes'}
@@ -220,6 +254,31 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium"
               >
                 Yes, Activate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showArchiveConfirm && (
+        <div className="fixed inset-0 bg-[#312f2c]/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-red-600 mb-2">Archive Pricing Group?</h3>
+            <p className="text-[#312f2c]/60 mb-6">
+              Archiving this group will immediately remove pricing for {group.member_count || 0} assigned customer(s), effective on their next page load or cart request. This can be undone by unarchiving.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowArchiveConfirm(false)}
+                className="px-4 py-2 text-[#312f2c]/60 hover:bg-[#312f2c]/10 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmArchive}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
+              >
+                Yes, Archive
               </button>
             </div>
           </div>
