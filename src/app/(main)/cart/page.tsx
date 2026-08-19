@@ -283,17 +283,34 @@ export default function CartPage() {
 
                   {/* 4. Final Price after discount applied */}
                   <td className="py-6 align-top pt-7 pl-4 text-right">
-                    {item.discountAmount && item.discountAmount > 0 ? (
-                      <div className="flex flex-col items-end">
-                        <span className="line-through text-[#666666] text-sm">{formatMoney(item.lineTotal)}</span>
-                        <span className="text-[#333333] font-semibold">{formatMoney(item.finalLineTotal)}</span>
-                        <span className="text-xs text-[#d4af37] mt-2 font-medium">
-                          Discount: -{formatMoney(item.discountAmount)}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-[#333333] font-semibold">{formatMoney(item.lineTotal)}</span>
-                    )}
+                    {(() => {
+                      let displayDiscount = item.discountAmount || 0;
+                      if ((item as any).appliedPromotions && (item as any).appliedPromotions.length > 0) {
+                        const cartSubtotalPortion = (item as any).appliedPromotions
+                          .filter((p: any) => p.applies_to === 'cart_subtotal')
+                          .reduce((sum: number, p: any) => sum + p.amount, 0);
+                        displayDiscount -= cartSubtotalPortion;
+                      }
+                      displayDiscount = Math.max(0, Math.round(displayDiscount * 100) / 100);
+                      
+                      const displayFinalTotal = item.lineTotal - displayDiscount;
+
+                      if (displayDiscount > 0) {
+                        return (
+                          <div className="flex flex-col items-end">
+                            <span className="line-through text-[#666666] text-sm">{formatMoney(item.lineTotal)}</span>
+                            <span className="text-[#333333] font-semibold">{formatMoney(displayFinalTotal)}</span>
+                            <span className="text-xs text-[#d4af37] mt-2 font-medium">
+                              Discount: -{formatMoney(displayDiscount)}
+                            </span>
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <span className="text-[#333333] font-semibold">{formatMoney(item.lineTotal)}</span>
+                        );
+                      }
+                    })()}
                   </td>
 
                   {/* 5. Remove Option */}
