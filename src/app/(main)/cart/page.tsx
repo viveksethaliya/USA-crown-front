@@ -337,18 +337,39 @@ export default function CartPage() {
             {cart.submittedCouponCodes && cart.submittedCouponCodes.length > 0 && (
               <div className="mb-6 space-y-3">
                 {cart.submittedCouponCodes.map((code) => {
-                  const isWinner = cart.pricingSource === 'coupon' && cart.selectedCouponCode === code;
+                  // A coupon wins when pricingSource is 'standard' and appliedDiscounts has
+                  // an entry with a matching coupon_code and a positive discount_amount.
+                  const winningDiscount = cart.appliedDiscounts?.find(
+                    (d) => d.coupon_code === code && (d.discount_amount ?? 0) > 0
+                  );
+                  const isWinner = cart.pricingSource === 'standard' && !!winningDiscount;
                   const isLoser = !isWinner;
+
+                  // Find the real backend-computed rejection reason for this code
+                  const rejectionEntry = cart.rejectedCouponMessages?.find((r) => r.code === code);
+                  const rejectionMessage = rejectionEntry?.reason === 'Coupon overridden by B2B contract pricing (Price List)'
+                    ? 'Your existing B2B contract pricing gives you a better deal, so this code was not applied.'
+                    : rejectionEntry?.reason === 'Coupon invalid, limits reached, or blocked by an exclusive discount'
+                    ? 'This coupon could not be applied — it may be invalid, expired, or have reached its usage limit.'
+                    : isLoser
+                    ? 'This coupon was not applied to your order.'
+                    : null;
                   
                   return (
                     <div key={code} className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 border ${isWinner ? 'border-[#d4af37] bg-[#fffaf0]' : 'border-[#e0e0e0] bg-gray-50'}`}>
                       <div className="flex-1">
-                        <span className="font-semibold text-[#333] uppercase">{code}</span>
-                        {isWinner && <span className="ml-3 text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">APPLIED</span>}
-                        {isLoser && (
-                          <p className="text-sm text-[#666] mt-1">
-                            Your existing B2B pricing gives you a better price, so this code was not applied.
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-[#333] uppercase">{code}</span>
+                          {isWinner && <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">APPLIED</span>}
+                          {isLoser && <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded">NOT APPLIED</span>}
+                        </div>
+                        {isWinner && winningDiscount && (
+                          <p className="text-sm text-green-700 mt-1 font-medium">
+                            Saving {formatMoney(winningDiscount.discount_amount ?? 0)} with this code
                           </p>
+                        )}
+                        {isLoser && rejectionMessage && (
+                          <p className="text-sm text-[#666] mt-1">{rejectionMessage}</p>
                         )}
                       </div>
                       <button
@@ -364,19 +385,19 @@ export default function CartPage() {
               </div>
             )}
 
-            <form onSubmit={handleApplyCoupon} className="flex gap-2 max-w-sm">
+            <form onSubmit={handleApplyCoupon} className="flex flex-col sm:flex-row gap-2 max-w-sm">
               <input
                 type="text"
                 placeholder="Enter code"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
                 disabled={applyingCoupon}
-                className="flex-1 px-4 py-2 border border-[#ccc] focus:border-[#001f3f] focus:outline-none uppercase"
+                className="w-full sm:flex-1 px-4 py-2 border border-[#ccc] focus:border-[#001f3f] focus:outline-none uppercase rounded-[4px]"
               />
               <button
                 type="submit"
                 disabled={!couponCode.trim() || applyingCoupon}
-                className="px-6 py-2 bg-[#333] text-white font-medium hover:bg-[#000] disabled:opacity-50 transition-colors"
+                className="w-full sm:w-auto px-6 py-2 bg-[#fa9531] text-[#001f3f] font-bold uppercase tracking-wider hover:bg-[#e0852b] hover:text-[#001f3f] disabled:opacity-50 transition-colors rounded-[4px]"
               >
                 {applyingCoupon ? 'Applying...' : 'Apply'}
               </button>

@@ -30,6 +30,7 @@ export interface CartSummary {
   pricingSourceName: string | null;
   submittedCouponCodes: string[];
   selectedCouponCode: string | null;
+  appliedDiscounts: { discount_rule_id?: number; coupon_code?: string | null; rule_name?: string; discount_amount?: number; type?: string; applies_to?: string }[];
   rejectedCouponMessages: { code: string; reason: string }[];
 }
 

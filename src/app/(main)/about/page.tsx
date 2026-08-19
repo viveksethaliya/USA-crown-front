@@ -111,9 +111,9 @@ export default function AboutPage() {
                     <div className={styles.bannerTitle}>
                         Experience the Crown Findings Difference
                     </div>
-                    <button className={styles.bannerBtn}>
+                    <Link href="/apply" className={styles.bannerBtn}>
                         Register For A Wholesale Account
-                    </button>
+                    </Link>
                 </ScrollReveal>
             </section>
 

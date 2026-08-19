@@ -156,9 +156,9 @@ export default function ContactPage() {
         <div className={styles.bannerTitle}>
           Experience the Crown Findings Difference
         </div>
-        <button className={styles.bannerBtn}>
+        <Link href="/apply" className={styles.bannerBtn}>
           Register For A Wholesale Account
-        </button>
+        </Link>
       </section>
 
     </main>
