@@ -136,7 +136,7 @@ export default function Header() {
     async function fetchProducts() {
       setLoadingProducts(true);
       try {
-        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=5`));
+        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=7`));
         if (res.ok) {
           const data = await res.json();
           setRecommendedCache(prev => ({
@@ -179,15 +179,24 @@ export default function Header() {
     platinum: null
   });
 
-  // Close mega menu on outside click
+  // Close mega menu on outside click and Escape key
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (bottomTierRef.current && !bottomTierRef.current.contains(e.target as Node)) {
         setIsMegaMenuOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsMegaMenuOpen(false);
+      }
+    }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Lock body scroll and focus mega menu on open
@@ -518,19 +527,15 @@ export default function Header() {
           <nav className={styles.nav}>
             {/* Desktop Nav */}
             <ul className={styles.navList}>
-              <li
-                className={styles.navItem}
-                onMouseEnter={() => setIsMegaMenuOpen(true)}
-                onMouseLeave={() => setIsMegaMenuOpen(false)}
-              >
-                <Link
-                  href="/products"
+              <li className={styles.navItem}>
+                <button
                   className={`${styles.navLink} ${styles.navLinkBtn}`}
                   aria-expanded={isMegaMenuOpen}
+                  onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
                   <span>☰</span> ALL PRODUCTS ▾
-                </Link>
+                </button>
 
                 {/* Mega Menu Dropdown */}
                 {isMegaMenuOpen && (

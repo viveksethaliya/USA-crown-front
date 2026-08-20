@@ -58,7 +58,7 @@
    SIDEBAR
    ============================================= */
 .sidebar {
-  width: 280px;
+  width: 240px;
   flex-shrink: 0;
 }
 
@@ -111,7 +111,7 @@
 .filterList {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.2rem;
   max-height: 500px;
   overflow-y: auto;
   padding-right: 0.3rem;
@@ -126,7 +126,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--color-text-main);
   cursor: pointer;
   padding: 0.15rem 0;
@@ -248,8 +248,8 @@
    ============================================= */
 .productGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
 .productCard {
@@ -310,17 +310,17 @@
 }
 
 .productInfo {
-  padding: 1rem;
+  padding: 0.6rem;
   flex: 1;
 }
 
 .productName {
   font-family: var(--font-montserrat), sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--color-inkblue);
   line-height: 1.5;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem;
   letter-spacing: 0.3px;
 }
 
@@ -357,7 +357,7 @@
 }
 
 .priceValue {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--color-gold);
 }
@@ -383,13 +383,13 @@
 .viewBtn {
   display: block;
   text-align: center;
-  padding: 0.8rem;
+  padding: 0.5rem;
   background-color: transparent;
   color: var(--color-inkblue);
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: var(--font-montserrat), sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: capitalize;
   letter-spacing: 0.5px;

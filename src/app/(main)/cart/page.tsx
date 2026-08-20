@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   formatMoney,
   cartFetch,
@@ -10,6 +10,96 @@ import {
 } from '@/lib/cart';
 import { toast } from 'react-hot-toast';
 import { ShoppingCart, Trash2, ArrowRight, Loader2, Search } from 'lucide-react';
+
+function QuantityControl({ item, busyItemId, updateQuantity }: { item: any, busyItemId: string | null, updateQuantity: (id: string, qty: number) => void }) {
+  const [inputValue, setInputValue] = useState(item.quantity.toString());
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local state when external quantity changes (e.g., from +/- buttons or loadCart)
+  useEffect(() => {
+    setInputValue(item.quantity.toString());
+  }, [item.quantity]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  const commitValue = (valueStr: string) => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    const parsed = parseInt(valueStr);
+    const finalQty = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+    
+    if (finalQty !== item.quantity) {
+      updateQuantity(item.id, finalQty);
+    } else {
+      setInputValue(item.quantity.toString()); // Revert visual if invalid
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputValue(val); // Update local visual immediately
+    
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      commitValue(val);
+    }, 600); // 600ms delay for typing
+  };
+
+  const handleBlur = () => {
+    commitValue(inputValue);
+  };
+
+  const handleIncrement = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    // Use the parsed local inputValue, so a typed "20" + click "+" = 21
+    const baseQuantity = parseInt(inputValue) || item.quantity;
+    updateQuantity(item.id, baseQuantity + 1);
+  };
+
+  const handleDecrement = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    const baseQuantity = parseInt(inputValue) || item.quantity;
+    // Don't go below 1
+    const newQty = Math.max(1, baseQuantity - 1);
+    if (newQty !== item.quantity) {
+      updateQuantity(item.id, newQty);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center">
+      <div className="flex items-center border border-[#e0e0e0] bg-white w-min rounded-none">
+        <button
+          onClick={handleDecrement}
+          disabled={busyItemId === item.id || (parseInt(inputValue) || item.quantity) <= 1}
+          className="px-4 py-2 text-[#333333] hover:bg-[#f8f9fa] disabled:opacity-50 transition-colors border-none"
+        >
+          -
+        </button>
+        <input
+          type="number"
+          min={1}
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          disabled={busyItemId === item.id}
+          className="w-12 text-center text-sm font-medium text-[#333333] focus:outline-none appearance-none bg-transparent border-none p-0"
+        />
+        <button
+          onClick={handleIncrement}
+          disabled={busyItemId === item.id}
+          className="px-4 py-2 text-[#333333] hover:bg-[#f8f9fa] disabled:opacity-50 transition-colors border-none"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartSummary | null>(null);
@@ -253,32 +343,7 @@ export default function CartPage() {
 
                   {/* 3. Quantity */}
                   <td className="py-6 align-top pt-6 px-4">
-                    <div className="flex items-center justify-center">
-                      <div className="flex items-center border border-[#e0e0e0] bg-white w-min rounded-none">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          disabled={busyItemId === item.id || item.quantity <= 1}
-                          className="px-4 py-2 text-[#333333] hover:bg-[#f8f9fa] disabled:opacity-50 transition-colors border-none"
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.quantity}
-                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                          disabled={busyItemId === item.id}
-                          className="w-12 text-center text-sm font-medium text-[#333333] focus:outline-none appearance-none bg-transparent border-none p-0"
-                        />
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          disabled={busyItemId === item.id}
-                          className="px-4 py-2 text-[#333333] hover:bg-[#f8f9fa] disabled:opacity-50 transition-colors border-none"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
+                    <QuantityControl item={item} busyItemId={busyItemId} updateQuantity={updateQuantity} />
                   </td>
 
                   {/* 4. Final Price after discount applied */}

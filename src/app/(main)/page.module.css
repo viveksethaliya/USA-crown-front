@@ -51,7 +51,7 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 2.5rem 2rem;
 }
 
 .heroTextContent {
@@ -114,9 +114,8 @@
   color: var(--color-inkblue);
 }
 
-/* --- About Section --- */
 .aboutSection {
-  padding: 6rem 0;
+  padding: 3.5rem 0;
   background-color: var(--color-white);
 }
 
@@ -178,7 +177,7 @@
 
 /* --- Explore Section --- */
 .exploreSection {
-  padding: 5rem 0;
+  padding: 3rem 0;
   background-image: linear-gradient(rgba(245, 243, 239, 0.95), rgba(245, 243, 239, 0.95)), url('/web-phts/comments2.webp');
   background-size: cover;
   background-position: center;
@@ -239,7 +238,7 @@
 
 /* --- Categories Section --- */
 .categoriesSection {
-  padding: 5rem 0;
+  padding: 3rem 0;
   background-color: var(--color-bg-light);
 }
 
@@ -321,7 +320,7 @@
 
 /* --- Affiliations Section --- */
 .affiliationsSection {
-  padding: 4rem 0;
+  padding: 2.5rem 0;
   background-color: var(--color-white);
   border-top: 1px solid #eee;
 }
@@ -349,7 +348,7 @@
 
 /* --- CTA Section --- */
 .ctaSection {
-  padding: 5rem 0;
+  padding: 3rem 0;
   background-color: var(--color-inkblue);
   background-image: linear-gradient(rgba(0, 31, 63, 0.85), rgba(0, 31, 63, 0.85)), url('/web-phts/type-of-rings-scaled-1-2048x1024.jpg');
   background-position: center;
@@ -396,7 +395,7 @@
 
 /* --- Features Section --- */
 .features {
-  padding: 5rem 0;
+  padding: 3rem 0;
   background-color: var(--color-white);
   border-top: 1px solid #eee;
 }
@@ -441,7 +440,7 @@
 
 /* --- Bottom Banner --- */
 .bottomBanner {
-  padding: 2.5rem 0;
+  padding: 1.5rem 0;
   background: linear-gradient(rgba(250, 149, 49, 0.95), rgba(250, 149, 49, 0.95)), url('/web-phts/btmbnr.jpg.jpeg');
   background-size: cover;
   background-position: center;
@@ -486,7 +485,7 @@
 
 /* --- Comments / Testimonials Section --- */
 .commentsSection {
-  padding: 5rem 0;
+  padding: 3rem 0;
   background-color: var(--color-white);
 }
 

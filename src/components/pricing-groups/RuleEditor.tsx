@@ -173,14 +173,8 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
   // Infer preset from action/rule
   let initialPreset = 'promo_percent';
   if (action?.action_type === 'percent_off') initialPreset = 'promo_percent';
-  if (action?.action_type === 'fixed_price') initialPreset = 'fixed_price';
   if (action?.action_type === 'fixed_amount_off') initialPreset = 'promo_amount';
   if (action?.action_type === 'tier_price') initialPreset = 'quantity_tier';
-
-  // For backward compatibility: if subtotal threshold is used and action is percent_off, could be spend_threshold
-  if (initialRule?.requires_min_cart_subtotal || initConditions.some((c: any) => c.condition_type === 'cart_subtotal_min')) {
-    if (action?.action_type === 'percent_off') initialPreset = 'spend_threshold';
-  }
 
   // Convert old DB formats and existing conditions array into UI state
   const startingConditions = initConditions.map((c: any) => ({
@@ -225,15 +219,10 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
     meas_type: initialRule?.metadata?.legacy_measurement?.type || 'inch',
     meas_min: initialRule?.metadata?.legacy_measurement?.min || '',
     meas_max: initialRule?.metadata?.legacy_measurement?.max || '',
-    
-    // Spend Threshold
-    spend_threshold_amount: startingConditions.find((c: any) => c.type === 'cart_subtotal_min')?.value || '',
   });
 
   const [targets, setTargets] = useState<{ type: string, id: string, is_exclusion: boolean }[]>(initTargets);
-  const [conditions, setConditions] = useState<{ type: string, value: string }[]>(
-    initialPreset === 'spend_threshold' ? startingConditions.filter((c: any) => c.type !== 'cart_subtotal_min') : startingConditions
-  );
+  const [conditions, setConditions] = useState<{ type: string, value: string }[]>(startingConditions);
   const [tiers, setTiers] = useState<any[]>(action?.action_type === 'tier_price' && action.tiers ? action.tiers : [{ min_quantity: 1, max_quantity: '', percent_value: '' }]);
   const [saving, setSaving] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -309,10 +298,8 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
 
       // Action Resolution based on preset
       let actionObj: any = {};
-      if (formData.preset === 'base_percent' || formData.preset === 'promo_percent' || formData.preset === 'spend_threshold') {
+      if (formData.preset === 'base_percent' || formData.preset === 'promo_percent') {
         actionObj = { action_type: 'percent_off', percent_value: parseFloat(formData.discount_value.toString()) };
-      } else if (formData.preset === 'fixed_price') {
-        actionObj = { action_type: 'fixed_price', fixed_value: parseFloat(formData.discount_value.toString()) };
       } else if (formData.preset === 'promo_amount') {
         actionObj = { action_type: 'fixed_amount_off', fixed_value: parseFloat(formData.discount_value.toString()), applies_to: 'cart_subtotal' };
       } else if (formData.preset === 'quantity_tier') {
@@ -378,16 +365,6 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
         }
       }
 
-      // Explicitly append the spend threshold condition if preset requires it
-      if (formData.preset === 'spend_threshold') {
-        if (!formData.spend_threshold_amount) {
-           throw new Error('Minimum cart subtotal is required for a Spend Threshold rule');
-        }
-        payload.conditions.push({
-          condition_type: 'cart_subtotal_min',
-          value_number: parseFloat(formData.spend_threshold_amount.toString())
-        });
-      }
 
       const token = localStorage.getItem('adminToken');
       const endpoint = isEditing 
@@ -443,20 +420,10 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                   <div className="font-semibold text-[#312f2c] text-sm">Amount Off</div>
                   <div className="text-xs text-[#312f2c]/50 mt-1">Fixed $ discount per item</div>
                 </label>
-                <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'fixed_price' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                  <input type="radio" name="preset" value="fixed_price" checked={formData.preset === 'fixed_price'} onChange={handleChange} className="sr-only" />
-                  <div className="font-semibold text-[#312f2c] text-sm">Fixed Contract Price</div>
-                  <div className="text-xs text-[#312f2c]/50 mt-1">Exact unit price override</div>
-                </label>
                 <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'quantity_tier' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
                   <input type="radio" name="preset" value="quantity_tier" checked={formData.preset === 'quantity_tier'} onChange={handleChange} className="sr-only" />
                   <div className="font-semibold text-[#312f2c] text-sm">Quantity Tiers</div>
                   <div className="text-xs text-[#312f2c]/50 mt-1">Volume-based discounts</div>
-                </label>
-                <label className={`border rounded-lg p-3 cursor-pointer transition-colors ${formData.preset === 'spend_threshold' ? 'border-[#d1a054] bg-[#d1a054]/10 ring-1 ring-[#d1a054]' : 'border-[#312f2c]/10 hover:border-[#d1a054]/30'}`}>
-                  <input type="radio" name="preset" value="spend_threshold" checked={formData.preset === 'spend_threshold'} onChange={handleChange} className="sr-only" />
-                  <div className="font-semibold text-[#312f2c] text-sm">Spend Threshold</div>
-                  <div className="text-xs text-[#312f2c]/50 mt-1">Unlock with cart total</div>
                 </label>
               </div>
             </div>
@@ -519,17 +486,11 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">
-                      {formData.preset.includes('percent') || formData.preset === 'spend_threshold' ? 'Percentage Off (%)' : 'Amount ($)'}
+                      {formData.preset.includes('percent') ? 'Percentage Off (%)' : 'Amount ($)'}
                     </label>
                     <input required type="number" step="0.01" min="0.01" name="discount_value" value={formData.discount_value} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
                   </div>
-                  {formData.preset === 'spend_threshold' && (
-                    <div>
-                      <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Minimum Cart Subtotal ($)</label>
-                      <input required type="number" step="0.01" min="0.01" name="spend_threshold_amount" value={formData.spend_threshold_amount} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="e.g. 200" />
-                    </div>
-                  )}
-                  {(formData.preset.includes('percent') || formData.preset === 'spend_threshold') && (
+                  {formData.preset.includes('percent') && (
                     <div>
                       <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Max Discount Cap ($)</label>
                       <input type="number" step="0.01" min="0" name="max_discount_amount" value={formData.max_discount_amount} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="No limit" />

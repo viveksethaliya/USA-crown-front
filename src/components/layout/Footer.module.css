@@ -10,8 +10,8 @@
 .newsletterBanner {
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(0, 31, 63, 0.95) 100%);
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  padding: 3rem 4rem;
-  margin-bottom: 4rem;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
 }
 
 .newsletterContainer {
@@ -63,8 +63,8 @@
 .newsletterInput {
   flex: 1;
   box-sizing: border-box;
-  height: 48px;
-  padding: 0 1.2rem;
+  height: 38px;
+  padding: 0 1rem;
   border: 2px solid rgba(212, 175, 55, 0.3);
   border-right: none;
   border-radius: 4px 0 0 4px;
@@ -87,11 +87,11 @@
 
 .newsletterBtn {
   box-sizing: border-box;
-  height: 48px;
-  padding: 0 2rem;
+  height: 38px;
+  padding: 0 1.5rem;
   background-color: var(--color-accent2);
   color: var(--color-primary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 1.5px;
   border: 2px solid var(--color-accent2);
@@ -132,16 +132,16 @@
 
 .container {
   width: 100%;
-  padding: 0 4rem 4rem;
+  padding: 0 2rem 2rem;
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .column {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .section {
@@ -161,7 +161,7 @@
 
 .heading {
   color: var(--color-accent2);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 1px;
   /* text-transform: uppercase; */
@@ -183,7 +183,7 @@
 .text {
   color: #cccccc;
   line-height: 1.6;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 
 .contactInfo {

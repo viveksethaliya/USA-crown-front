@@ -126,7 +126,7 @@
 
 /* Sections spacing */
 :where(.storefront-root) section {
-  padding: 6rem 0; /* Add more breathing room globally */
+  padding: 3rem 0; /* Tighter layout for density */
 }
 
 

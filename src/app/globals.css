@@ -46,7 +46,7 @@
 }
 
 html {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 body {
@@ -76,11 +76,11 @@ h6 {
   }
 
   .primary-btn {
-    @apply inline-flex items-center justify-center px-8 py-3 bg-primary text-white font-bold uppercase tracking-widest rounded transition-all duration-300 border border-primary hover:bg-white hover:text-primary hover:-translate-y-1 shadow-lg hover:shadow-xl;
+    @apply inline-flex items-center justify-center px-6 py-2 bg-primary text-white font-bold uppercase tracking-widest rounded transition-all duration-300 border border-primary hover:bg-white hover:text-primary hover:-translate-y-1 shadow-lg hover:shadow-xl;
   }
 
   .secondary-btn {
-    @apply inline-flex items-center justify-center px-8 py-3 bg-transparent border border-primary text-primary font-bold uppercase tracking-widest rounded transition-all duration-300 hover:bg-primary hover:text-white hover:-translate-y-1 shadow-sm hover:shadow-lg;
+    @apply inline-flex items-center justify-center px-6 py-2 bg-transparent border border-primary text-primary font-bold uppercase tracking-widest rounded transition-all duration-300 hover:bg-primary hover:text-white hover:-translate-y-1 shadow-sm hover:shadow-lg;
   }
 
   /* Bento card rich backgrounds */
