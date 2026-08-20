@@ -107,14 +107,20 @@ function ProductsContent() {
   }
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [filters, setFilters] = useState<DynamicFilter[]>([]);
+  // Initialize with placeholder filters so the headers are visible immediately while loading
+  const [filters, setFilters] = useState<DynamicFilter[]>([
+    { id: 8, name: 'Metal', slug: 'metal', type: 'select', terms: [] },
+    { id: 9, name: 'Sizes', slug: 'sizes', type: 'select', terms: [] }
+  ]);
   const [categories, setCategories] = useState<CategoryTree[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const [sortBy, setSortBy] = useState('name');
 
   const [expandedFilters, setExpandedFilters] = useState<string[]>(['categories']);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [filtersLoading, setFiltersLoading] = useState(false);
 
   const toggleFilterExpand = (filterKey: string) => {
     setExpandedFilters(prev => prev.includes(filterKey) ? prev.filter(f => f !== filterKey) : [...prev, filterKey]);
@@ -143,12 +149,15 @@ function ProductsContent() {
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
+      setCategoriesLoading(true);
       try {
         const res = await fetch(apiUrl('/api/store/catalog/categories'));
         const data = await res.json();
         setCategories(data.categories || []);
       } catch (err) {
         console.error('Failed to fetch categories', err);
+      } finally {
+        setCategoriesLoading(false);
       }
     };
     fetchCategories();
@@ -159,6 +168,7 @@ function ProductsContent() {
   const searchStr = catalogState.search;
   useEffect(() => {
     const fetchFilters = async () => {
+      setFiltersLoading(true);
       try {
         const queryParams = new URLSearchParams();
         if (categoryStr) queryParams.set('category', categoryStr);
@@ -167,14 +177,10 @@ function ProductsContent() {
         const res = await fetch(apiUrl(`/api/store/catalog/filters?${queryParams.toString()}`));
         const data = await res.json();
         setFilters(data.filters || []);
-        
-        // Also expand metal filters by default
-        const metalFilters = (data.filters || [])
-          .filter((f: any) => f.name.toLowerCase().includes('metal'))
-          .map((f: any) => f.slug);
-        setExpandedFilters(prev => Array.from(new Set([...prev, 'categories', ...metalFilters])));
       } catch (err) {
         console.error('Failed to fetch product filters', err);
+      } finally {
+        setFiltersLoading(false);
       }
     };
     fetchFilters();
@@ -313,7 +319,9 @@ function ProductsContent() {
             <button
               type="button"
               onClick={() => setExpandedCategories(prev =>
-                prev.includes(category.slug) ? prev.filter(c => c !== category.slug) : [...prev, category.slug]
+                prev.includes(category.slug) 
+                  ? ancestorSlugs // collapsing: keep only ancestors expanded
+                  : [...ancestorSlugs, category.slug] // expanding: replace entirely with this branch
               )}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '1.2rem', color: '#666' }}
             >
@@ -390,7 +398,14 @@ function ProductsContent() {
             </h3>
             {expandedFilters.includes('categories') && (
               <div className={styles.filterList}>
-                {[...categories].sort((a, b) => sortCategories(a.name, b.name)).map(cat => renderCategoryFilter(cat, []))}
+                {categoriesLoading ? (
+                  <div style={{ padding: '10px 0', color: '#666', fontSize: '0.9rem', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className={styles.loadingSpinner} style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid #ccc', borderTopColor: '#333', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    Loading...
+                  </div>
+                ) : (
+                  [...categories].sort((a, b) => sortCategories(a.name, b.name)).map(cat => renderCategoryFilter(cat, []))
+                )}
               </div>
             )}
           </div>
@@ -409,24 +424,31 @@ function ProductsContent() {
               </h3>
               {expandedFilters.includes(filter.slug) && (
                 <div className={styles.filterList}>
-                  {filter.terms.map(term => (
-                    <label key={term.id} className={styles.checkLabel}>
-                      <input
-                        type="checkbox"
-                        checked={(catalogState.attributes[filter.slug] || []).includes(term.name)}
-                        onChange={() => toggleAttribute(filter.slug, term.name)}
-                        className={styles.checkInput}
-                      />
-                      {filter.type === 'color' && term.color_hex && (
-                        <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: '50%', background: term.color_hex, marginRight: 6, border: '1px solid #ccc' }} />
-                      )}
-                      {filter.type === 'image' && term.image_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={term.image_url} alt={term.name} style={{ width: 14, height: 14, borderRadius: '50%', marginRight: 6, border: '1px solid #ccc', objectFit: 'cover' }} />
-                      )}
-                      {term.name}
-                    </label>
-                  ))}
+                  {filtersLoading ? (
+                    <div style={{ padding: '10px 0', color: '#666', fontSize: '0.9rem', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={styles.loadingSpinner} style={{ display: 'inline-block', width: '12px', height: '12px', border: '2px solid #ccc', borderTopColor: '#333', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                      Loading...
+                    </div>
+                  ) : (
+                    filter.terms.map(term => (
+                      <label key={term.id} className={styles.checkLabel}>
+                        <input
+                          type="checkbox"
+                          checked={(catalogState.attributes[filter.slug] || []).includes(term.slug)}
+                          onChange={() => toggleAttribute(filter.slug, term.slug)}
+                          className={styles.checkInput}
+                        />
+                        {filter.type === 'color' && term.color_hex && (
+                          <span style={{ display: 'inline-block', width: 14, height: 14, borderRadius: '50%', background: term.color_hex, marginRight: 6, border: '1px solid #ccc' }} />
+                        )}
+                        {filter.type === 'image' && term.image_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={term.image_url} alt={term.name} style={{ width: 14, height: 14, borderRadius: '50%', marginRight: 6, border: '1px solid #ccc', objectFit: 'cover' }} />
+                        )}
+                        {term.name}
+                      </label>
+                    ))
+                  )}
                 </div>
               )}
             </div>
@@ -461,10 +483,13 @@ function ProductsContent() {
 
               {Object.entries(catalogState.attributes).map(([slug, values]) =>
                 values.map(val => {
-                  const filterName = filters.find(f => f.slug === slug)?.name || slug;
+                  const filterDef = filters.find(f => f.slug === slug);
+                  const filterName = filterDef?.name || slug;
+                  const termDef = filterDef?.terms.find(t => t.slug === val);
+                  const displayValue = termDef ? termDef.name : val;
                   return (
                     <span key={`${slug}-${val}`} className={styles.activeFilterTag}>
-                      {filterName}: {val}
+                      {filterName}: {displayValue}
                       <button className={styles.activeFilterRemoveBtn} onClick={() => toggleAttribute(slug, val)}><FiX /></button>
                     </span>
                   );
