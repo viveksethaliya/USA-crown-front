@@ -15,6 +15,8 @@ interface Order {
   payment_status: string;
   total: number;
   created_at: string;
+  cancellation_requested_at?: string;
+  returns?: { status: string }[];
 }
 
 export default function OrdersPage() {
@@ -54,6 +56,36 @@ export default function OrdersPage() {
     }
     fetchOrders();
   }, [router]);
+
+  const handleCancel = async (id: number) => {
+    const reason = window.prompt('Please enter a reason for cancelling this order:');
+    if (reason === null) return; // User clicked cancel
+
+    try {
+      const token = localStorage.getItem('storeToken');
+      const res = await fetch(apiUrl(`/api/store/account/orders/${id}/cancel-request`), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Cancellation request submitted.');
+        setOrders(orders.map(o => o.id === id ? { ...o, status: 'cancelled' } : o));
+        // We might want to just reload the page to get the true state, 
+        // but since we don't have cancellation_requested_at in this Order type yet,
+        // we'll just optimistically update or reload.
+        window.location.reload();
+      } else {
+        toast.error(data.error || 'Failed to cancel order.');
+      }
+    } catch (err) {
+      toast.error('An error occurred.');
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -135,9 +167,27 @@ export default function OrdersPage() {
                       <td style={{ padding: '1rem 0.5rem' }}>{getPaymentStatusBadge(order.payment_status)}</td>
                       <td style={{ padding: '1rem 0.5rem', fontWeight: 600 }}>${parseFloat(order.total.toString()).toFixed(2)}</td>
                       <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
-                        <Link href={`/orders/${order.id}`} className={styles.btnSmall} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          Details <FiChevronRight />
-                        </Link>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          {(order.status === 'pending' || order.status === 'on-hold') && !order.cancellation_requested_at && (
+                            <button onClick={() => handleCancel(order.id)} className={styles.btnSmall} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: '#fff', color: '#dc3545', border: '1px solid #dc3545' }}>
+                              <FiX /> Cancel
+                            </button>
+                          )}
+                          {(order.status === 'pending' || order.status === 'on-hold') && order.cancellation_requested_at && (
+                            <span style={{ fontSize: '0.75rem', color: '#dc3545', fontWeight: 600, padding: '0.2rem 0.5rem', border: '1px solid #dc3545', borderRadius: '4px', backgroundColor: '#fff' }}>Cancel Requested</span>
+                          )}
+                          {order.status === 'completed' && (!order.returns || !order.returns.some(r => ['requested', 'approved', 'received'].includes(r.status))) && (
+                            <Link href={`/orders/${order.id}?action=return`} className={styles.btnSmall} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: '#fff', color: '#d1a054', border: '1px solid #d1a054' }}>
+                              <FiRefreshCcw /> Return
+                            </Link>
+                          )}
+                          {order.status === 'completed' && order.returns && order.returns.some(r => ['requested', 'approved', 'received'].includes(r.status)) && (
+                            <span style={{ fontSize: '0.75rem', color: '#d1a054', fontWeight: 600, padding: '0.2rem 0.5rem', border: '1px solid #d1a054', borderRadius: '4px', backgroundColor: '#fff' }}>Return Requested</span>
+                          )}
+                          <Link href={`/orders/${order.id}`} className={styles.btnSmall} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            Details <FiChevronRight />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

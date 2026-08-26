@@ -39,7 +39,7 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
       // Safe JSON parse — backend may return HTML on errors
@@ -225,6 +225,8 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={handleKeyDown}
+                      autoCapitalize="none"
+                      autoCorrect="off"
                       className={styles.input}
                       placeholder="Enter your email"
                       required

@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useState } from 'react';
 import {
   apiUrl,
-  formatMoney,
   cartFetch,
+  formatMoney,
   type CartApiResponse,
   type CartSummary
 } from '@/lib/cart';
+import { AddressFields } from '@/components/forms/AddressFields';
 import { toast } from 'react-hot-toast';
 import styles from './checkout.module.css';
 
@@ -226,18 +227,12 @@ export default function CheckoutPage() {
     }
   };
 
-  const addressFields: { key: keyof CheckoutAddress; label: string; type?: string; required?: boolean }[] = [
+  const personalFields: { key: keyof CheckoutAddress; label: string; type?: string; required?: boolean }[] = [
     { key: 'firstName', label: 'First name', required: true },
     { key: 'lastName', label: 'Last name', required: true },
     { key: 'companyName', label: 'Company' },
     { key: 'email', label: 'Email', type: 'email', required: true },
-    { key: 'phone', label: 'Phone', type: 'tel', required: true },
-    { key: 'address_line1', label: 'Address Line 1', required: true },
-    { key: 'address_line2', label: 'Address Line 2' },
-    { key: 'city', label: 'City', required: true },
-    { key: 'state', label: 'State / Province', required: true },
-    { key: 'postal_code', label: 'Zip / Postal Code', required: true },
-    { key: 'country', label: 'Country', required: true }
+    { key: 'phone', label: 'Phone', type: 'tel', required: true }
   ];
 
   if (order) {
@@ -336,7 +331,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className={styles.fieldGrid}>
-                    {addressFields.map((field) => (
+                    {personalFields.map((field) => (
                       <label key={field.key} className={styles.field}>
                         <span>
                           {field.label}
@@ -350,6 +345,18 @@ export default function CheckoutPage() {
                       />
                     </label>
                   ))}
+                </div>
+                <div className="mt-4">
+                  <AddressFields 
+                    value={billingAddress} 
+                    onChange={(updates) => {
+                      setBillingAddress(prev => {
+                        const next = { ...prev, ...updates };
+                        if (sameAsBilling) setShippingAddress(next);
+                        return next;
+                      });
+                    }}
+                  />
                 </div>
               </section>
 
@@ -403,22 +410,30 @@ export default function CheckoutPage() {
                 )}
 
                 {!sameAsBilling && (
-                  <div className={styles.fieldGrid}>
-                    {addressFields.map((field) => (
-                      <label key={field.key} className={styles.field}>
-                        <span>
-                          {field.label}
-                          {field.required && <span className={styles.requiredAsterisk}>*</span>}
-                        </span>
-                        <input
-                          type={field.type || 'text'}
-                          value={shippingAddress[field.key]}
-                          required={field.required}
-                          onChange={(event) => updateShipping(field.key, event.target.value)}
-                        />
-                      </label>
-                    ))}
-                  </div>
+                  <>
+                    <div className={styles.fieldGrid}>
+                      {personalFields.map((field) => (
+                        <label key={field.key} className={styles.field}>
+                          <span>
+                            {field.label}
+                            {field.required && <span className={styles.requiredAsterisk}>*</span>}
+                          </span>
+                          <input
+                            type={field.type || 'text'}
+                            value={shippingAddress[field.key]}
+                            required={field.required}
+                            onChange={(event) => updateShipping(field.key, event.target.value)}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                    <div className="mt-4">
+                      <AddressFields 
+                        value={shippingAddress} 
+                        onChange={(updates) => setShippingAddress(prev => ({ ...prev, ...updates }))}
+                      />
+                    </div>
+                  </>
                 )}
               </section>
 

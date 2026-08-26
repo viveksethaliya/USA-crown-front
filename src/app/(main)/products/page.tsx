@@ -83,7 +83,7 @@ function readCatalogState(params: ReadonlyURLSearchParams) {
   });
   return {
     search: params.get('search') ?? '',
-    categories: (params.get('category') ?? '').split(',').filter(Boolean),
+    categories: Array.from(new Set((params.get('category') ?? '').toLowerCase().split(',').filter(Boolean))),
     attributes,
   };
 }
@@ -162,6 +162,34 @@ function ProductsContent() {
     };
     fetchCategories();
   }, []);
+
+  // Auto-expand parent categories if a subcategory is selected (e.g. from Mega Menu)
+  useEffect(() => {
+    if (categories.length === 0 || catalogState.categories.length === 0) return;
+
+    const newExpanded = new Set(expandedCategories);
+    let changed = false;
+
+    const checkNode = (node: CategoryTree, ancestors: string[]) => {
+      if (catalogState.categories.includes(node.slug)) {
+        ancestors.forEach(a => {
+          if (!newExpanded.has(a)) {
+            newExpanded.add(a);
+            changed = true;
+          }
+        });
+      }
+      node.children.forEach(c => checkNode(c, [...ancestors, node.slug]));
+    };
+
+    categories.forEach(c => checkNode(c, []));
+
+    if (changed) {
+      setExpandedCategories(Array.from(newExpanded));
+    }
+  // explicitly omitting expandedCategories to avoid re-expanding when user manually collapses
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, catalogState.categories]);
 
   // Fetch attribute filters
   const categoryStr = catalogState.categories.join(',');
@@ -275,8 +303,13 @@ function ProductsContent() {
     } else {
       // Checking: remove all ancestors (to narrow down) and descendants (to broaden up), then add this slug
       newCats = catalogState.categories.filter(c => !ancestorSlugs.includes(c) && !descendantSlugs.includes(c));
-      newCats.push(slug);
+      if (!newCats.includes(slug)) {
+        newCats.push(slug);
+      }
     }
+
+    // Ensure no duplicates are ever pushed to the URL
+    newCats = Array.from(new Set(newCats));
 
     replaceCatalogState({ ...catalogState, categories: newCats });
     setPage(1);

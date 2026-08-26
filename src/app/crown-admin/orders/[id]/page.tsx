@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
 import { adminFetch } from '@/lib/api';
 import PrintInvoice from '@/components/PrintInvoice';
+import ReturnsSection from '@/components/admin/ReturnsSection';
 
 const ORDER_STATUSES = ['pending', 'on-hold', 'processing', 'completed', 'cancelled', 'refunded', 'failed'];
 const PAYMENT_STATUSES = ['pending', 'partially_paid', 'paid', 'refunded', 'failed'];
@@ -323,6 +324,8 @@ export default function OrderDetailPage() {
       </div>
     )}
   </div></div></section>
+
+      {!creating && <ReturnsSection order={order} reloadOrder={loadOrder} />}
 
       {!creating && <div className="grid grid-cols-1 gap-6 xl:grid-cols-2"><section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Order notes</h2><div className="mt-4 flex gap-2"><select value={noteType} onChange={(event) => setNoteType(event.target.value)} className="rounded-lg border border-[#312f2c]/10 bg-white px-2 text-sm font-medium text-[#312f2c]"><option value="internal">Private</option><option value="customer">Customer note</option></select><input value={noteContent} onChange={(event) => setNoteContent(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && addNote()} placeholder="Add a note..." className="min-w-0 flex-1 rounded-lg border border-[#312f2c]/10 bg-white px-3 py-2 text-sm outline-none" /><button onClick={addNote} className="rounded-lg bg-[#312f2c] px-3 text-white"><Send className="h-4 w-4" /></button></div><div className="mt-4 space-y-3">{order?.notes?.length ? order.notes.map((note: any) => <div key={note.id} className={`rounded-xl border p-3 group relative ${note.note_type === 'internal' ? 'border-[#312f2c]/10 bg-[#312f2c]/5' : 'border-[#d1a054]/20 bg-[#d1a054]/10'}`}><div className="flex justify-between gap-3 text-[10px] font-bold uppercase tracking-wide"><span className={note.note_type === 'internal' ? 'text-[#312f2c]/55' : 'text-[#9b7132]'}>{note.note_type === 'internal' ? 'Private note' : 'Customer note'}</span><span className="text-[#312f2c]/40">{new Date(note.created_at).toLocaleString()}</span></div><p className="mt-2 text-sm text-[#312f2c]/75">{note.content}</p>{note.note_type === 'customer' && <button onClick={() => deleteNote(note.id)} className="absolute top-2 right-2 hidden group-hover:block rounded-md p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-3 w-3" /></button>}</div>) : <p className="py-5 text-center text-sm text-[#312f2c]/40">No notes yet.</p>}</div></section><section className="rounded-2xl border border-white/60 bg-white/45 p-5 shadow-sm"><h2 className="font-bold text-[#312f2c]">Customer & addresses</h2><div className="mt-4 rounded-xl border border-[#312f2c]/10 bg-white/45 p-4"><p className="font-bold text-[#312f2c]">{order?.customer?.username}</p><p className="mt-1 text-sm text-[#312f2c]/65">{order?.customer?.first_name} {order?.customer?.last_name} · {order?.customer?.email}</p><p className="mt-1 text-sm text-[#312f2c]/55">{order?.customer?.phone || 'No phone number'}</p></div><div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2"><Address title="Billing address" address={order?.billing_address} /><Address title="Shipping address" address={order?.shipping_address} /></div></section></div>}
 

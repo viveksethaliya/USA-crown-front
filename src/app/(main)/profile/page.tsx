@@ -7,6 +7,7 @@ import styles from './profile.module.css';
 import { FiDownload, FiShoppingBag, FiPlus } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { apiUrl } from "@/lib/cart";
+import { AddressFields } from '@/components/forms/AddressFields';
 
 interface UserProfile {
   id: string;
@@ -587,30 +588,23 @@ export default function ProfilePage() {
                   <input type="text" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className={styles.input} disabled={profile?.level === 1} />
                 </div>
               </div>
-              <div className={styles.inputGroup}>
-                <label className={styles.label}>Address Line 1 <span className={styles.req}>*</span></label>
-                <input type="text" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
-              </div>
-              <div className={styles.row}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>City <span className={styles.req}>*</span></label>
-                  <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>State/Province <span className={styles.req}>*</span></label>
-                  <input type="text" value={state} onChange={(e) => setState(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
-                </div>
-              </div>
-              <div className={styles.row}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Zip/Postal Code <span className={styles.req}>*</span></label>
-                  <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Country <span className={styles.req}>*</span></label>
-                  <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} className={styles.input} required disabled={profile?.level === 1} />
-                </div>
-              </div>
+              <AddressFields
+                value={{
+                  address_line1: addressLine1,
+                  city: city,
+                  state: state,
+                  postal_code: postalCode,
+                  country: country
+                }}
+                onChange={(updates) => {
+                  if (updates.address_line1 !== undefined) setAddressLine1(updates.address_line1);
+                  if (updates.city !== undefined) setCity(updates.city);
+                  if (updates.state !== undefined) setState(updates.state);
+                  if (updates.postal_code !== undefined) setPostalCode(updates.postal_code);
+                  if (updates.country !== undefined) setCountry(updates.country);
+                }}
+                disabled={profile?.level === 1}
+              />
               <div className={styles.row}>
                 <div className={styles.inputGroup}>
                   <label className={styles.label}>Company Phone</label>
@@ -803,34 +797,10 @@ export default function ProfilePage() {
                       </label>
                     </div>
                   </div>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Address Line 1 <span className={styles.req}>*</span></label>
-                    <input type="text" required value={addressForm.address_line1 || ''} onChange={e => setAddressForm({...addressForm, address_line1: e.target.value})} className={styles.input} />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Address Line 2</label>
-                    <input type="text" value={addressForm.address_line2 || ''} onChange={e => setAddressForm({...addressForm, address_line2: e.target.value})} className={styles.input} />
-                  </div>
-                  <div className={styles.row}>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>City <span className={styles.req}>*</span></label>
-                      <input type="text" required value={addressForm.city || ''} onChange={e => setAddressForm({...addressForm, city: e.target.value})} className={styles.input} />
-                    </div>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>State/Province <span className={styles.req}>*</span></label>
-                      <input type="text" required value={addressForm.state || ''} onChange={e => setAddressForm({...addressForm, state: e.target.value})} className={styles.input} />
-                    </div>
-                  </div>
-                  <div className={styles.row}>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>Zip/Postal Code <span className={styles.req}>*</span></label>
-                      <input type="text" required value={addressForm.postal_code || ''} onChange={e => setAddressForm({...addressForm, postal_code: e.target.value})} className={styles.input} />
-                    </div>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>Country <span className={styles.req}>*</span></label>
-                      <input type="text" required value={addressForm.country || ''} onChange={e => setAddressForm({...addressForm, country: e.target.value})} className={styles.input} />
-                    </div>
-                  </div>
+                  <AddressFields
+                    value={addressForm}
+                    onChange={(updates) => setAddressForm(prev => ({ ...prev, ...updates }))}
+                  />
                   <div className={styles.row}>
                     <div className={styles.inputGroup}>
                       <label className={styles.label}>Phone</label>

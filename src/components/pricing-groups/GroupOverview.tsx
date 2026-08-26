@@ -15,6 +15,7 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
     valid_from: group.valid_from ? group.valid_from.substring(0, 16) : '',
     valid_until: group.valid_until ? group.valid_until.substring(0, 16) : '',
     internal_note: group.internal_note || '',
+    eligibility_mode: group.eligibility_mode || 'assigned_members',
   });
 
   const [saving, setSaving] = useState(false);
@@ -59,6 +60,7 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
         valid_from: resData.group.valid_from ? resData.group.valid_from.substring(0, 16) : '',
         valid_until: resData.group.valid_until ? resData.group.valid_until.substring(0, 16) : '',
         internal_note: resData.group.internal_note || '',
+        eligibility_mode: resData.group.eligibility_mode || 'assigned_members',
       });
     } catch (err: any) {
       toast.error(err.message);
@@ -168,6 +170,19 @@ export default function GroupOverview({ group, onUpdate }: { group: any, onUpdat
             <option value="draft">Draft</option>
             <option value="active">Active</option>
             {group.status === 'archived' && <option value="archived">Archived</option>}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Eligibility Mode</label>
+          <select 
+            name="eligibility_mode"
+            value={formData.eligibility_mode}
+            onChange={handleChange}
+            className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#d1a054]/40"
+          >
+            <option value="assigned_members">Specific Group (Assigned Members)</option>
+            <option value="all_customers">All Customers (Global)</option>
           </select>
         </div>
 

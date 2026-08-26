@@ -21,7 +21,6 @@ export interface B2BApplication {
   resale_tax_id_number?: string;
   fax?: string;
   wants_credit_application?: string | boolean;
-  additional_company_details?: string;
   address_line1?: string;
   city?: string;
   state?: string;

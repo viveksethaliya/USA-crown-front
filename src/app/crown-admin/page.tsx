@@ -170,7 +170,7 @@ export default function AdminDashboard() {
       label: 'Pending B2B Approvals',
       value: stats.pendingApprovals,
       icon: Clock,
-      href: '/crown-admin/b2b',
+      href: '/crown-admin/customers',
       accent: stats.pendingApprovals > 0,
     },
     {

@@ -25,7 +25,7 @@ export default function AdminForgotPassword() {
       const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to request password reset');
@@ -71,6 +71,8 @@ export default function AdminForgotPassword() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoCapitalize="none"
+                autoCorrect="off"
                 className="w-full px-4 py-3 bg-white border border-[#312f2c]/12 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 text-[#312f2c] placeholder:text-[#312f2c]/30 transition-all"
                 placeholder="admin@yourstore.com"
                 required

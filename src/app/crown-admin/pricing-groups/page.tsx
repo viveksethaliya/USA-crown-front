@@ -12,6 +12,8 @@ type GroupData = {
   status: string;
   group_type: string;
   member_count?: number;
+  eligibility_mode?: string;
+  member_names?: string[];
 };
 
 export default function PricingGroupsList() {
@@ -198,6 +200,26 @@ export default function PricingGroupsList() {
                         <Link href={`/crown-admin/pricing-groups/${group.id}`} className="font-bold text-[#312f2c] hover:text-[#d1a054] transition-colors block">
                           {group.name}
                         </Link>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {group.eligibility_mode === 'all_customers' ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                              All
+                            </span>
+                          ) : (
+                            <>
+                              {group.member_names?.slice(0, 5).map((name, idx) => (
+                                <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#312f2c]/5 text-[#312f2c]/70 border border-[#312f2c]/10">
+                                  {name}
+                                </span>
+                              ))}
+                              {(group.member_names?.length || 0) > 5 && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#312f2c]/5 text-[#312f2c]/70 border border-[#312f2c]/10">
+                                  +{(group.member_names?.length || 0) - 5} more
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 text-xs font-medium text-[#312f2c]/65 capitalize">
                         {group.group_type.replace('_', ' ')}
@@ -256,6 +278,26 @@ export default function PricingGroupsList() {
                           <span className="font-bold text-[#312f2c]/60 block line-through decoration-[#312f2c]/20">
                             {group.name}
                           </span>
+                          <div className="mt-1.5 flex flex-wrap gap-1.5 opacity-60">
+                            {group.eligibility_mode === 'all_customers' ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                                All
+                              </span>
+                            ) : (
+                              <>
+                                {group.member_names?.slice(0, 5).map((name, idx) => (
+                                  <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#312f2c]/5 text-[#312f2c]/70 border border-[#312f2c]/10">
+                                    {name}
+                                  </span>
+                                ))}
+                                {(group.member_names?.length || 0) > 5 && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#312f2c]/5 text-[#312f2c]/70 border border-[#312f2c]/10">
+                                    +{(group.member_names?.length || 0) - 5} more
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </td>
                         <td className="p-4 text-xs font-medium text-[#312f2c]/50 capitalize">
                           {group.group_type.replace('_', ' ')}

@@ -990,14 +990,24 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 </td>
               </tr>
 
-              {variationAttributes.map(attr => (
-                selectedOptions[attr.slug] && (
+              {variationAttributes.map(attr => {
+                if (!attr.values || attr.values.length === 0) return null;
+                
+                const sortedValues = [...attr.values].sort((a, b) => 
+                  a.value.localeCompare(b.value, undefined, { numeric: true, sensitivity: 'base' })
+                );
+
+                return (
                   <tr key={attr.slug}>
                     <th>{attr.name}</th>
-                    <td><em>{selectedOptions[attr.slug]}</em></td>
+                    <td>
+                      {selectedOptions[attr.slug] 
+                        ? <em>{selectedOptions[attr.slug]}</em>
+                        : sortedValues.map(v => v.value).join(', ')}
+                    </td>
                   </tr>
-                )
-              ))}
+                );
+              })}
               {visibleAttrs.map((attr, idx) => (
                 <tr key={idx}>
                   <th>{attr.name}</th>

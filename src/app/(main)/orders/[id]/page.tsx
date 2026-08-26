@@ -7,6 +7,7 @@ import { FiArrowLeft, FiClock, FiCheck, FiX, FiRefreshCcw, FiPrinter, FiCreditCa
 import { toast } from 'react-hot-toast';
 import { apiUrl } from "@/lib/cart";
 import styles from '../../profile/profile.module.css';
+import ReturnModal from './ReturnModal';
 
 interface OrderItem {
   id: number;
@@ -41,6 +42,7 @@ interface Order {
   admin_notes?: { content: string; created_at: string }[];
   discounts?: { rule_name_snapshot: string; coupon_code: string; discount_amount: number }[];
   returns?: { id: number; return_number: string; status: string; refund_amount: number }[];
+  cancellation_requested_at?: string;
 }
 
 export default function OrderDetailsPage(props: { params: Promise<{ id: string }> }) {
@@ -48,39 +50,77 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showReturnModal, setShowReturnModal] = useState(false);
 
   useEffect(() => {
-    async function fetchOrder() {
-      try {
-        const token = localStorage.getItem('storeToken');
-        if (!token) {
-          router.push('/login');
-          return;
-        }
-
-        const res = await fetch(apiUrl(`/api/store/account/orders/${params.id}`), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (res.status === 401) {
-          router.push('/login');
-          return;
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          setOrder(data);
-        } else {
-          toast.error('Failed to load order details.');
-        }
-      } catch (err) {
-        toast.error('An error occurred while fetching order details.');
-      } finally {
-        setLoading(false);
+    // Check if the URL has ?action=return to auto-open modal
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'return') {
+        setShowReturnModal(true);
       }
     }
+  }, []);
+
+  const fetchOrder = async () => {
+    try {
+      const token = localStorage.getItem('storeToken');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const res = await fetch(apiUrl(`/api/store/account/orders/${params.id}`), {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        setOrder(data);
+      } else {
+        toast.error('Failed to load order details.');
+      }
+    } catch (err) {
+      toast.error('An error occurred while fetching order details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOrder();
   }, [params.id, router]);
+
+  const handleCancel = async () => {
+    const reason = window.prompt('Please enter a reason for cancelling this order:');
+    if (reason === null) return; 
+
+    try {
+      const token = localStorage.getItem('storeToken');
+      const res = await fetch(apiUrl(`/api/store/account/orders/${order?.id}/cancel-request`), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Cancellation request submitted.');
+        fetchOrder();
+      } else {
+        toast.error(data.error || 'Failed to cancel order.');
+      }
+    } catch (err) {
+      toast.error('An error occurred.');
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -143,7 +183,27 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
               Placed on {new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            {order.status === 'completed' && (!order.returns || !order.returns.some(r => ['requested', 'approved', 'received'].includes(r.status))) && (
+              <button onClick={() => setShowReturnModal(true)} className={styles.btnSmall} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fff', color: '#d1a054', border: '1px solid #d1a054' }}>
+                <FiRefreshCcw /> Request Return
+              </button>
+            )}
+            {order.status === 'completed' && order.returns && order.returns.some(r => ['requested', 'approved', 'received'].includes(r.status)) && (
+              <span className={styles.btnSmall} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fff', color: '#d1a054', border: '1px solid #d1a054', cursor: 'default' }}>
+                Return Requested
+              </span>
+            )}
+            {(order.status === 'pending' || order.status === 'on-hold') && !order.cancellation_requested_at && (
+              <button onClick={handleCancel} className={styles.btnSmall} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fff', color: '#dc3545', border: '1px solid #dc3545' }}>
+                <FiX /> Cancel Order
+              </button>
+            )}
+            {(order.status === 'pending' || order.status === 'on-hold') && order.cancellation_requested_at && (
+              <span className={styles.btnSmall} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fff', color: '#dc3545', border: '1px solid #dc3545', cursor: 'default' }}>
+                Cancellation Requested
+              </span>
+            )}
             <Link href={`/invoice/${order.id}`} target="_blank" className={styles.btnSmall} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#f5f5f5', color: '#333', border: '1px solid #ccc' }}>
               <FiPrinter /> Print Invoice
             </Link>
@@ -327,6 +387,21 @@ export default function OrderDetailsPage(props: { params: Promise<{ id: string }
           </div>
         </div>
       </div>
+      {showReturnModal && order && (
+        <ReturnModal 
+          order={order} 
+          onClose={() => {
+            setShowReturnModal(false);
+            const url = new URL(window.location.href);
+            url.searchParams.delete('action');
+            window.history.replaceState({}, '', url);
+          }} 
+          onSuccess={() => {
+            setShowReturnModal(false);
+            fetchOrder();
+          }} 
+        />
+      )}
     </div>
   );
 }

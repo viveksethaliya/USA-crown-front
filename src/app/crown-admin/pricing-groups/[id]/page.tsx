@@ -10,7 +10,6 @@ import GroupCustomers from '@/components/pricing-groups/GroupCustomers';
 import GroupAccess from '@/components/pricing-groups/GroupAccess';
 import GroupRules from '@/components/pricing-groups/GroupRules';
 import GroupCampaigns from '@/components/pricing-groups/GroupCampaigns';
-import GroupPreview from '@/components/pricing-groups/GroupPreview';
 import GroupHistory from '@/components/pricing-groups/GroupHistory';
 import toast from 'react-hot-toast';
 
@@ -20,6 +19,7 @@ type GroupData = {
   status: string;
   group_type: string;
   member_count?: number;
+  eligibility_mode?: string;
 };
 
 export default function PricingGroupDetail() {
@@ -28,7 +28,7 @@ export default function PricingGroupDetail() {
   const id = params.id as string;
   
   const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'customers' | 'access' | 'rules' | 'campaigns' | 'preview' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'customers' | 'access' | 'rules' | 'campaigns' | 'history'>('overview');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -97,11 +97,12 @@ export default function PricingGroupDetail() {
           <div className="flex space-x-1 mt-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             {[
               { id: 'overview', icon: Layout, label: 'Overview' },
-              { id: 'customers', icon: UsersRound, label: 'Customers' },
+              ...(selectedGroup.eligibility_mode !== 'all_customers' 
+                ? [{ id: 'customers', icon: UsersRound, label: 'Customers' }] 
+                : []),
               { id: 'access', icon: Shield, label: 'Product Access' },
               { id: 'rules', icon: Tag, label: 'Discount Rules' },
               { id: 'campaigns', icon: Calendar, label: 'Campaigns' },
-              { id: 'preview', icon: Eye, label: 'Preview' },
               { id: 'history', icon: Activity, label: 'History' },
             ].map(tab => {
               const Icon = tab.icon;
@@ -128,7 +129,7 @@ export default function PricingGroupDetail() {
           {activeTab === 'overview' && (
             <GroupOverview group={selectedGroup} onUpdate={handleGroupUpdate} />
           )}
-          {activeTab === 'customers' && (
+          {activeTab === 'customers' && selectedGroup.eligibility_mode !== 'all_customers' && (
             <GroupCustomers group={selectedGroup} />
           )}
           {activeTab === 'access' && (
@@ -139,9 +140,6 @@ export default function PricingGroupDetail() {
           )}
           {activeTab === 'campaigns' && (
             <GroupCampaigns group={selectedGroup} />
-          )}
-          {activeTab === 'preview' && (
-            <GroupPreview group={selectedGroup} />
           )}
           {activeTab === 'history' && (
             <GroupHistory group={selectedGroup} />

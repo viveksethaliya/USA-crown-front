@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email: email.trim().toLowerCase() })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to request password reset.");
@@ -80,6 +80,8 @@ export default function ForgotPasswordPage() {
                   required 
                   value={email} 
                   onChange={e => setEmail(e.target.value)} 
+                  autoCapitalize="none"
+                  autoCorrect="off"
                   placeholder="you@example.com"
                   className={styles.input}
                 />

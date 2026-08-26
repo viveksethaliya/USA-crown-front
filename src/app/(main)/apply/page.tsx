@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useState, useRef } from 'react';
 import styles from './apply.module.css';
 import { FiX, FiEye, FiEyeOff, FiUploadCloud, FiCheckCircle, FiAlertCircle, FiFileText } from 'react-icons/fi';
-import { apiUrl } from '@/lib/cart';
+import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { apiUrl } from "@/lib/cart";
+import { AddressFields } from '@/components/forms/AddressFields';
 
 export default function ApplyPage() {
   const [step, setStep] = useState(1);
@@ -47,7 +49,6 @@ export default function ApplyPage() {
   // Step 2: Company Information
   const [companyName, setCompanyName] = useState('');
   const [companyWebsite, setCompanyWebsite] = useState('');
-  const [additionalCompanyDetails, setAdditionalCompanyDetails] = useState('');
   const [addressLine, setAddressLine] = useState('');
   const [phone, setPhone] = useState('');
   const [resaleTaxId, setResaleTaxId] = useState('');
@@ -227,12 +228,11 @@ export default function ApplyPage() {
       const formData = new FormData();
       formData.append('firstName', firstName);
       formData.append('lastName', lastName);
-      formData.append('email', email);
+      formData.append('email', email.trim().toLowerCase());
       formData.append('hearAbout', hearAbout);
       formData.append('password', password);
       formData.append('companyName', companyName);
       formData.append('companyWebsite', companyWebsite);
-      formData.append('additionalCompanyDetails', additionalCompanyDetails);
       formData.append('addressLine', addressLine);
       formData.append('phone', phone);
       formData.append('resaleTaxId', resaleTaxId);
@@ -401,6 +401,8 @@ export default function ApplyPage() {
                       ref={emailRef}
                       type="email"
                       autoComplete="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); if (errorField === 'email') setErrorField(''); }}
                       className={`${styles.input} ${(errorField === 'email' || !isValidEmail(email)) ? styles.errorBlink : ''}`}
@@ -572,30 +574,44 @@ export default function ApplyPage() {
                     )}
                   </div>
 
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Additional Company Details</label>
-                    <textarea
-                      value={additionalCompanyDetails}
-                      onChange={(e) => setAdditionalCompanyDetails(e.target.value)}
-                      className={styles.input}
-                      style={{ resize: 'vertical', minHeight: '80px', padding: '0.8rem 1rem' }}
-                      placeholder="Any additional details about your company"
-                    />
-                  </div>
-
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Address Line <span className={styles.required}>*</span></label>
-                    <input
-                      ref={addressLineRef}
-                      type="text"
-                      autoComplete="street-address"
-                      value={addressLine}
-                      onChange={(e) => { setAddressLine(e.target.value); if (errorField === 'addressLine') setErrorField(''); }}
-                      className={`${styles.input} ${errorField === 'addressLine' ? styles.errorBlink : ''}`}
-                      placeholder="Address Line"
-                      required
-                    />
-                  </div>
+                  <AddressFields
+                    value={{
+                      address_line1: addressLine,
+                      city: city,
+                      state: stateProvince,
+                      postal_code: zipCode,
+                      country: country
+                    }}
+                    onChange={(updates) => {
+                      if (updates.address_line1 !== undefined) {
+                        setAddressLine(updates.address_line1);
+                        if (errorField === 'addressLine') setErrorField('');
+                      }
+                      if (updates.city !== undefined) {
+                        setCity(updates.city);
+                        if (errorField === 'city') setErrorField('');
+                      }
+                      if (updates.state !== undefined) {
+                        setStateProvince(updates.state);
+                        if (errorField === 'stateProvince') setErrorField('');
+                      }
+                      if (updates.postal_code !== undefined) {
+                        setZipCode(updates.postal_code);
+                        if (errorField === 'zipCode') setErrorField('');
+                      }
+                      if (updates.country !== undefined) {
+                        setCountry(updates.country);
+                        if (errorField === 'country') setErrorField('');
+                      }
+                    }}
+                    errors={{
+                      address_line1: errorField === 'addressLine' ? 'Required' : '',
+                      city: errorField === 'city' ? 'Required' : '',
+                      state: errorField === 'stateProvince' ? 'Required' : '',
+                      postal_code: errorField === 'zipCode' ? 'Required' : '',
+                      country: errorField === 'country' ? 'Required' : ''
+                    }}
+                  />
 
                   <div className={styles.twoCol}>
                     <div className={styles.inputGroup}>
@@ -641,74 +657,7 @@ export default function ApplyPage() {
                     />
                   </div>
 
-                  <div className={styles.twoCol}>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>City <span className={styles.required}>*</span></label>
-                      <input
-                        ref={cityRef}
-                        type="text"
-                        autoComplete="address-level2"
-                        value={city}
-                        onChange={(e) => { setCity(e.target.value); if (errorField === 'city') setErrorField(''); }}
-                        className={`${styles.input} ${(errorField === 'city' || !isValidCity(city)) ? styles.errorBlink : ''}`}
-                        placeholder="City"
-                        required
-                      />
-                      {!isValidCity(city) && (
-                        <span style={{ fontSize: '0.8rem', color: '#d9534f', marginTop: '0.2rem' }}>
-                          ⚠️ City name must be at least 2 letters
-                        </span>
-                      )}
-                    </div>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>Postal / Zip Code <span className={styles.required}>*</span></label>
-                      <input
-                        ref={zipCodeRef}
-                        type="text"
-                        autoComplete="postal-code"
-                        value={zipCode}
-                        onChange={(e) => { setZipCode(e.target.value); if (errorField === 'zipCode') setErrorField(''); }}
-                        className={`${styles.input} ${(errorField === 'zipCode' || !isValidZip(zipCode)) ? styles.errorBlink : ''}`}
-                        placeholder="Postal / Zip Code"
-                        required
-                      />
-                      {!isValidZip(zipCode) && (
-                        <span style={{ fontSize: '0.8rem', color: '#d9534f', marginTop: '0.2rem' }}>
-                          ⚠️ Zip/Postal code must be at least 3 characters (e.g. 10001 or M5V 2T6)
-                        </span>
-                      )}
-                    </div>
-                  </div>
 
-
-                  <div className={styles.twoCol}>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>State / Province / Region <span className={styles.required}>*</span></label>
-                      <input
-                        ref={stateProvinceRef}
-                        type="text"
-                        autoComplete="address-level1"
-                        value={stateProvince}
-                        onChange={(e) => { setStateProvince(e.target.value); if (errorField === 'stateProvince') setErrorField(''); }}
-                        className={`${styles.input} ${errorField === 'stateProvince' ? styles.errorBlink : ''}`}
-                        placeholder="State / Province / Region"
-                        required
-                      />
-                    </div>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>Country <span className={styles.required}>*</span></label>
-                      <input
-                        ref={countryRef}
-                        type="text"
-                        autoComplete="country-name"
-                        value={country}
-                        onChange={(e) => { setCountry(e.target.value); if (errorField === 'country') setErrorField(''); }}
-                        className={`${styles.input} ${errorField === 'country' ? styles.errorBlink : ''}`}
-                        placeholder="Country"
-                        required
-                      />
-                    </div>
-                  </div>
 
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Credit Application <span className={styles.required}>*</span></label>

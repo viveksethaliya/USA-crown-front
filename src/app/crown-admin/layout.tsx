@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { LogIn } from 'lucide-react';
 import {
   LayoutDashboard, Image, Package, Tag, Tags, SlidersHorizontal, Shapes,
-  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, Undo2, FileText, FormInput, Search
+  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, FileText, FormInput, Search
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import PendingRegistrationsBar from '@/components/admin/PendingRegistrationsBar';
 
 interface NavLinkProps {
   href: string;
@@ -37,9 +38,7 @@ const NAV: NavElement[] = [
   {
     group: 'Management',
     items: [
-      { label: 'Approvals', href: '/crown-admin/b2b', icon: Building2 },
       { label: 'Orders', href: '/crown-admin/orders', icon: ClipboardList },
-      { label: 'Returns', href: '/crown-admin/returns', icon: Undo2 },
       { label: 'Active Carts', href: '/crown-admin/carts', icon: ShoppingCart },
       { label: 'Checkout Fields', href: '/crown-admin/checkout-fields', icon: FormInput },
       { label: 'Settings', href: '/crown-admin/settings', icon: Settings },
@@ -257,6 +256,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </main>
       </div>
+      {/* Persistent pending-registrations notification bar */}
+      <PendingRegistrationsBar />
     </div>
   );
 }

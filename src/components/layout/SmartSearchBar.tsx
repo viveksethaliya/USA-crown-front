@@ -139,6 +139,7 @@ export default function SmartSearchBar() {
     navigate(query);
   };
 
+  const isSearching = isLoading || query !== debouncedQuery;
   const isEmpty = products.length === 0;
   const showRecents = !query.trim() && recentSearches.length > 0;
 
@@ -152,7 +153,10 @@ export default function SmartSearchBar() {
           className={styles.searchInput}
           value={query}
           autoComplete="off"
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+          }}
           onFocus={() => {
             if (query.trim() ? products.length > 0 : recentSearches.length > 0) {
               setIsOpen(true);
@@ -197,7 +201,7 @@ export default function SmartSearchBar() {
           {/* Main results */}
           {query.trim() && (
             <>
-              {isLoading ? (
+              {isSearching ? (
                 <div className={styles.loading}>
                   <span className={styles.loadingDots} aria-label="Searching">
                     <span /><span /><span />

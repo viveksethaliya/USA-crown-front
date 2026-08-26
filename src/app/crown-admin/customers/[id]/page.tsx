@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Loader2, Save, Edit2, Trash2, Building2, Users, FileText, Eye, ChevronLeft, MapPin, Plus, Shield, Network, Activity, Clock, Mail, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
+import { AddressFields } from '@/components/forms/AddressFields';
 
 import { ADMIN_API as API } from '@/lib/config';
 import { adminFetch } from '@/lib/api';
@@ -29,7 +30,7 @@ export default function CustomerDetailPage() {
   const [formData, setFormData] = useState<any>({
     username: '', email: '', password: '', first_name: '', last_name: '', phone: '',
     how_did_you_hear_about_us: '', role_id: 4, status: 'pending',
-    company_name: '', company_website: '', resale_tax_id_number: '', additional_company_details: '',
+    company_name: '', company_website: '', resale_tax_id_number: '',
     fax: '', wants_credit_application: false, credit_application_status: 'not_applicable',
     parent_user_id: '', purchasing_permission: 'can_place_orders', spending_limit: '',
     customer_group_id: ''
@@ -63,14 +64,14 @@ export default function CustomerDetailPage() {
         const token = localStorage.getItem('adminToken');
         const [customersRes, groupsRes, permsRes] = await Promise.all([
           adminFetch(`${API}/customers?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          adminFetch(`${API}/groups`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          adminFetch(`${API}/pricing-groups`, { headers: { 'Authorization': `Bearer ${token}` } }),
           adminFetch(`${API}/permissions`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         const customersJson = await customersRes.json();
         const groupsJson = await groupsRes.json();
         const permsJson = await permsRes.json();
         setAllCustomers(customersJson.data || []);
-        setCustomerGroups(groupsJson.data || []);
+        setCustomerGroups(groupsJson.groups || []);
         setAllPermissions(permsJson || []);
       } catch (err) { console.error(err); }
     };
@@ -108,13 +109,12 @@ export default function CustomerDetailPage() {
       role_id: user.roles?.id || 4, status: user.status || 'pending', password: '',
       company_name: company?.company_name || '', company_website: company?.company_website || '',
       resale_tax_id_number: company?.resale_tax_id_number || '',
-      additional_company_details: company?.additional_company_details || '',
       fax: company?.fax || '', wants_credit_application: company?.wants_credit_application || false,
       credit_application_status: company?.credit_application_status || 'not_applicable',
       parent_user_id: user.parent_user_id || '',
       purchasing_permission: user.purchasing_permission || 'can_place_orders',
       spending_limit: user.spending_limit || '',
-      customer_group_id: (user.customer_group_members && user.customer_group_members.length > 0) ? user.customer_group_members[0].group_id : ''
+      customer_group_id: Array.isArray(user.customer_group_members) ? (user.customer_group_members[0]?.group_id || '') : (user.customer_group_members?.group_id || '')
     });
   };
 
@@ -622,10 +622,6 @@ export default function CustomerDetailPage() {
                       <option value="rejected">Rejected</option>
                     </select>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className={labelCls}>Additional Company Details</label>
-                    <textarea name="additional_company_details" value={formData.additional_company_details} onChange={handleInputChange} rows={3} disabled={!isEditing} className={inputCls} />
-                  </div>
                 </div>
               </div>
             )}
@@ -702,29 +698,11 @@ export default function CustomerDetailPage() {
                           Set as default for this type
                         </label>
                       </div>
-                      <div>
-                        <label className={labelCls}>Address Line 1 *</label>
-                        <input type="text" value={addressForm.address_line1 || ''} onChange={e => setAddressForm({ ...addressForm, address_line1: e.target.value })} className={inputCls} required />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Address Line 2</label>
-                        <input type="text" value={addressForm.address_line2 || ''} onChange={e => setAddressForm({ ...addressForm, address_line2: e.target.value })} className={inputCls} />
-                      </div>
-                      <div>
-                        <label className={labelCls}>City *</label>
-                        <input type="text" value={addressForm.city || ''} onChange={e => setAddressForm({ ...addressForm, city: e.target.value })} className={inputCls} required />
-                      </div>
-                      <div>
-                        <label className={labelCls}>State/Province *</label>
-                        <input type="text" value={addressForm.state || ''} onChange={e => setAddressForm({ ...addressForm, state: e.target.value })} className={inputCls} required />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Zip/Postal Code *</label>
-                        <input type="text" value={addressForm.postal_code || ''} onChange={e => setAddressForm({ ...addressForm, postal_code: e.target.value })} className={inputCls} required />
-                      </div>
-                      <div>
-                        <label className={labelCls}>Country *</label>
-                        <input type="text" value={addressForm.country || ''} onChange={e => setAddressForm({ ...addressForm, country: e.target.value })} className={inputCls} required />
+                      <div className="col-span-full">
+                        <AddressFields
+                          value={addressForm}
+                          onChange={(updates) => setAddressForm(prev => ({ ...prev, ...updates }))}
+                        />
                       </div>
                       <div>
                         <label className={labelCls}>Phone</label>

@@ -189,6 +189,13 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
   if (initialRule?.requires_min_cart_subtotal && !startingConditions.find((c: any) => c.type === 'cart_subtotal_min')) {
     startingConditions.push({ type: 'cart_subtotal_min', value: String(initialRule.requires_min_cart_subtotal) });
   }
+  
+  // Extract min_cart_value for the dedicated UI field
+  const minCartValueCondition = startingConditions.find((c: any) => c.type === 'cart_subtotal_min');
+  const initialMinCartValue = minCartValueCondition ? minCartValueCondition.value : '';
+
+  // Remove it from the dynamic conditions list so we don't render it twice if it's managed via the dedicated field
+  const dynamicStartingConditions = startingConditions.filter((c: any) => c.type !== 'cart_subtotal_min');
 
   const initTargets = initialRule?.discount_targets?.length > 0 
     ? initialRule.discount_targets.map((t: any) => ({
@@ -203,17 +210,12 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
     name: initialRule?.name || '',
     trigger_type: initialRule?.trigger_type || 'automatic',
     status: initialRule?.status || 'draft',
-    starts_at: initialRule?.starts_at ? initialRule.starts_at.substring(0, 16) : '',
-    ends_at: initialRule?.ends_at ? initialRule.ends_at.substring(0, 16) : '',
-    priority: initialRule?.priority || 10,
-    stacking_mode: initialRule?.stacking_mode || 'stackable',
-    max_total_uses: initialRule?.max_total_uses || '',
-    max_uses_per_user: initialRule?.max_uses_per_user || '',
     campaign_id: initialRule?.campaign_id || '',
     
     // Action
     discount_value: action?.percent_value || action?.fixed_value || '',
     max_discount_amount: action?.max_discount_amount || '',
+    min_cart_value: initialMinCartValue,
     
     // Measurement specific (applies if any target is 'measurement')
     meas_type: initialRule?.metadata?.legacy_measurement?.type || 'inch',
@@ -222,7 +224,7 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
   });
 
   const [targets, setTargets] = useState<{ type: string, id: string, is_exclusion: boolean }[]>(initTargets);
-  const [conditions, setConditions] = useState<{ type: string, value: string }[]>(startingConditions);
+  const [conditions, setConditions] = useState<{ type: string, value: string }[]>(dynamicStartingConditions);
   const [tiers, setTiers] = useState<any[]>(action?.action_type === 'tier_price' && action.tiers ? action.tiers : [{ min_quantity: 1, max_quantity: '', percent_value: '' }]);
   const [saving, setSaving] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -284,12 +286,6 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
         source_kind: 'promotion', // All rules are unified as promotion type for standard evaluation
         trigger_type: formData.trigger_type,
         status: formData.status,
-        starts_at: formData.starts_at || null,
-        ends_at: formData.ends_at || null,
-        priority: parseInt(formData.priority.toString()) || 10,
-        stacking_mode: formData.stacking_mode,
-        max_total_uses: formData.max_total_uses ? parseInt(formData.max_total_uses.toString()) : null,
-        max_uses_per_user: formData.max_uses_per_user ? parseInt(formData.max_uses_per_user.toString()) : null,
         campaign_id: formData.campaign_id ? parseInt(formData.campaign_id.toString()) : null,
         actions: [],
         targets: [],
@@ -363,6 +359,14 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
             value_number: cond.value ? parseFloat(cond.value.toString()) : null
           });
         }
+      }
+
+      // Map dedicated Minimum Cart Value field
+      if ((formData.preset === 'base_percent' || formData.preset === 'promo_percent' || formData.preset === 'promo_amount') && formData.min_cart_value) {
+        payload.conditions.push({
+          condition_type: 'cart_subtotal_min',
+          value_number: parseFloat(formData.min_cart_value.toString())
+        });
       }
 
 
@@ -489,6 +493,12 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                       {formData.preset.includes('percent') ? 'Percentage Off (%)' : 'Amount ($)'}
                     </label>
                     <input required type="number" step="0.01" min="0.01" name="discount_value" value={formData.discount_value} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">
+                      Minimum Cart Value ($) <span className="text-[#312f2c]/40">(optional)</span>
+                    </label>
+                    <input type="number" step="0.01" min="0" name="min_cart_value" value={formData.min_cart_value} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="e.g. 100" />
                   </div>
                   {formData.preset.includes('percent') && (
                     <div>
@@ -758,38 +768,8 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
 
             {/* Advanced & Campaign */}
             <div>
-              <h4 className="font-semibold text-[#312f2c] mb-4 border-b pb-2">Availability & Limits</h4>
+              <h4 className="font-semibold text-[#312f2c] mb-4 border-b pb-2">Campaign</h4>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Starts At</label>
-                  <input type="datetime-local" name="starts_at" value={formData.starts_at} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Ends At</label>
-                  <input type="datetime-local" name="ends_at" value={formData.ends_at} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Priority (1-100)</label>
-                  <input type="number" min="1" max="100" name="priority" value={formData.priority} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Stacking Mode</label>
-                  <select name="stacking_mode" value={formData.stacking_mode} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2">
-                    <option value="stackable">Stackable</option>
-                    <option value="best_of_group">Best of Group</option>
-                    <option value="exclusive">Exclusive (stops evaluation)</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Max Total Uses</label>
-                  <input type="number" min="1" name="max_total_uses" value={formData.max_total_uses} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="Unlimited" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Max Uses Per User</label>
-                  <input type="number" min="1" name="max_uses_per_user" value={formData.max_uses_per_user} onChange={handleChange} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2" placeholder="Unlimited" />
-                </div>
 
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-[#312f2c]/80 mb-1">Attach to Campaign (Optional)</label>
