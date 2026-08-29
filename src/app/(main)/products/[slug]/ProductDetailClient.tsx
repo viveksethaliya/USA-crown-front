@@ -811,29 +811,39 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                           </div>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                             <thead>
-                              <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left' }}>
-                                <th style={{ padding: '0.3rem 0' }}>Quantity</th>
-                                <th style={{ padding: '0.3rem 0' }}>Discount</th>
+                              <tr style={{ borderBottom: '1px solid #ccc', textAlign: 'left', background: '#f9fafb' }}>
+                                <th style={{ padding: '0.5rem 0.8rem', color: '#475467', fontWeight: 600 }}>Title</th>
+                                <th style={{ padding: '0.5rem 0.8rem', color: '#475467', fontWeight: 600 }}>Range</th>
+                                <th style={{ padding: '0.5rem 0.8rem', color: '#475467', fontWeight: 600 }}>Discount</th>
                               </tr>
                             </thead>
                             <tbody>
                               {quantityDiscounts.map((d, index) => {
                                 const isSelectedTier = quantity >= d.min_quantity && (d.max_quantity === null || quantity <= d.max_quantity);
+                                
+                                let savedPerUnit = 0;
+                                if (basePrice !== null) {
+                                  if (d.type === 'percentage') {
+                                    savedPerUnit = basePrice * (d.amount / 100);
+                                  } else if (d.type === 'fixed_price') {
+                                    savedPerUnit = basePrice - d.amount;
+                                  }
+                                }
+
                                 return (
-                                <tr key={d.id} style={{ borderBottom: index === quantityDiscounts.length - 1 ? 'none' : '1px solid #eee', background: isSelectedTier ? '#effaf2' : '#fff' }}>
-                                  <td style={{ padding: '0.5rem 0.8rem', fontWeight: isSelectedTier ? 700 : 400 }}>
-                                    {d.max_quantity ? `${d.min_quantity} - ${d.max_quantity}` : `${d.min_quantity}+`}
-                                    {d.measurement_type ? ` ${d.measurement_type === 'plate' ? 'sq. in.' : 'in.'}` : ''}
+                                <tr key={d.id} style={{ 
+                                  borderBottom: index === quantityDiscounts.length - 1 ? 'none' : '1px solid #eee', 
+                                  background: isSelectedTier ? '#f0fdf4' : '#fff',
+                                  boxShadow: isSelectedTier ? 'inset 0 0 0 1px #16a34a' : 'none'
+                                }}>
+                                  <td style={{ padding: '0.5rem 0.8rem', fontWeight: 500, color: '#111827' }}>
+                                    {d.name || 'Bulk Discount Quantity'}
                                   </td>
-                                  <td style={{ padding: '0.5rem 0.8rem', color: 'green', fontWeight: 600 }}>
-                                    {d.type === 'percentage' ? `${d.amount}% off` : d.type === 'fixed_price' ? `$${d.amount.toFixed(2)} each` : `$${d.amount} off`}
-                                    {d.type === 'percentage' && basePrice !== null && (
-                                      <span style={{ color: '#555', fontSize: '0.8rem', marginLeft: '6px' }}>
-                                        (Save ${ (basePrice * (d.amount / 100)).toFixed(2) }/ea)
-                                      </span>
-                                    )}
-                                    <span style={{ color: '#777', fontWeight: 400, marginLeft: '4px' }}>({d.scope})</span>
-                                    {isSelectedTier && <span style={{ color: '#18794e', fontSize: '0.75rem', marginLeft: '7px', fontWeight: 700 }}>APPLIES TO YOUR QTY</span>}
+                                  <td style={{ padding: '0.5rem 0.8rem', color: '#374151' }}>
+                                    {d.max_quantity ? `${d.min_quantity} - ${d.max_quantity}` : `${d.min_quantity}+`}
+                                  </td>
+                                  <td style={{ padding: '0.5rem 0.8rem', color: '#16a34a', fontWeight: 600 }}>
+                                    ${savedPerUnit.toFixed(2)}
                                   </td>
                                 </tr>
                                 );

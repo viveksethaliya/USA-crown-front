@@ -7,59 +7,8 @@ import { useRouter } from 'next/navigation';
 import { apiUrl, cartFetch } from '@/lib/cart';
 import styles from './Header.module.css';
 import SmartSearchBar from './SmartSearchBar';
-import { FiUser, FiMapPin, FiLogOut, FiBriefcase, FiUsers } from 'react-icons/fi';
+import { FiUser, FiMapPin, FiLogOut, FiBriefcase, FiUsers, FiMenu, FiChevronDown } from 'react-icons/fi';
 
-// Static fallback mega menu data
-const fallbackMegaMenuData: Record<string, { title: string, slug: string, links: { label: string, href: string }[] }> = {
-  'findings': {
-    title: 'FINDINGS',
-    slug: 'findings',
-    links: [
-      { label: 'Clasps & Toggles', href: '/products?category=clasps' },
-      { label: 'Earring Findings', href: '/products?category=earring-findings' },
-      { label: 'Jump Rings', href: '/products?category=jump-rings' },
-      { label: 'Settings', href: '/products?category=settings' },
-    ]
-  },
-  'mountings': {
-    title: 'MOUNTINGS',
-    slug: 'mountings',
-    links: [
-      { label: 'Ring Mountings', href: '/products?category=ring-mountings' },
-      { label: 'Pendant Mountings', href: '/products?category=pendant-mountings' },
-      { label: 'Earring Mountings', href: '/products?category=earring-mountings' },
-      { label: 'Bracelet Mountings', href: '/products?category=bracelet-mountings' },
-    ]
-  },
-  'finished': {
-    title: 'FINISHED JEWELRY',
-    slug: 'finished',
-    links: [
-      { label: 'Chains', href: '/products?category=chains' },
-      { label: 'Bracelets', href: '/products?category=bracelets' },
-      { label: 'Earrings', href: '/products?category=earrings' },
-      { label: 'Rings', href: '/products?category=rings' },
-    ]
-  },
-  'metals': {
-    title: 'METALS',
-    slug: 'metals',
-    links: [
-      { label: 'Casting Grain', href: '/products?category=casting-grain' },
-      { label: 'Wire', href: '/products?category=wire' },
-      { label: 'Sheet', href: '/products?category=sheet' },
-      { label: 'Solder', href: '/products?category=solder' },
-    ]
-  }
-};
-
-// Fallback links if API is unavailable
-const fallbackCollections = [
-  { name: 'NEW ARRIVALS', slug: 'new' },
-  { name: 'METALS & MILL', slug: 'metals' },
-  { name: 'TOOLS & SUPPLIES', slug: 'tools' },
-  { name: 'CUSTOM MANUFACTURING', slug: 'custom' },
-];
 
 interface NavCollection {
   id?: string;
@@ -118,8 +67,8 @@ export default function Header() {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('findings');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [navCollections, setNavCollections] = useState<NavCollection[]>(fallbackCollections);
-  const [megaMenuData, setMegaMenuData] = useState(fallbackMegaMenuData);
+  const [navCollections, setNavCollections] = useState<NavCollection[] | null>(null);
+  const [megaMenuData, setMegaMenuData] = useState<Record<string, { title: string, slug: string, links: { label: string, href: string }[] }> | null>(null);
   const [mobileViewCategory, setMobileViewCategory] = useState<string | null>(null);
 
   const [recommendedCache, setRecommendedCache] = useState<Record<string, Product[]>>({});
@@ -127,7 +76,7 @@ export default function Header() {
 
   // Fetch recommended products when a category is hovered
   useEffect(() => {
-    if (!isMegaMenuOpen || !activeCategory) return;
+    if (!isMegaMenuOpen || !activeCategory || !megaMenuData) return;
     if (recommendedCache[activeCategory]) return; // already fetched
 
     const catData = megaMenuData[activeCategory];
@@ -136,7 +85,7 @@ export default function Header() {
     async function fetchProducts() {
       setLoadingProducts(true);
       try {
-        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=7`));
+        const res = await fetch(apiUrl(`/api/store/catalog/products?category=${catData.slug}&limit=24`));
         if (res.ok) {
           const data = await res.json();
           setRecommendedCache(prev => ({
@@ -163,6 +112,15 @@ export default function Header() {
       groups[bucket].push(link);
     });
     return groups;
+  };
+
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleCategoryHover = (catKey: string) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setActiveCategory(catKey);
+    }, 150);
   };
 
   const bottomTierRef = useRef<HTMLDivElement>(null);
@@ -379,8 +337,6 @@ export default function Header() {
     }
   };
 
-  const currentCategoryData = megaMenuData[activeCategory] || megaMenuData[Object.keys(megaMenuData)[0]] || { title: '', links: [] };
-
   return (
     <header className={styles.header}>
       {/* Top Tier: Member Links (White) */}
@@ -531,27 +487,34 @@ export default function Header() {
                 <button
                   className={`${styles.navLink} ${styles.navLinkBtn}`}
                   aria-expanded={isMegaMenuOpen}
+                  aria-haspopup="menu"
+                  aria-controls="mega-menu-dropdown"
                   onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  disabled={!megaMenuData}
+                  style={{ opacity: !megaMenuData ? 0.6 : 1, cursor: !megaMenuData ? 'wait' : 'pointer' }}
                 >
-                  <span>☰</span> ALL PRODUCTS ▾
+                  <FiMenu className={styles.navMenuIcon} />
+                  <span>ALL PRODUCTS</span>
+                  <FiChevronDown className={`${styles.navChevronIcon} ${isMegaMenuOpen ? styles.rotated : ''}`} />
                 </button>
 
                 {/* Mega Menu Dropdown */}
-                {isMegaMenuOpen && (
-                  <div className={styles.megaMenuDropdown}>
+                {isMegaMenuOpen && megaMenuData && (
+                  <div className={styles.megaMenuDropdown} id="mega-menu-dropdown" role="menu">
                     <div className={styles.megaMenuInner}>
 
                       {/* Left Side: Categories */}
-                      <div className={styles.categorySidebar}>
+                      <div className={styles.categorySidebar} role="menu">
                         {Object.keys(megaMenuData)
                           .sort((a, b) => sortCategories(megaMenuData[a].title, megaMenuData[b].title))
                           .map((catKey) => (
                             <Link
                               href={`/products?category=${megaMenuData[catKey].slug}`}
                               key={catKey}
+                              role="menuitem"
                               className={`${styles.categoryItem} ${activeCategory === catKey ? styles.active : ''}`}
-                              onMouseEnter={() => setActiveCategory(catKey)}
+                              onMouseEnter={() => handleCategoryHover(catKey)}
+                              onFocus={() => handleCategoryHover(catKey)}
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
                               <span className={styles.catName}>{megaMenuData[catKey].title}</span>
@@ -564,10 +527,38 @@ export default function Header() {
                       <div className={styles.megaPanel}>
                         {activeCategory && megaMenuData[activeCategory] && (
                           <>
-                            {/* Tier 1: Recommended Products */}
+                            {/* Tier 1: Sub Categories (Middle Column) */}
+                            <div className={styles.subCategorySection}>
+                              <h4 className={styles.sectionTitle}>Sub-Categories</h4>
+                              {megaMenuData[activeCategory].links.length === 0 ? (
+                                <p style={{ color: '#888', fontSize: '0.9rem' }}>No sub-categories available.</p>
+                              ) : (
+                                <div className={styles.subCategoryGrid}>
+                                  {[...megaMenuData[activeCategory].links]
+                                    .sort((a, b) => a.label.localeCompare(b.label))
+                                    .map((link, idx) => (
+                                      <Link href={link.href} key={idx} className={styles.subCategoryLink} onClick={() => setIsMegaMenuOpen(false)}>
+                                        {link.label}
+                                      </Link>
+                                    ))}
+                                </div>
+                              )}
+                              {/* Catalog Access Link */}
+                              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
+                                <Link
+                                  href={`/products?category=${megaMenuData[activeCategory].slug}`}
+                                  className={styles.viewFullCatalogBtn}
+                                  onClick={() => setIsMegaMenuOpen(false)}
+                                >
+                                  View Full Catalog →
+                                </Link>
+                              </div>
+                            </div>
+
+                            {/* Tier 2: Recommended Products (Right Column) */}
                             <div className={styles.recommendedSection}>
                               <h4 className={styles.sectionTitle}>
-                                Recommended in {megaMenuData[activeCategory].title}
+                                Recommended
                               </h4>
 
                               {loadingProducts && (!recommendedCache[activeCategory] || recommendedCache[activeCategory].length === 0) ? (
@@ -597,37 +588,6 @@ export default function Header() {
                                 </div>
                               )}
                             </div>
-
-                            <hr className={styles.divider} />
-
-                            {/* Tier 2: Sub Categories */}
-                            <div className={styles.subCategorySection}>
-                              <h4 className={styles.sectionTitle}>Sub-Categories</h4>
-                              {megaMenuData[activeCategory].links.length === 0 ? (
-                                <p style={{ color: '#888', fontSize: '0.9rem' }}>No sub-categories available.</p>
-                              ) : (
-                                <div className={styles.subCategoryGrid}>
-                                  {[...megaMenuData[activeCategory].links]
-                                    .sort((a, b) => a.label.localeCompare(b.label))
-                                    .slice(0, 12) // Shorter Mega Menu (limit to 12 items)
-                                    .map((link, idx) => (
-                                      <Link href={link.href} key={idx} className={styles.subCategoryLink} onClick={() => setIsMegaMenuOpen(false)}>
-                                        {link.label}
-                                      </Link>
-                                    ))}
-                                </div>
-                              )}
-                              {/* Catalog Access Link */}
-                              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
-                                <Link
-                                  href={`/products?category=${megaMenuData[activeCategory].slug}`}
-                                  className={styles.viewFullCatalogBtn}
-                                  onClick={() => setIsMegaMenuOpen(false)}
-                                >
-                                  View Full Catalog →
-                                </Link>
-                              </div>
-                            </div>
                           </>
                         )}
                       </div>
@@ -638,28 +598,42 @@ export default function Header() {
               </li>
 
               {/* Dynamic collection links */}
-              {navCollections.map((col) => (
-                <li key={col.slug} className={styles.navItem}>
-                  <Link href={`/collections/${col.slug}`} className={styles.navLink}>
-                    {col.name.toUpperCase()}
-                  </Link>
-                </li>
-              ))}
+              {navCollections === null ? (
+                Array(4).fill(0).map((_, i) => (
+                  <li key={`skeleton-desktop-${i}`} className={styles.navItem}>
+                    <div className={styles.skeletonNavLink} />
+                  </li>
+                ))
+              ) : (
+                navCollections.map((col) => (
+                  <li key={col.slug} className={styles.navItem}>
+                    <Link href={`/collections/${col.slug}`} className={styles.navLink}>
+                      {col.name.toUpperCase()}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
 
             {/* Mobile Nav */}
             {isMobileMenuOpen && (
               <div className={styles.mobileNav}>
-                {navCollections.map((col) => (
-                  <Link
-                    key={col.slug}
-                    href={`/collections/${col.slug}`}
-                    className={styles.navLink}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {col.name.toUpperCase()}
-                  </Link>
-                ))}
+                {navCollections === null ? (
+                  Array(4).fill(0).map((_, i) => (
+                    <div key={`skeleton-mobile-${i}`} style={{ height: '40px', background: 'rgba(0,0,0,0.05)', margin: '0.5rem 1rem', borderRadius: '4px', animation: 'pulse 1.5s infinite' }} />
+                  ))
+                ) : (
+                  navCollections.map((col) => (
+                    <Link
+                      key={col.slug}
+                      href={`/collections/${col.slug}`}
+                      className={styles.mobileNavLink}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {col.name.toUpperCase()}
+                    </Link>
+                  ))
+                )}
               </div>
             )}
           </nav>

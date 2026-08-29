@@ -225,7 +225,7 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
 
   const [targets, setTargets] = useState<{ type: string, id: string, is_exclusion: boolean }[]>(initTargets);
   const [conditions, setConditions] = useState<{ type: string, value: string }[]>(dynamicStartingConditions);
-  const [tiers, setTiers] = useState<any[]>(action?.action_type === 'tier_price' && action.tiers ? action.tiers : [{ min_quantity: 1, max_quantity: '', percent_value: '' }]);
+  const [tiers, setTiers] = useState<any[]>(action?.action_type === 'tier_price' && action.tiers ? action.tiers : [{ min_quantity: 1, max_quantity: '', percent_value: '', fixed_value: '' }]);
   const [saving, setSaving] = useState(false);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [attributes, setAttributes] = useState<any[]>([]);
@@ -272,7 +272,7 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
     setTiers(newTiers);
   };
 
-  const addTier = () => setTiers([...tiers, { min_quantity: '', max_quantity: '', percent_value: '' }]);
+  const addTier = () => setTiers([...tiers, { min_quantity: '', max_quantity: '', percent_value: '', fixed_value: '' }]);
   const removeTier = (index: number) => setTiers(tiers.filter((_, i) => i !== index));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -283,7 +283,7 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
     try {
       const payload: any = {
         name: formData.name,
-        source_kind: 'promotion', // All rules are unified as promotion type for standard evaluation
+        source_kind: 'group_pricing', // Changed from promotion to correctly identify as a group rule
         trigger_type: formData.trigger_type,
         status: formData.status,
         campaign_id: formData.campaign_id ? parseInt(formData.campaign_id.toString()) : null,
@@ -299,11 +299,15 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
       } else if (formData.preset === 'promo_amount') {
         actionObj = { action_type: 'fixed_amount_off', fixed_value: parseFloat(formData.discount_value.toString()), applies_to: 'cart_subtotal' };
       } else if (formData.preset === 'quantity_tier') {
-        actionObj = { action_type: 'tier_price', tiers: tiers.map(t => ({
-          min_quantity: parseInt(t.min_quantity),
-          max_quantity: t.max_quantity ? parseInt(t.max_quantity) : null,
-          percent_value: parseFloat(t.percent_value)
-        }))};
+        actionObj = { action_type: 'tier_price', tiers: tiers.map(t => {
+          const res: any = {
+            min_quantity: parseInt(t.min_quantity),
+            max_quantity: t.max_quantity ? parseInt(t.max_quantity) : null
+          };
+          if (t.percent_value) res.percent_value = parseFloat(t.percent_value);
+          if (t.fixed_value) res.fixed_value = parseFloat(t.fixed_value);
+          return res;
+        })};
       }
       
       if (formData.max_discount_amount) {
@@ -475,7 +479,11 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                       </div>
                       <div className="flex-1">
                         <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">% Off</label>
-                        <input type="number" step="0.01" value={tier.percent_value ?? ''} onChange={e => handleTierChange(index, 'percent_value', e.target.value)} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm" required />
+                        <input type="number" step="0.01" disabled={!!tier.fixed_value} value={tier.percent_value ?? ''} onChange={e => handleTierChange(index, 'percent_value', e.target.value)} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm disabled:opacity-50" placeholder={tier.fixed_value ? "Disabled" : ""} required={!tier.fixed_value} />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">Fixed $</label>
+                        <input type="number" step="0.01" disabled={!!tier.percent_value} value={tier.fixed_value ?? ''} onChange={e => handleTierChange(index, 'fixed_value', e.target.value)} className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm disabled:opacity-50" placeholder={tier.percent_value ? "Disabled" : ""} required={!tier.percent_value} />
                       </div>
                       <button type="button" onClick={() => removeTier(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                         <Trash2 className="w-4 h-4" />

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Pencil, Trash2, Plus, SlidersHorizontal, Search, ChevronDown, ChevronRight, X, ImageIcon, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Pencil, Trash2, Plus, SlidersHorizontal, Search, ChevronDown, ChevronRight, X, ImageIcon, Loader2, Eye, AlertTriangle } from 'lucide-react';
 import ImageUploader from '../components/ImageUploader';
 import { toast } from 'react-hot-toast';
 
@@ -35,6 +36,9 @@ interface FormData {
 
 function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
   const [values, setValues] = useState<AttributeValue[]>(attribute.attribute_values || []);
+  const [stats, setStats] = useState<{ counts: Record<number, number>, duplicates: Record<number, any[]> } | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
   const [newValue, setNewValue] = useState<string>('');
   const [newColorHex, setNewColorHex] = useState<string>('#d1a054');
   const [newImageUrl, setNewImageUrl] = useState<string>('');
@@ -47,6 +51,27 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
   const [showEditImageUploader, setShowEditImageUploader] = useState<boolean>(false);
 
   const getToken = (): string | null => localStorage.getItem('adminToken');
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchStats = async () => {
+      try {
+        const res = await adminFetch(`${API}/${attribute.id}/stats`, {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (mounted) setStats(data);
+        }
+      } catch (e) {
+        console.error('Failed to load stats', e);
+      } finally {
+        if (mounted) setLoadingStats(false);
+      }
+    };
+    fetchStats();
+    return () => { mounted = false; };
+  }, [attribute.id]);
 
   const handleAddValue = async (): Promise<void> => {
     if (!newValue.trim()) return;
@@ -126,98 +151,130 @@ function AttributeValuesPanel({ attribute }: { attribute: Attribute }) {
   return (
     <div className="px-4 pb-4 border-t border-[#312f2c]/8 mt-0 bg-[#312f2c]/3">
       <div className="pt-4 space-y-2">
-        <p className="text-xs font-semibold text-[#312f2c]/40 uppercase tracking-wider mb-3">
-          Values — e.g. "{attribute.name === 'Metal Type' ? '14K Yellow Gold' : attribute.name === 'Ring Size' ? '7' : 'Value 1'}"
-        </p>
-
         {values.length === 0 ? (
           <p className="text-sm text-[#312f2c]/35 italic py-2">No values yet. Add the first one below.</p>
         ) : (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {values.sort((a, b) => a.position - b.position).map(v => (
-              <div key={v.id} className="flex items-center gap-1 group">
-                {editingValueId === v.id ? (
-                  <div className="flex items-center gap-1">
-                    {attribute.type === 'color' && (
-                      <input
-                        type="color"
-                        value={editColorHex}
-                        onChange={(e) => setEditColorHex(e.target.value)}
-                        className="w-7 h-7 rounded-lg cursor-pointer border border-[#312f2c]/12 bg-white p-0.5"
-                        title="Pick color"
-                      />
-                    )}
-                    {attribute.type === 'image' && (
-                      <button
-                        type="button"
-                        onClick={() => setShowEditImageUploader(!showEditImageUploader)}
-                        className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-colors ${editImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
-                        title={editImageUrl ? 'Image selected' : 'Upload image'}
-                      >
-                        {editImageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={editImageUrl} alt="Swatch" className="w-full h-full rounded-md object-cover p-0.5" />
-                        ) : (
-                          <ImageIcon className="w-3 h-3" />
+          <div className="overflow-x-auto bg-white/60 border border-[#312f2c]/10 rounded-xl shadow-sm mb-3">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-[#312f2c]/5 border-b border-[#312f2c]/10 text-xs text-[#312f2c]/50 font-bold uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3 w-16">Swatch</th>
+                  <th className="px-4 py-3">Value</th>
+                  <th className="px-4 py-3 w-32">Usage</th>
+                  <th className="px-4 py-3 w-48">Warnings</th>
+                  <th className="px-4 py-3 text-right w-32">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#312f2c]/5">
+                {values.sort((a, b) => a.position - b.position).map(v => {
+                  const count = stats?.counts?.[v.id];
+                  const duplicates = stats?.duplicates?.[v.id] || [];
+                  const isOrphaned = count === 0;
+
+                  return (
+                    <tr key={v.id} className="hover:bg-white/80 transition-colors group">
+                      <td className="px-4 py-3 align-middle">
+                        {v.color_hex && (
+                          <span className="inline-block w-5 h-5 rounded border border-[#312f2c]/15 shadow-sm" style={{ backgroundColor: v.color_hex }} />
                         )}
-                      </button>
-                    )}
-                    <input
-                      type="text"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleUpdateValue(v.id)}
-                      autoFocus
-                      className="bg-white border border-[#d1a054]/40 rounded-lg px-3 py-1 text-[#312f2c] text-sm w-36 focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40"
-                    />
-                    <button
-                      onClick={() => handleUpdateValue(v.id)}
-                      className="px-2 py-1 bg-[#d1a054] text-[#f0ede5] rounded text-xs font-medium"
-                    >✓</button>
-                    <button
-                      onClick={() => { setEditingValueId(null); setShowEditImageUploader(false); }}
-                      className="px-2 py-1 bg-[#312f2c]/8 text-[#312f2c]/60 rounded text-xs"
-                    >✕</button>
-                  </div>
-                ) : (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#312f2c]/10 rounded-lg text-sm text-[#312f2c]">
-                    {v.color_hex && (
-                      <span
-                        className="w-3 h-3 rounded-full border border-[#312f2c]/15 flex-shrink-0"
-                        style={{ backgroundColor: v.color_hex }}
-                      />
-                    )}
-                    {v.image_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={v.image_url}
-                        alt={v.value}
-                        className="w-4 h-4 rounded-full border border-[#312f2c]/15 object-cover"
-                      />
-                    )}
-                    {v.value}
-                    <button
-                      onClick={() => { 
-                        setEditingValueId(v.id); 
-                        setEditText(v.value);
-                        setEditColorHex(v.color_hex || '#d1a054');
-                        setEditImageUrl(v.image_url || '');
-                        setShowEditImageUploader(false);
-                      }}
-                      className="ml-1 opacity-0 group-hover:opacity-100 text-[#312f2c]/35 hover:text-[#d1a054] transition-opacity"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteValue(v.id)}
-                      className="opacity-0 group-hover:opacity-100 text-[#312f2c]/35 hover:text-red-500 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-              </div>
-            ))}
+                        {v.image_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={v.image_url} alt={v.value} className="w-6 h-6 rounded border border-[#312f2c]/15 object-cover" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        {editingValueId === v.id ? (
+                          <div className="flex items-center gap-2">
+                            {attribute.type === 'color' && (
+                              <input
+                                type="color"
+                                value={editColorHex}
+                                onChange={(e) => setEditColorHex(e.target.value)}
+                                className="w-7 h-7 rounded cursor-pointer border border-[#312f2c]/12 p-0.5 bg-white"
+                              />
+                            )}
+                            {attribute.type === 'image' && (
+                              <button
+                                type="button"
+                                onClick={() => setShowEditImageUploader(!showEditImageUploader)}
+                                className={`w-7 h-7 rounded border flex items-center justify-center transition-colors ${editImageUrl ? 'border-[#d1a054] bg-[#d1a054]/10 text-[#d1a054]' : 'border-[#312f2c]/12 bg-white hover:bg-[#312f2c]/5 text-[#312f2c]/50'}`}
+                              >
+                                {editImageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={editImageUrl} alt="Swatch" className="w-full h-full rounded object-cover p-0.5" />
+                                ) : (
+                                  <ImageIcon className="w-3 h-3" />
+                                )}
+                              </button>
+                            )}
+                            <input
+                              type="text"
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleUpdateValue(v.id)}
+                              autoFocus
+                              className="bg-white border border-[#d1a054]/40 rounded-lg px-2 py-1 text-[#312f2c] text-sm w-36 focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40"
+                            />
+                            <button onClick={() => handleUpdateValue(v.id)} className="px-2 py-1 bg-[#d1a054] text-[#f0ede5] rounded text-xs font-medium">✓</button>
+                            <button onClick={() => { setEditingValueId(null); setShowEditImageUploader(false); }} className="px-2 py-1 bg-[#312f2c]/8 text-[#312f2c]/60 rounded text-xs">✕</button>
+                          </div>
+                        ) : (
+                          <span className="font-medium text-[#312f2c]">{v.value}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        {loadingStats ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-[#312f2c]/30" />
+                        ) : (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${isOrphaned ? 'bg-[#312f2c]/5 text-[#312f2c]/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                            {count} variation{count !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-middle">
+                        {!loadingStats && duplicates.length > 0 && (
+                          <div className="flex items-center gap-1.5 text-amber-600 text-xs font-medium bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate max-w-[120px]" title={`Also exists in: ${duplicates.map((d: any) => d.attribute_name).join(', ')}`}>
+                              In: {duplicates.map((d: any) => d.attribute_name).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-middle text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Link
+                            href={`/crown-admin/attributes/${attribute.slug}/values/${v.id}`}
+                            className="p-1.5 bg-[#312f2c]/5 hover:bg-[#d1a054]/10 hover:text-[#d1a054] text-[#312f2c]/50 rounded-lg transition-colors"
+                            title="View variations"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => { 
+                              setEditingValueId(v.id); 
+                              setEditText(v.value);
+                              setEditColorHex(v.color_hex || '#d1a054');
+                              setEditImageUrl(v.image_url || '');
+                              setShowEditImageUploader(false);
+                            }}
+                            className="p-1.5 bg-[#312f2c]/5 hover:bg-[#d1a054]/10 hover:text-[#d1a054] text-[#312f2c]/50 rounded-lg transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteValue(v.id)}
+                            className="p-1.5 bg-[#312f2c]/5 hover:bg-red-500/10 hover:text-red-600 text-[#312f2c]/50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
 
