@@ -157,6 +157,13 @@ function DynamicTargetSelect({
   );
 }
 
+const isConditionCompatible = (preset: string, type: string) => {
+  if (type === 'none') return true;
+  if (type === 'cart_subtotal_min') return false; // Hidden on all presets per requirements
+  if (type === 'quantity_min' && preset === 'quantity_tier') return false; // Hidden on Quantity Tiers
+  return true;
+};
+
 export default function RuleEditor({ group, initialRule, onClose, onSaved }: { 
   group: any, 
   initialRule: any, 
@@ -357,7 +364,7 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
 
       // Map dynamic conditions
       for (const cond of conditions) {
-        if (cond.type !== 'none') {
+        if (cond.type !== 'none' && isConditionCompatible(formData.preset, cond.type)) {
           payload.conditions.push({
             condition_type: cond.type,
             value_number: cond.value ? parseFloat(cond.value.toString()) : null
@@ -716,10 +723,15 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                   <h5 className="font-semibold text-[#312f2c] mb-3">Requirements & Eligibility</h5>
                   
                   <div className="space-y-3">
-                    {conditions.map((cond, idx) => (
-                      <div key={idx} className="flex gap-3 items-start bg-white p-3 rounded-lg border border-[#312f2c]/10 shadow-sm">
+                    {conditions.map((cond, idx) => {
+                      const isCompatible = isConditionCompatible(formData.preset, cond.type);
+                      const presetName = formData.preset === 'quantity_tier' ? 'Quantity Tiers' : 
+                                         formData.preset === 'promo_amount' ? 'Amount Off' : 'Percentage Off';
+                      
+                      return (
+                      <div key={idx} className={`flex gap-3 items-start bg-white p-3 rounded-lg border shadow-sm relative ${!isCompatible ? 'border-red-200 bg-red-50/30' : 'border-[#312f2c]/10'}`}>
                         <div className="flex-1">
-                          <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">Condition Type</label>
+                          <label className={`block text-xs font-medium mb-1 ${!isCompatible ? 'text-red-700' : 'text-[#312f2c]/60'}`}>Condition Type</label>
                           <select 
                             value={cond.type} 
                             onChange={e => {
@@ -731,20 +743,26 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                               }
                               setConditions(newConds);
                             }}
-                            className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm"
+                            className={`w-full border rounded-lg px-3 py-2 text-sm ${!isCompatible ? 'border-red-300 text-red-700 bg-red-50' : 'border-[#312f2c]/20'}`}
                           >
                             <option value="none">-- Select Condition --</option>
-                            <option value="quantity_min">Minimum Line Quantity</option>
-                            <option value="cart_subtotal_min">Minimum Cart Subtotal ($)</option>
+                            {(cond.type === 'quantity_min' || isConditionCompatible(formData.preset, 'quantity_min')) && <option value="quantity_min">Minimum Line Quantity</option>}
+                            {(cond.type === 'cart_subtotal_min' || isConditionCompatible(formData.preset, 'cart_subtotal_min')) && <option value="cart_subtotal_min">Minimum Cart Subtotal ($)</option>}
                             <option value="first_purchase">First Purchase Only</option>
                             <option value="repeat_customer">Repeat Customers Only</option>
                             <option value="ltv_min">Minimum Lifetime Spend ($)</option>
                           </select>
+                          {!isCompatible && cond.type !== 'none' && (
+                            <div className="text-red-600 text-xs mt-1.5 flex items-start gap-1 font-medium">
+                              <span className="shrink-0 mt-0.5">•</span>
+                              This condition doesn't apply to {presetName} and will be removed if you save.
+                            </div>
+                          )}
                         </div>
                         
                         {!['none', 'first_purchase', 'repeat_customer'].includes(cond.type) && (
                           <div className="flex-1">
-                            <label className="block text-xs font-medium text-[#312f2c]/60 mb-1">
+                            <label className={`block text-xs font-medium mb-1 ${!isCompatible ? 'text-red-700' : 'text-[#312f2c]/60'}`}>
                               Value
                             </label>
                             <input 
@@ -755,17 +773,17 @@ export default function RuleEditor({ group, initialRule, onClose, onSaved }: {
                                 newConds[idx].value = e.target.value;
                                 setConditions(newConds);
                               }}
-                              className="w-full border border-[#312f2c]/20 rounded-lg px-3 py-2 text-sm" 
+                              className={`w-full border rounded-lg px-3 py-2 text-sm ${!isCompatible ? 'border-red-300 text-red-700 bg-white/50' : 'border-[#312f2c]/20'}`} 
                               placeholder={cond.type.includes('quantity') ? 'e.g. 5' : 'e.g. 100'} 
                             />
                           </div>
                         )}
                         
-                        <button type="button" onClick={() => setConditions(conditions.filter((_, i) => i !== idx))} className="mt-6 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                        <button type="button" onClick={() => setConditions(conditions.filter((_, i) => i !== idx))} className="mt-6 p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors shrink-0">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    ))}
+                    )})}
                     
                     <button type="button" onClick={() => setConditions([...conditions, { type: 'none', value: '' }])} className="text-sm text-[#d1a054] font-medium hover:text-[#312f2c] flex items-center gap-1 mt-2">
                       <Plus className="w-4 h-4" /> Add Condition

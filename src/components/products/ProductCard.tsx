@@ -41,106 +41,81 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
   const productHref = `/products/${encodeURIComponent(product.slug)}`;
 
   return (
-    <div className={styles.productCard} style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100%' }}>
+    <div className={styles.productCard}>
       <div className={styles.productImageWrap}>
         {product.sale_price && isSaleActive(product.sale_price, product.date_sale_starts, product.date_sale_ends) && (
           <div className={styles.saleBadge}>
             SALE
           </div>
         )}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.image || '/web-phts/a-17.jpg'}
-            alt={product.name}
-            className={styles.productImage}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={product.image || '/web-phts/a-17.jpg'}
+          alt={product.name}
+          className={styles.productImage}
+          loading="lazy"
+          decoding="async"
+        />
       </div>
-      <div className={styles.productInfo} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Link href={productHref} className={styles.productNameLink} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <h3 className={styles.productName} style={{ cursor: 'pointer', textTransform: 'capitalize' }}>{product.name.toLowerCase()}</h3>
+      <div className={styles.productInfo}>
+        <Link href={productHref} className={styles.productNameLink}>
+          <h3 className={styles.productName}>{product.name}</h3>
         </Link>
-        {product.swatchAttributes && product.swatchAttributes.length > 0 && (
-          <div className={styles.metalRow}>
-            <span className={styles.metalLabel}>
-              Metal Type:
-            </span>
-            <div className={styles.metalDots}>
-              {product.swatchAttributes.map(swatch => {
+        <div className={styles.priceSlot}>
+          {isAuthenticated && userPermission !== 'view_only' ? (
+            product.priceRange ? (
+              <span className={styles.priceValue}>{product.priceRange}</span>
+            ) : product.regular_price !== undefined && product.regular_price !== null ? (
+              <span className={styles.priceValue}>
+                ${Number(product.sale_price && isSaleActive(product.sale_price, product.date_sale_starts, product.date_sale_ends) ? product.sale_price : product.regular_price).toFixed(2)}
+              </span>
+            ) : null
+          ) : (
+            <span className={styles.loginForPricing}>Login for pricing</span>
+          )}
+        </div>
+        <div className={styles.swatchSlot}>
+          {product.swatchAttributes && product.swatchAttributes.length > 0 && (
+            <>
+              {product.swatchAttributes.slice(0, 4).map(swatch => {
                 const isSelected = selectedMetal === swatch.value;
                 const hasColorOrImage = !!(swatch.color_hex || swatch.image_url);
-                const baseStyle = swatch.image_url
-                  ? { backgroundImage: `url(${swatch.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                const dynamicStyle = swatch.image_url
+                  ? { backgroundImage: `url(${swatch.image_url})` }
                   : swatch.color_hex
                     ? { backgroundColor: swatch.color_hex }
-                    : { background: '#f4f6f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#333', fontWeight: 600, padding: '0 6px', minWidth: '32px' };
+                    : {};
 
                 return (
                   <Link
                     key={swatch.value}
                     href={`${productHref}?metal=${encodeURIComponent(swatch.value)}`}
-                    onClick={() => {
-                      // We don't prevent default, we want the link to work
-                      setSelectedMetal(swatch.value);
-                    }}
-                    style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+                    onClick={() => setSelectedMetal(swatch.value)}
+                    className={`${styles.metalDot} ${isSelected ? styles.metalDotSelected : ''} ${!hasColorOrImage ? styles.metalDotText : ''}`}
+                    style={dynamicStyle}
                     title={swatch.value}
+                    aria-label={swatch.value}
                   >
-                    <span
-                      className={styles.metalDot}
-                      style={{
-                        ...baseStyle,
-                        border: isSelected ? '2px solid #1a202c' : '1px solid rgba(0,0,0,0.15)',
-                        outline: isSelected ? '1px solid #1a202c' : 'none',
-                        outlineOffset: '1px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        width: hasColorOrImage ? '24px' : 'auto',
-                        height: '24px',
-                        borderRadius: '2px' // make it square-ish like the image
-                      }}
-                    >
-                      {!hasColorOrImage ? swatch.value : ''}
-                    </span>
-                    {hasColorOrImage && (
-                      <span style={{ fontSize: '10px', color: '#555', fontWeight: isSelected ? 600 : 400 }}>
-                        {swatch.value}
-                      </span>
-                    )}
+                    {!hasColorOrImage ? swatch.value : ''}
                   </Link>
                 );
               })}
-            </div>
-          </div>
-        )}
-        {product.sizeRanges && product.sizeRanges.map((sz, i) => (
-          <div key={i} className={styles.metalRow}>
-            <span className={styles.metalLabel}>{sz.name}:</span>
-            <span className={styles.metalValue}>{sz.range}</span>
-          </div>
-        ))}
-        {isAuthenticated && userPermission !== 'view_only' && (
-          product.priceRange ? (
-            <div className={styles.metalRow}>
-              <span className={styles.metalLabel}>Price:</span>
-              <span className={styles.priceValue}>{product.priceRange}</span>
-            </div>
-          ) : product.regular_price !== undefined && product.regular_price !== null ? (
-            <div className={styles.metalRow}>
-              <span className={styles.metalLabel}>Price:</span>
-              <span className={styles.priceValue}>
-                ${Number(product.sale_price && isSaleActive(product.sale_price, product.date_sale_starts, product.date_sale_ends) ? product.sale_price : product.regular_price).toFixed(2)}
-              </span>
-            </div>
-          ) : null
-        )}
-        {(!isAuthenticated || userPermission === 'view_only') && (
-          <div className={styles.metalRow}>
-            <span style={{ color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic' }}>Login for pricing</span>
-          </div>
-        )}
+              {product.swatchAttributes.length > 4 && (
+                <span className={styles.overflowIndicator}>+{product.swatchAttributes.length - 4}</span>
+              )}
+            </>
+          )}
+        </div>
+        <div className={styles.sizeSlot}>
+          {product.sizeRanges && product.sizeRanges.map((sz, i) => {
+            const shortName = sz.name.toLowerCase().includes('length') ? 'Len:' : 'Sz:';
+            return (
+              <React.Fragment key={i}>
+                <span>{shortName}</span> <span className={styles.sizeValue}>{sz.range}</span>
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

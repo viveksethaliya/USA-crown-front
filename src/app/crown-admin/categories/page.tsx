@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Plus, Pencil, Trash2, FolderTree, Loader2, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Category } from '@/types/admin';
@@ -109,6 +110,19 @@ export default function CategoriesPage() {
       result = result.concat(buildHierarchy(cats, child.id, depth + 1));
     }
     return result;
+  };
+
+  const getDirectCount = (cat: any) => {
+    return cat.product_categories?.[0]?.count || 0;
+  };
+
+  const getTotalCount = (catId: any): number => {
+    const cat = categories.find(c => c.id === catId);
+    if (!cat) return 0;
+    
+    // Return direct count only to avoid double counting, 
+    // since products in this DB are mapped to both parent and child categories.
+    return getDirectCount(cat);
   };
 
   const displayCategories = search
@@ -294,7 +308,15 @@ export default function CategoriesPage() {
                         <FolderTree className="w-4 h-4" />
                       </div>
                     </div>
-                    <span>{cat.name}</span>
+                    <Link
+                      href={`/crown-admin/categories/${cat.id}/products`}
+                      className={`font-medium hover:text-[#d1a054] transition-colors flex items-center gap-2 ${getTotalCount(cat.id) === 0 ? 'text-[#312f2c]/50' : 'text-[#312f2c]'}`}
+                    >
+                      {cat.name}
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${getTotalCount(cat.id) === 0 ? 'bg-[#312f2c]/5 text-[#312f2c]/40' : 'bg-[#d1a054]/10 text-[#d1a054]'}`}>
+                        {getTotalCount(cat.id)}
+                      </span>
+                    </Link>
                   </td>
                   <td className="p-4 text-[#312f2c]/50 font-mono text-sm">{cat.slug}</td>
                   <td className="p-4 text-[#312f2c]/45 text-sm">

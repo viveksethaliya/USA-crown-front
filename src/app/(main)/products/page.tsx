@@ -125,7 +125,7 @@ function ProductsContent() {
   const toggleFilterExpand = (filterKey: string) => {
     setExpandedFilters(prev => prev.includes(filterKey) ? prev.filter(f => f !== filterKey) : [...prev, filterKey]);
   };
-  
+
   const [searchQuery, setSearchQuery] = useState(catalogState.search);
   const [mobileSidebar, setMobileSidebar] = useState(false);
 
@@ -187,8 +187,8 @@ function ProductsContent() {
     if (changed) {
       setExpandedCategories(Array.from(newExpanded));
     }
-  // explicitly omitting expandedCategories to avoid re-expanding when user manually collapses
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // explicitly omitting expandedCategories to avoid re-expanding when user manually collapses
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, catalogState.categories]);
 
   // Fetch attribute filters
@@ -273,7 +273,7 @@ function ProductsContent() {
       }
     }, 400);
     return () => clearTimeout(timeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // Trigger fetch
@@ -352,7 +352,7 @@ function ProductsContent() {
             <button
               type="button"
               onClick={() => setExpandedCategories(prev =>
-                prev.includes(category.slug) 
+                prev.includes(category.slug)
                   ? ancestorSlugs // collapsing: keep only ancestors expanded
                   : [...ancestorSlugs, category.slug] // expanding: replace entirely with this branch
               )}
@@ -406,19 +406,6 @@ function ProductsContent() {
           <button className={styles.mobileClose} onClick={() => setMobileSidebar(false)}>
             <FiX style={{ marginRight: '8px' }} /> Close
           </button>
-
-          <div className={styles.searchBox}>
-            <input
-              type="text"
-              placeholder="Search Product..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className={styles.searchInput}
-            />
-            <span className={styles.searchIcon}>
-              <FiSearch />
-            </span>
-          </div>
 
           {/* Categories */}
           <div className={styles.filterBlock}>
@@ -552,11 +539,11 @@ function ProductsContent() {
           ) : (
             <div className={styles.productGrid}>
               {products.map((product, index) => (
-                <ScrollReveal key={product.id} animation="fade-up" delay={(index % 4) * 100 as 0|100|200|300} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <ProductCard 
-                    product={product} 
-                    isAuthenticated={isAuthenticated} 
-                    userPermission={userPermission} 
+                <ScrollReveal key={product.id} animation="fade-up" delay={(index % 4) * 100 as 0 | 100 | 200 | 300} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <ProductCard
+                    product={product}
+                    isAuthenticated={isAuthenticated}
+                    userPermission={userPermission}
                   />
                 </ScrollReveal>
               ))}

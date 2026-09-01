@@ -91,7 +91,33 @@ export default function GroupRules({ group }: { group: any }) {
     const target = rule.discount_targets?.[0];
     const cond = rule.discount_conditions?.[0];
     
-    let summary = `Get ${action?.percent_value || 0}% off`;
+    let summary = 'No discount defined';
+    
+    if (action) {
+      const tiers = action.discount_tiers || action.tiers;
+      if (tiers && Array.isArray(tiers) && tiers.length > 0) {
+        const hasPercent = tiers.some((t: any) => t.percent_value > 0);
+        const hasFixed = tiers.some((t: any) => t.fixed_value > 0);
+        
+        if (hasPercent && !hasFixed) {
+          const vals = tiers.map((t: any) => t.percent_value || 0);
+          const min = Math.min(...vals);
+          const max = Math.max(...vals);
+          summary = min === max ? `Get ${min}% off, based on quantity` : `${min}–${max}% off, based on quantity`;
+        } else if (hasFixed && !hasPercent) {
+          const vals = tiers.map((t: any) => t.fixed_value || 0);
+          const min = Math.min(...vals);
+          const max = Math.max(...vals);
+          summary = min === max ? `Get $${min} off per item, based on quantity` : `$${min}–$${max} off per item, based on quantity`;
+        } else {
+          summary = `Tiered discount based on quantity`;
+        }
+      } else if (action.fixed_value != null && action.fixed_value > 0) {
+        summary = `Get $${action.fixed_value} off`;
+      } else {
+        summary = `Get ${action.percent_value || 0}% off`;
+      }
+    }
     
     if (target) {
       if (target.target_name) {
@@ -194,13 +220,7 @@ export default function GroupRules({ group }: { group: any }) {
                     </div>
                     
                     <div className="text-xs text-[#312f2c]/50 flex items-center gap-3 mt-3">
-                      <span>Type: <strong className="text-[#312f2c]/80">{rule.trigger_type}</strong></span>
-                      <>
-                        <span>•</span>
-                        <span>Priority: <strong className="text-[#312f2c]/80">{rule.priority}</strong></span>
-                        <span>•</span>
-                        <span>Stacking: <strong className="text-[#312f2c]/80">{rule.stacking_mode}</strong></span>
-                      </>
+                      <span>Trigger: <strong className="text-[#312f2c]/80">{rule.trigger_type}</strong></span>
                       {rule.campaign_id && (
                         <>
                           <span>•</span>
@@ -267,16 +287,7 @@ export default function GroupRules({ group }: { group: any }) {
         <p>The <strong>Discount Rules</strong> tab is the core pricing engine for this group. It unifies what used to be Base Pricing and Promotions into one powerful system.</p>
         
         <h3>How Rules Are Evaluated</h3>
-        <p>When a customer in this group adds an item to their cart, the system looks at all Active rules and finds the best eligible discount based on two factors:</p>
-        <ul>
-          <li><strong>Priority:</strong> Rules with a higher Priority number (e.g. 100) take precedence over lower priority rules (e.g. 10).</li>
-          <li><strong>Stacking Mode:</strong>
-            <ul>
-              <li><em>Exclusive:</em> If an exclusive rule applies, the engine stops evaluating and applies only this rule.</li>
-              <li><em>Stackable:</em> If a stackable rule applies, the engine continues to evaluate other stackable rules and combines the discounts (up to a limit).</li>
-            </ul>
-          </li>
-        </ul>
+        <p>When a customer in this group adds an item to their cart, the system looks at all Active rules and finds the best eligible discount for each item.</p>
 
         <h3>Rule Components</h3>
         <ul>
