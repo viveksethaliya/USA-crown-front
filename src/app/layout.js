@@ -19,11 +19,29 @@ const outfit = Outfit({
   weight: ["300", "400", "500", "600"],
 });
 
-export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || "https://usa-crown-front.vercel.app"),
-  title: "Crown Findings",
-  description: "B2B Wholesale Jewelry",
-};
+export async function generateMetadata() {
+  let title = "Crown Findings";
+  let description = "B2B Wholesale Jewelry";
+  
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { 
+      next: { revalidate: 60 } 
+    });
+    if (res.ok) {
+      const settings = await res.json();
+      if (settings.seo_default_title) title = settings.seo_default_title;
+      if (settings.seo_default_description) description = settings.seo_default_description;
+    }
+  } catch (error) {
+    console.error("Failed to fetch store settings for metadata:", error);
+  }
+
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || "https://usa-crown-front.vercel.app"),
+    title,
+    description,
+  };
+}
 
 export default function RootLayout({ children }) {
   return (

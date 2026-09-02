@@ -8,6 +8,7 @@ interface Product {
   slug: string;     // required for all public navigation
   name: string;
   image?: string | null;
+  image_alt_text?: string | null;
   regular_price?: number | string | null;
   sale_price?: number | string | null;
   date_sale_starts?: string;
@@ -51,7 +52,7 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={product.image || '/web-phts/a-17.jpg'}
-          alt={product.name}
+          alt={product.image_alt_text || product.name}
           className={styles.productImage}
           loading="lazy"
           decoding="async"

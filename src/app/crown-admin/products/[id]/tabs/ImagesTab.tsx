@@ -9,7 +9,7 @@ import { toast } from 'react-hot-toast';
 import { ADMIN_API as API } from '@/lib/config';
 import { adminFetch } from '@/lib/api';
 
-export default function ImagesTab({ productId, images, setImages }: { productId: string, images: any[], setImages: React.Dispatch<React.SetStateAction<any[]>> }) {
+export default function ImagesTab({ productId, images, setImages, productName = '' }: { productId: string, images: any[], setImages: React.Dispatch<React.SetStateAction<any[]>>, productName?: string }) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
@@ -19,7 +19,7 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
       const res = await adminFetch(`${API}/products/${productId}/images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ url, alt_text: '', position: images.length })
+        body: JSON.stringify({ url, alt_text: productName, position: images.length })
       });
       const data = await res.json();
       if (res.ok) {
@@ -39,7 +39,7 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
       const res = await adminFetch(`${API}/products/${productId}/images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ url, alt_text: '', position: images.length })
+        body: JSON.stringify({ url, alt_text: productName, position: images.length })
       });
       const data = await res.json();
       if (res.ok) {
@@ -98,6 +98,25 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
     finally { setIsDeleting(null); }
   };
 
+  const handleAltTextBlur = async (image: any, newAltText: string) => {
+    if (image.alt_text === newAltText) return;
+    const token = localStorage.getItem('adminToken');
+    try {
+      const res = await adminFetch(`${API}/products/${productId}/images/${image.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ alt_text: newAltText })
+      });
+      if (!res.ok) throw new Error('Failed to update alt text');
+      
+      setImages(prev => prev.map(img => img.id === image.id ? { ...img, alt_text: newAltText } : img));
+      toast.success('Alt text updated');
+    } catch (error: any) { 
+      console.error(error); 
+      toast.error(error.message || 'Failed to update alt text'); 
+    }
+  };
+
   const sortedImages = [...images].sort((a, b) => a.position - b.position);
 
   return (
@@ -131,10 +150,10 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
             <p className="text-sm">No images yet. Upload files above.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {sortedImages.map((img, idx) => (
-              <div key={img.id}
-                className="relative group rounded-xl overflow-hidden bg-[#312f2c]/8 aspect-square border border-[#312f2c]/12 hover:border-[#d1a054]/40 transition-all">
+              <div key={img.id} className="flex flex-col">
+                <div className="relative group rounded-xl overflow-hidden bg-[#312f2c]/8 aspect-square border border-[#312f2c]/12 hover:border-[#d1a054]/40 transition-all">
                 <img src={img.url} alt={img.alt_text || `Product image ${idx + 1}`} className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -167,6 +186,14 @@ export default function ImagesTab({ productId, images, setImages }: { productId:
                   {idx + 1}
                 </div>
               </div>
+              <input
+                type="text"
+                defaultValue={img.alt_text || ''}
+                onBlur={(e) => handleAltTextBlur(img, e.target.value)}
+                placeholder="Alt text (defaults to product name)"
+                className="mt-2 w-full bg-transparent border-b border-[#312f2c]/20 text-xs px-1 py-1 focus:outline-none focus:border-[#d1a054] text-[#312f2c]"
+              />
+            </div>
             ))}
           </div>
         )}

@@ -63,14 +63,7 @@ export default async function CollectionPage({ params }: Props) {
 
         {/* Collection Header */}
         <div style={{ textAlign: 'center', marginBottom: '3rem', paddingTop: '2rem' }}>
-          {collection.hero_image && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={collection.hero_image}
-              alt={collection.name}
-              style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '12px', marginBottom: '2rem' }}
-            />
-          )}
+
           <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--color-inkblue)' }}>{collection.name}</h1>
           {collection.description && (
             <p style={{ color: '#475569', maxWidth: '800px', margin: '0 auto', lineHeight: '1.6' }}>

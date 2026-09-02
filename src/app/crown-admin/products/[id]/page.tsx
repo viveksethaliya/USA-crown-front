@@ -228,7 +228,7 @@ export default function ProductEditorPage() {
       <div>
         {activeTab === 'basic' && <BasicInfoTab product={product} onChange={handleChange} brands={brands} />}
         {activeTab === 'organization' && <OrganizationTab product={product} onChange={handleChange} categories={categories} tags={tags} />}
-        {activeTab === 'images' && !isNew && <ImagesTab productId={idStr as string} images={images} setImages={setImages} />}
+        {activeTab === 'images' && !isNew && <ImagesTab productId={idStr as string} images={images} setImages={setImages} productName={product.name} />}
         {activeTab === 'variations' && !isNew && (
           <VariationsTab productId={idStr as string} productType={product.type} variations={variations} setVariations={setVariations} attributes={attributes} />
         )}

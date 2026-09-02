@@ -15,10 +15,25 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
-export const metadata: Metadata = {
-  title: "Crown Findings | B2B Wholesale Jewelry",
-  description: "Premium B2B wholesale jewelry platform for verified members.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let title = "Crown Findings | B2B Wholesale Jewelry";
+  let description = "Premium B2B wholesale jewelry platform for verified members.";
+  
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { 
+      next: { revalidate: 60 } 
+    });
+    if (res.ok) {
+      const settings = await res.json();
+      if (settings.seo_default_title) title = settings.seo_default_title;
+      if (settings.seo_default_description) description = settings.seo_default_description;
+    }
+  } catch (error) {
+    console.error("Failed to fetch store settings for metadata:", error);
+  }
+
+  return { title, description };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

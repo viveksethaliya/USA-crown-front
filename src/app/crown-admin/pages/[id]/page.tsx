@@ -52,7 +52,7 @@ export default function PageEditorPage() {
           content: data.content || '',
           excerpt: data.excerpt || '',
           is_published: data.is_published || false,
-          page_type: 'blog',
+          page_type: data.page_type || 'blog',
           featured_image: data.featured_image || '',
           seo_title: data.seo_title || '',
           seo_description: data.seo_description || '',
@@ -112,6 +112,11 @@ export default function PageEditorPage() {
     );
   }
 
+  const tabs = [{ id: 'content', label: 'Content' }];
+  if (page.page_type !== 'page') {
+    tabs.push({ id: 'seo', label: 'SEO & Metadata' });
+  }
+
   return (
     <div className="space-y-6 w-full">
       {/* Header */}
@@ -123,9 +128,9 @@ export default function PageEditorPage() {
           </Link>
           <div>
             <h2 className="text-xl font-bold text-[#312f2c]">
-              {isNew ? 'Create New Blog Post' : (page.title || 'Edit Blog Post')}
+              {isNew ? 'Create New Page / Post' : (page.title || 'Edit Page')}
             </h2>
-            <p className="text-[#312f2c]/45 text-sm capitalize">Blog Post</p>
+            <p className="text-[#312f2c]/45 text-sm capitalize">{page.page_type === 'blog' ? 'Blog Post' : 'Static Page'}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -146,17 +151,14 @@ export default function PageEditorPage() {
             className="flex items-center gap-2 px-5 py-2 bg-[#312f2c] hover:bg-[#312f2c]/85 text-[#f0ede5] rounded-lg font-medium transition-all disabled:opacity-50 shadow-sm"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isNew ? 'Create Post' : 'Save Changes'}
+            {isNew ? 'Create Page' : 'Save Changes'}
           </button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-[#312f2c]/12 gap-1">
-        {[
-          { id: 'content', label: 'Content' },
-          { id: 'seo', label: 'SEO & Metadata' },
-        ].map(tab => (
+        {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}

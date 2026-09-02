@@ -397,11 +397,18 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     }
   };
 
-  const images = uniqueUrls(
-    (currentVariation && currentVariation.images && currentVariation.images.length > 0)
-      ? currentVariation.images.map(img => img.url)
-      : (product?.images && product.images.length > 0 ? product.images.map(img => img.url) : ['/web-phts/a-17.jpg'])
-  );
+  const rawImages = (currentVariation && currentVariation.images && currentVariation.images.length > 0)
+    ? currentVariation.images
+    : (product?.images && product.images.length > 0 ? product.images : [{ url: '/web-phts/a-17.jpg', alt_text: product?.name }]);
+
+  const images: Array<{url: string, alt_text: string}> = [];
+  const seenUrls = new Set();
+  rawImages.forEach((img: any) => {
+    if (!seenUrls.has(img.url)) {
+      seenUrls.add(img.url);
+      images.push({ url: img.url, alt_text: img.alt_text || product?.name });
+    }
+  });
 
   useEffect(() => {
     if (activeImage >= images.length) {
@@ -481,8 +488,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           <ScrollReveal animation="slide-right" duration={700} className={styles.imageSide}>
             <div className={styles.mainImage}>
               <img
-                src={images[activeImageIndex] || images[0]}
-                alt={product.name}
+                src={images[activeImageIndex]?.url || images[0]?.url}
+                alt={images[activeImageIndex]?.alt_text || product.name}
                 className={styles.mainImg}
               />
             </div>
@@ -494,7 +501,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     className={`${styles.thumbBtn} ${activeImageIndex === idx ? styles.thumbActive : ''}`}
                     onClick={() => setActiveImage(idx)}
                   >
-                    <img src={img} alt={`${product.name} view ${idx + 1}`} className={styles.thumbImg} />
+                    <img src={img.url} alt={img.alt_text || `${product.name} view ${idx + 1}`} className={styles.thumbImg} />
                   </button>
                 ))}
               </div>
