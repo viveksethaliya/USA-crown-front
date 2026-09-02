@@ -1,6 +1,7 @@
 import React from "react";
 import ProductCard from "@/components/products/ProductCard";
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import styles from "@/app/(main)/products/products.module.css";
 import { apiUrl } from "@/lib/api";
 
@@ -42,14 +43,14 @@ export default async function CollectionPage({ params }: Props) {
   ]);
 
   if (!colRes.ok) {
-    return <div style={{ padding: '4rem', textAlign: 'center' }}>Collection not found.</div>;
+    notFound();
   }
 
   const colData = await colRes.json();
   const collection = colData.collection;
 
   if (!collection) {
-    return <div style={{ padding: '4rem', textAlign: 'center' }}>Collection not found.</div>;
+    notFound();
   }
 
   const prodData = prodRes.ok ? await prodRes.json() : { products: [] };
