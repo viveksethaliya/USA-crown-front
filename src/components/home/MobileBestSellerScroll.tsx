@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import styles from '@/app/(main)/page.module.css';
+import styles from '@/app/(main)/(with-loading)/page.module.css';
 
 export default function MobileBestSellerScroll({ products }: { products: any[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
