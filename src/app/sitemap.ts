@@ -22,55 +22,51 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   });
 
-  try {
-    const res = await fetch(apiUrl('/api/store/catalog/sitemap'), { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch sitemap data');
-    const { products, collections, brands, pages } = await res.json();
+  const res = await fetch(apiUrl('/api/store/catalog/sitemap'), { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to fetch sitemap data');
+  const { products, collections, brands, pages } = await res.json();
 
-    // 3. Products
-    if (products) {
-      products.forEach((product: any) => {
-        if (product.slug) {
-          entries.push({
-            url: `${baseUrl}/products/${product.slug}`,
-            lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.8,
-          });
-        }
-      });
-    }
+  // 3. Products
+  if (products) {
+    products.forEach((product: any) => {
+      if (product.slug) {
+        entries.push({
+          url: `${baseUrl}/products/${product.slug}`,
+          lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        });
+      }
+    });
+  }
 
-    // 4. Collections (Brands)
-    if (brands) {
-      brands.forEach((brand: any) => {
-        if (brand.slug) {
-          entries.push({
-            url: `${baseUrl}/collections/${brand.slug}`,
-            lastModified: new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.7,
-          });
-        }
-      });
-    }
+  // 4. Collections (Brands)
+  if (brands) {
+    brands.forEach((brand: any) => {
+      if (brand.slug) {
+        entries.push({
+          url: `${baseUrl}/collections/${brand.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        });
+      }
+    });
+  }
 
-    // 5. Pages & Blog Posts
-    if (pages) {
-      pages.forEach((page: any) => {
-        if (page.slug && page.slug !== 'home') {
-          const prefix = page.page_type === 'blog' ? '/blog/' : '/';
-          entries.push({
-            url: `${baseUrl}${prefix}${page.slug}`,
-            lastModified: page.updated_at ? new Date(page.updated_at) : new Date(),
-            changeFrequency: 'monthly',
-            priority: page.page_type === 'blog' ? 0.6 : 0.5,
-          });
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Error generating sitemap:', error);
+  // 5. Pages & Blog Posts
+  if (pages) {
+    pages.forEach((page: any) => {
+      if (page.slug && page.slug !== 'home') {
+        const prefix = page.page_type === 'blog' ? '/blog/' : '/';
+        entries.push({
+          url: `${baseUrl}${prefix}${page.slug}`,
+          lastModified: page.updated_at ? new Date(page.updated_at) : new Date(),
+          changeFrequency: 'monthly',
+          priority: page.page_type === 'blog' ? 0.6 : 0.5,
+        });
+      }
+    });
   }
 
   return entries;
