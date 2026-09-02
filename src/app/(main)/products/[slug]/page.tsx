@@ -41,6 +41,8 @@ async function checkRedirect(slug: string) {
   }
 }
 
+import { generateProductDescription, generateProductTitle } from '@/lib/generateProductMeta';
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
@@ -49,12 +51,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Product Not Found' };
   }
 
+  const generatedTitle = generateProductTitle(product);
+  const generatedDesc = generateProductDescription(product);
+
   return {
-    title: product.seo_title || `${product.name} | Crown Findings`,
+    title: product.seo_title?.trim() || generatedTitle,
     description:
-      product.seo_description ||
-      product.short_description ||
-      product.description,
+      product.seo_description?.trim() ||
+      product.short_description?.trim() ||
+      product.description?.trim() ||
+      generatedDesc,
     alternates: {
       canonical: `/products/${product.slug}`,
     },
