@@ -12,6 +12,12 @@ export function normalizeMetal(val: string): string {
   return map[val] || val;
 }
 
+export function toTitleCase(str: string): string {
+  return str.toLowerCase().split(' ').map(word => {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
+
 export function generateProductDescription(product: any): string {
   // Extract metals
   let metals: string[] = [];
@@ -19,6 +25,8 @@ export function generateProductDescription(product: any): string {
     const metalAttr = product.attributes.find((a: any) => a.slug === 'metal');
     if (metalAttr && Array.isArray(metalAttr.values)) {
       metals = metalAttr.values.map((v: any) => normalizeMetal(v.value || v.name));
+      // Sort alphabetically to ensure deterministic order across renders
+      metals.sort();
     }
   }
 
@@ -35,6 +43,7 @@ export function generateProductDescription(product: any): string {
   let primaryCategory: string | null = null;
   if (product.categories && Array.isArray(product.categories) && product.categories.length > 0) {
     primaryCategory = product.categories.length > 1 ? product.categories[1].name : product.categories[0].name;
+    primaryCategory = toTitleCase(primaryCategory);
   }
 
   const name = product.name || '';
