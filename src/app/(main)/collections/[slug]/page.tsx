@@ -4,6 +4,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import styles from "@/app/(main)/products/products.module.css";
 import { apiUrl } from "@/lib/api";
+import { generateSEOTitle } from "@/lib/generateProductMeta";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -25,12 +26,12 @@ export async function generateMetadata(
     return { title: 'Collection Not Found' };
   }
 
+  const generatedTitle = generateSEOTitle(collection.name || '');
+  const generatedDesc = `Browse the ${collection.name} wholesale jewelry collection at Crown Findings.`;
+
   return {
-    title: collection.meta_title || `${collection.name} | Crown Findings`,
-    description: collection.meta_description || collection.description || `Browse the ${collection.name} collection at Crown Findings.`,
-    openGraph: {
-      images: collection.hero_image ? [collection.hero_image] : [],
-    },
+    title: generatedTitle,
+    description: generatedDesc,
   };
 }
 

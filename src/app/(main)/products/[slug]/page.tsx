@@ -41,7 +41,7 @@ async function checkRedirect(slug: string) {
   }
 }
 
-import { generateProductDescription, generateProductTitle } from '@/lib/generateProductMeta';
+import { generateProductDescription, generateSEOTitle } from '@/lib/generateProductMeta';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Product Not Found' };
   }
 
-  const generatedTitle = generateProductTitle(product);
+  const generatedTitle = generateSEOTitle(product.name || '');
   const generatedDesc = generateProductDescription(product);
 
   return {

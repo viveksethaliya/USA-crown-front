@@ -59,8 +59,7 @@ export function generateProductDescription(product: any): string {
   }
 }
 
-export function generateProductTitle(product: any): string {
-  const name = product.name || '';
+export function generateSEOTitle(name: string): string {
   const defaultTitle = `${name} | Crown Findings`;
   
   if (defaultTitle.length > 60) {
