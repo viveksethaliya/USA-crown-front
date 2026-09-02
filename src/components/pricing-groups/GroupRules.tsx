@@ -17,7 +17,7 @@ export default function GroupRules({ group }: { group: any }) {
     fetchRules();
   }, [group.id]);
 
-  const fetchRules = async () => {
+  async function fetchRules() {
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');

@@ -18,7 +18,7 @@ export default function GroupCampaigns({ group }: { group: any }) {
     fetchCampaigns();
   }, [group.id]);
 
-  const fetchCampaigns = async () => {
+  async function fetchCampaigns() {
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');

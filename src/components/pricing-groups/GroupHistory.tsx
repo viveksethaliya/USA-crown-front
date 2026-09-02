@@ -13,7 +13,7 @@ export default function GroupHistory({ group }: { group: any }) {
     fetchLogs();
   }, [group.id]);
 
-  const fetchLogs = async () => {
+  async function fetchLogs() {
     try {
       const token = localStorage.getItem('adminToken');
       const res = await adminFetch(`/api/admin/pricing-groups/${group.id}/audit`, {

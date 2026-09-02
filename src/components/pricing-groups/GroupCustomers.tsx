@@ -17,7 +17,7 @@ export default function GroupCustomers({ group }: { group: any }) {
     fetchMembers();
   }, [group.id]);
 
-  const fetchMembers = async () => {
+  async function fetchMembers() {
     try {
       const token = localStorage.getItem('adminToken');
       const res = await adminFetch(`/api/admin/pricing-groups/${group.id}/members`, {
