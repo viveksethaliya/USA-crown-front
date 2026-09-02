@@ -97,6 +97,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   interface Discount {
     id: string | number;
+    name?: string;
     scope: string;
     min_quantity: number;
     max_quantity: number | null;
