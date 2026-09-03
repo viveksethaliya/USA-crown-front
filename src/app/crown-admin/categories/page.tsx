@@ -14,7 +14,7 @@ export default function CategoriesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', slug: '', parent_id: '', position: 0, seo_title: '', seo_description: '', seo_og_image: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '', parent_id: '', position: 0, description: '', seo_title: '', seo_description: '', seo_og_image: '' });
   const [showSeoSection, setShowSeoSection] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -37,10 +37,10 @@ export default function CategoriesPage() {
   const handleOpenForm = (cat: Category | null = null) => {
     if (cat) {
       setEditingId(cat.id);
-      setFormData({ name: cat.name, slug: cat.slug, parent_id: cat.parent_id || '', position: cat.position || 0, seo_title: (cat as any).seo_title || '', seo_description: (cat as any).seo_description || '', seo_og_image: (cat as any).seo_og_image || '' });
+      setFormData({ name: cat.name, slug: cat.slug, parent_id: cat.parent_id || '', position: cat.position || 0, description: cat.description || '', seo_title: (cat as any).seo_title || '', seo_description: (cat as any).seo_description || '', seo_og_image: (cat as any).seo_og_image || '' });
     } else {
       setEditingId(null);
-      setFormData({ name: '', slug: '', parent_id: '', position: 0, seo_title: '', seo_description: '', seo_og_image: '' });
+      setFormData({ name: '', slug: '', parent_id: '', position: 0, description: '', seo_title: '', seo_description: '', seo_og_image: '' });
     }
     setShowSeoSection(false);
     setShowForm(true);
@@ -49,7 +49,7 @@ export default function CategoriesPage() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', slug: '', parent_id: '', position: 0, seo_title: '', seo_description: '', seo_og_image: '' });
+    setFormData({ name: '', slug: '', parent_id: '', position: 0, description: '', seo_title: '', seo_description: '', seo_og_image: '' });
     setShowSeoSection(false);
   };
 
@@ -211,6 +211,17 @@ export default function CategoriesPage() {
                       className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#312f2c]/65 mb-1">Description (Optional)</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    placeholder="Enter category description..."
+                    className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all resize-none"
+                  />
                 </div>
 
                 {/* SEO Collapsible */}

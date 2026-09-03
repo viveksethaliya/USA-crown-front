@@ -1,45 +1,26 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
-import { apiUrl } from '@/lib/cart';
+import NewsletterForm from './NewsletterForm';
+import { apiUrl } from '@/lib/api';
 import styles from './Footer.module.css';
 
-export default function Footer() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-
-    setStatus('loading');
-    try {
-      const res = await fetch(apiUrl('/api/store/newsletter/subscribe'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: 'footer' }),
-        credentials: 'include',
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setStatus('error');
-        setMessage(data.error || 'Something went wrong.');
-        return;
+export default async function Footer() {
+  // Fetch categories from sitemap endpoint which returns valid categories based on exact rules
+  let footerCategories: any[] = [];
+  try {
+    // We can fetch from our own API since this is server-rendered, 
+    // and /sitemap returns exactly the valid ones.
+    const res = await fetch(apiUrl('/api/store/catalog/sitemap'), { cache: 'no-store' });
+    if (res.ok) {
+      const { categories } = await res.json();
+      if (categories) {
+        // Filter out the paginated ones, take the top 25 base categories
+        footerCategories = categories.filter((c: any) => c.type === 'category').slice(0, 25);
       }
-
-      setStatus('success');
-      setMessage(data.message);
-      setEmail('');
-    } catch {
-      setStatus('error');
-      setMessage('Failed to subscribe. Please try again.');
     }
-  };
+  } catch (err) {
+    console.error('Failed to fetch categories for footer:', err);
+  }
 
   return (
     <footer className={styles.footer}>
@@ -53,33 +34,7 @@ export default function Footer() {
                 Get exclusive updates on new arrivals, metal price alerts, and wholesale deals.
               </p>
             </div>
-            <form onSubmit={handleSubscribe} className={styles.newsletterForm}>
-              <div className={styles.newsletterInputWrap}>
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (status !== 'idle') { setStatus('idle'); setMessage(''); }
-                  }}
-                  className={styles.newsletterInput}
-                  required
-                />
-                <button
-                  type="submit"
-                  className={styles.newsletterBtn}
-                  disabled={status === 'loading'}
-                >
-                  {status === 'loading' ? 'Subscribing...' : 'SUBSCRIBE'}
-                </button>
-              </div>
-              {message && (
-                <p className={`${styles.newsletterMsg} ${status === 'error' ? styles.newsletterMsgError : styles.newsletterMsgSuccess}`}>
-                  {message}
-                </p>
-              )}
-            </form>
+            <NewsletterForm />
           </div>
         </div>
       </div>
@@ -167,13 +122,16 @@ export default function Footer() {
           <div className={styles.section}>
             <h4 className={styles.heading}>CATEGORIES</h4>
             <ul className={styles.list}>
-              <li><Link href="/products?category=batteries" className={styles.link}>Batteries</Link></li>
-              <li><Link href="/products?category=beads" className={styles.link}>Beads</Link></li>
-              <li><Link href="/products?category=bracelet" className={styles.link}>Bracelet</Link></li>
-              <li><Link href="/products?category=chains" className={styles.link}>Chains</Link></li>
-              <li><Link href="/products?category=cd-mounting" className={styles.link}>CD Mounting</Link></li>
-              <li><Link href="/products?category=clasps" className={styles.link}>Clasps</Link></li>
-              <li><Link href="/products?category=discs" className={styles.link}>Discs</Link></li>
+              {footerCategories.map(cat => (
+                <li key={cat.slug}><Link href={\`/categories/\${cat.slug}\`} className={styles.link}>{cat.slug.replace(/-/g, ' ').toUpperCase()}</Link></li>
+              ))}
+              {footerCategories.length === 0 && (
+                <>
+                  <li><Link href="/categories/batteries" className={styles.link}>BATTERIES</Link></li>
+                  <li><Link href="/categories/beads" className={styles.link}>BEADS</Link></li>
+                  <li><Link href="/categories/bracelets" className={styles.link}>BRACELETS</Link></li>
+                </>
+              )}
               <li><Link href="/products" className={styles.link}>View All</Link></li>
             </ul>
           </div>

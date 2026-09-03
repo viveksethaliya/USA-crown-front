@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const res = await fetch(apiUrl('/api/store/catalog/sitemap'), { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch sitemap data');
-  const { products, collections, brands, pages } = await res.json();
+  const { products, collections, brands, pages, categories } = await res.json();
 
   // 3. Products
   if (products) {
@@ -64,6 +64,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           lastModified: page.updated_at ? new Date(page.updated_at) : new Date(),
           changeFrequency: 'monthly',
           priority: page.page_type === 'blog' ? 0.6 : 0.5,
+        });
+      }
+    });
+  }
+
+  // 6. Categories
+  if (categories) {
+    categories.forEach((cat: any) => {
+      if (cat.slug) {
+        entries.push({
+          url: `${baseUrl}/categories/${cat.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.8,
         });
       }
     });
