@@ -36,8 +36,12 @@ export async function generateMetadata() {
     console.error("Failed to fetch store settings for metadata:", error);
   }
 
+  if (!process.env.NEXT_PUBLIC_SITE_URL) {
+    throw new Error("NEXT_PUBLIC_SITE_URL is missing in environment");
+  }
+
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || "https://usa-crown-front.vercel.app"),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     title,
     description,
   };

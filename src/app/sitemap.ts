@@ -2,7 +2,10 @@ import { MetadataRoute } from 'next';
 import { apiUrl } from '@/lib/api';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://usa-crown-front.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_SITE_URL is missing in environment");
+  }
   
   const entries: MetadataRoute.Sitemap = [];
 

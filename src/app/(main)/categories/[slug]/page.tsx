@@ -44,7 +44,7 @@ export async function generateMetadata(props: PageProps) {
     }
 
     // Canonical URL handles pagination
-    const canonicalBase = `https://usa-crown-front.vercel.app/categories/${params.slug}`;
+    const canonicalBase = `/categories/${params.slug}`;
     const canonical = pageNum > 1 ? `${canonicalBase}?page=${pageNum}` : canonicalBase;
 
     return {

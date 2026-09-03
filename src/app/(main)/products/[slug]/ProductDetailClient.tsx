@@ -491,6 +491,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 src={images[activeImageIndex]?.url || images[0]?.url}
                 alt={images[activeImageIndex]?.alt_text || product.name}
                 className={styles.mainImg}
+                loading="eager"
+                fetchPriority="high"
               />
             </div>
             {images.length > 1 && (

@@ -1,8 +1,10 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  // Use site URL if configured, otherwise fallback
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://usa-crown-front.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_SITE_URL is missing in environment");
+  }
 
   return {
     rules: {
