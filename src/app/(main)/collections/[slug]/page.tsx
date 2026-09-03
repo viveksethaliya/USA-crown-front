@@ -32,6 +32,9 @@ export async function generateMetadata(
   return {
     title: generatedTitle,
     description: generatedDesc,
+    alternates: {
+      canonical: `https://usa-crown-front.vercel.app/collections/${slug}`,
+    },
   };
 }
 
