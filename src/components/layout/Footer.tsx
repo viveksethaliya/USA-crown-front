@@ -123,7 +123,7 @@ export default async function Footer() {
             <h4 className={styles.heading}>CATEGORIES</h4>
             <ul className={styles.list}>
               {footerCategories.map(cat => (
-                <li key={cat.slug}><Link href={\`/categories/\${cat.slug}\`} className={styles.link}>{cat.slug.replace(/-/g, ' ').toUpperCase()}</Link></li>
+                <li key={cat.slug}><Link href={`/categories/${cat.slug}`} className={styles.link}>{cat.slug.replace(/-/g, ' ').toUpperCase()}</Link></li>
               ))}
               {footerCategories.length === 0 && (
                 <>
