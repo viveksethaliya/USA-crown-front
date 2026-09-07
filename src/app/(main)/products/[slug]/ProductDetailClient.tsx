@@ -515,6 +515,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                       sizes="80px" 
                       width={80} 
                       height={80} 
+                      fallbackWidth={160}
                       className={styles.thumbImg} 
                     />
                   </button>

@@ -15,6 +15,7 @@ interface CatalogImageProps {
   sizes: string;
   width?: number;
   height?: number;
+  fallbackWidth?: 160 | 400;
 }
 
 export default function CatalogImage({
@@ -24,7 +25,8 @@ export default function CatalogImage({
   className,
   sizes,
   width = 400,
-  height = 400
+  height = 400,
+  fallbackWidth = 400
 }: CatalogImageProps) {
   // Support both endpoint shapes: { url, alt_text } from PDP and { image, image_alt_text } from Lists
   const originalUrl = image?.url || image?.image;
@@ -36,7 +38,9 @@ export default function CatalogImage({
   const hasVariants = Boolean(image?.variant_160w && image?.variant_400w);
   
   // Fallback to original image if variants are missing
-  const src = hasVariants ? image!.variant_400w! : originalUrl || '/web-phts/a-17.jpg';
+  const src = hasVariants 
+    ? (fallbackWidth === 160 ? image!.variant_160w! : image!.variant_400w!) 
+    : originalUrl || '/web-phts/a-17.jpg';
 
   return (
     <img
