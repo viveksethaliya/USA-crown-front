@@ -73,9 +73,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `/products/${product.slug}`,
     },
-    openGraph: product.seo_og_image
-      ? { images: [product.seo_og_image] }
-      : undefined,
+    openGraph: (() => {
+      if (product.seo_og_image) return { images: [product.seo_og_image] };
+      if (product.images && product.images.length > 0) {
+        return { images: [product.images[0].variant_400w || product.images[0].url] };
+      }
+      return undefined;
+    })(),
   };
 }
 
@@ -104,7 +108,7 @@ export default async function ProductPage({ params }: Props) {
 
   const jsonLdDescription = product?.seo_description || product?.short_description || product?.description || undefined;
   const jsonLdSku = product?.sku || undefined;
-  const jsonLdImage = product?.seo_og_image || (product?.images && product.images.length > 0 ? product.images[0].url : undefined);
+  const jsonLdImage = product?.seo_og_image || (product?.images && product.images.length > 0 ? (product.images[0].variant_400w || product.images[0].url) : undefined);
 
   const jsonLd = product
     ? {
