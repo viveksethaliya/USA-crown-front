@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import styles from '@/app/(main)/(with-loading)/page.module.css';
 
+import CatalogImage from '@/components/CatalogImage';
+
 export default function MobileBestSellerScroll({ products }: { products: any[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -42,10 +44,15 @@ export default function MobileBestSellerScroll({ products }: { products: any[] }
         return (
           <Link key={`${prod.id}-${i}`} href={`/products/${encodeURIComponent(prod.slug)}`} className={styles.bestSellerItem}>
             <div className={styles.bestSellerImageWrapper}>
-              <img 
-                src={prod.image || '/web-phts/a-17.jpg'} 
-                alt={prod.name} 
-                className={styles.bestSellerImage} 
+              <CatalogImage
+                image={prod}
+                productName={prod.name}
+                sizes="240px"
+                width={240}
+                height={240}
+                fallbackWidth={400}
+                priority={false}
+                className={styles.bestSellerImage}
               />
             </div>
             <div className={styles.bestSellerInfo}>

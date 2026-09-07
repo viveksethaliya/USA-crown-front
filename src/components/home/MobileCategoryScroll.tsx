@@ -3,6 +3,8 @@
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 
+import CatalogImage from '@/components/CatalogImage';
+
 export default function MobileCategoryScroll({ categories }: { categories: any[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -45,11 +47,14 @@ export default function MobileCategoryScroll({ categories }: { categories: any[]
           <div key={`${cat.id}-${i}`} className="flex flex-col items-center group">
             <Link href={`/products?category=${cat.slug}`} className="flex flex-col items-center text-center w-full decoration-transparent">
               <div className="w-full aspect-square rounded-2xl bg-[#fffbfb] border border-pink-50/50 shadow-sm flex items-center justify-center p-4 mb-3 transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
-                <img 
-                  src={cat.image_url || fallbackImg} 
-                  alt={cat.name} 
-                  className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110" 
-                  style={{ mixBlendMode: 'multiply' }} 
+                <CatalogImage 
+                  image={{ url: cat.image_url || fallbackImg }}
+                  productName={cat.name}
+                  sizes="140px"
+                  width={140}
+                  height={140}
+                  fallbackWidth={160}
+                  className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110 mix-blend-multiply" 
                 />
               </div>
               <span className="text-sm font-medium text-gray-500 group-hover:text-[#182955] transition-colors duration-300 capitalize">
