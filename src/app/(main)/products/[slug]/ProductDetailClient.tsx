@@ -7,6 +7,7 @@ import { apiUrl, cartFetch, getGuestCartId, CartItem } from '../../../../lib/car
 import styles from './detail.module.css';
 import { toast } from 'react-hot-toast';
 import ScrollReveal from "@/components/animations/ScrollReveal";
+import CatalogImage from "@/components/CatalogImage";
 
 interface ProductVariation {
   id: number;
@@ -401,12 +402,17 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     ? currentVariation.images
     : (product?.images && product.images.length > 0 ? product.images : [{ url: '/web-phts/a-17.jpg', alt_text: product?.name }]);
 
-  const images: Array<{url: string, alt_text: string}> = [];
+  const images: Array<{url: string, alt_text: string, variant_160w?: string | null, variant_400w?: string | null}> = [];
   const seenUrls = new Set();
   rawImages.forEach((img: any) => {
     if (!seenUrls.has(img.url)) {
       seenUrls.add(img.url);
-      images.push({ url: img.url, alt_text: img.alt_text || product?.name });
+      images.push({ 
+        url: img.url, 
+        alt_text: img.alt_text || product?.name,
+        variant_160w: img.variant_160w,
+        variant_400w: img.variant_400w
+      });
     }
   });
 
@@ -487,12 +493,12 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           {/* Left: Images */}
           <ScrollReveal animation="slide-right" duration={700} className={styles.imageSide}>
             <div className={styles.mainImage}>
-              <img
-                src={images[activeImageIndex]?.url || images[0]?.url}
-                alt={images[activeImageIndex]?.alt_text || product.name}
+              <CatalogImage
+                image={images[activeImageIndex] || images[0]}
+                productName={product.name}
+                priority={true}
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className={styles.mainImg}
-                loading="eager"
-                fetchPriority="high"
               />
             </div>
             {images.length > 1 && (
@@ -503,7 +509,14 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     className={`${styles.thumbBtn} ${activeImageIndex === idx ? styles.thumbActive : ''}`}
                     onClick={() => setActiveImage(idx)}
                   >
-                    <img src={img.url} alt={img.alt_text || `${product.name} view ${idx + 1}`} className={styles.thumbImg} />
+                    <CatalogImage 
+                      image={img} 
+                      productName={`${product.name} view ${idx + 1}`} 
+                      sizes="80px" 
+                      width={80} 
+                      height={80} 
+                      className={styles.thumbImg} 
+                    />
                   </button>
                 ))}
               </div>
