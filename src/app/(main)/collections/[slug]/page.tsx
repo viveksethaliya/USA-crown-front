@@ -26,8 +26,17 @@ export async function generateMetadata(
     return { title: 'Collection Not Found' };
   }
 
-  const generatedTitle = generateSEOTitle(collection.name || '');
-  const generatedDesc = `Browse the ${collection.name} wholesale jewelry collection at Crown Findings.`;
+  let storeName = 'Crown Findings';
+  try {
+    const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { next: { revalidate: 60 } });
+    if (settingsRes.ok) {
+      const settings = await settingsRes.json();
+      if (settings.store_name) storeName = settings.store_name;
+    }
+  } catch(e) {}
+
+  const generatedTitle = generateSEOTitle(collection.name || '', storeName);
+  const generatedDesc = `Browse the ${collection.name} wholesale jewelry collection at ${storeName}.`;
 
   return {
     title: generatedTitle,

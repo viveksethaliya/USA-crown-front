@@ -2,10 +2,23 @@ import React from 'react';
 import styles from '../policy.module.css';
 import ShippingFaqAccordion from './ShippingFaqAccordion';
 
-export const metadata = {
-  title: 'Shipping Policy | Crown Findings',
-  description: 'Shipping rates, methods, and delivery policies for Crown Findings.',
-};
+import { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+  let storeName = 'Crown Findings';
+  try {
+    const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { next: { revalidate: 60 } });
+    if (settingsRes.ok) {
+      const settings = await settingsRes.json();
+      if (settings.store_name) storeName = settings.store_name;
+    }
+  } catch(e) {}
+  
+  return {
+    title: `Shipping Policy | ${storeName}`,
+    description: `Shipping rates, methods, and delivery policies for ${storeName}.`,
+  };
+}
 
 export default function ShippingPage() {
   return (

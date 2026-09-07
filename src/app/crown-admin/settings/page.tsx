@@ -21,6 +21,7 @@ export default function SettingsPage() {
     seo_default_title: '',
     seo_default_description: '',
     seo_default_og_image: '',
+    store_name: '',
     tax_rate_percent: ''
   });
 
@@ -43,6 +44,7 @@ export default function SettingsPage() {
           seo_default_title: data.seo_default_title || '',
           seo_default_description: data.seo_default_description || '',
           seo_default_og_image: data.seo_default_og_image || '',
+          store_name: data.store_name || '',
           tax_rate_percent: data.tax_rate_percent !== null && data.tax_rate_percent !== undefined ? data.tax_rate_percent : ''
         });
       }
@@ -112,6 +114,34 @@ export default function SettingsPage() {
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8">
+                <div className="flex items-center gap-3 border-b border-[#312f2c]/10 pb-4 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center border border-purple-500/20 shadow-sm shrink-0">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[#312f2c] uppercase tracking-wider">Store Identity</h2>
+                    <p className="text-xs font-bold text-[#312f2c]/50 uppercase tracking-wider mt-0.5">Core brand information used across the site.</p>
+                  </div>
+                </div>
+
+                <div className="max-w-xl space-y-2">
+                  <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">Store Name</label>
+                  <input
+                    type="text"
+                    name="store_name"
+                    value={formData.store_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all"
+                    placeholder="e.g., Crown Findings"
+                    required
+                  />
+                  <p className="text-xs font-bold text-[#312f2c]/40 uppercase tracking-wider mt-2 leading-relaxed">
+                    The name of your store. Used in page titles, metadata, and structured data.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8 mt-6">
                 <div className="flex items-center gap-3 border-b border-[#312f2c]/10 pb-4 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center border border-blue-500/20 shadow-sm shrink-0">
                     <Save className="w-5 h-5" />

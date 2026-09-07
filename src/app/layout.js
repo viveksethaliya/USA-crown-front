@@ -30,6 +30,7 @@ export async function generateMetadata() {
     if (res.ok) {
       const settings = await res.json();
       if (settings.seo_default_title) title = settings.seo_default_title;
+      else if (settings.store_name) title = settings.store_name;
       if (settings.seo_default_description) description = settings.seo_default_description;
     }
   } catch (error) {

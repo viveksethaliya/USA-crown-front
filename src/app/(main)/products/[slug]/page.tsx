@@ -51,7 +51,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Product Not Found' };
   }
 
-  const generatedTitle = generateSEOTitle(product.name || '');
+  let storeName = 'Crown Findings';
+  try {
+    const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { next: { revalidate: 60 } });
+    if (settingsRes.ok) {
+      const settings = await settingsRes.json();
+      if (settings.store_name) storeName = settings.store_name;
+    }
+  } catch(e) {}
+
+  const generatedTitle = generateSEOTitle(product.name || '', storeName);
   const generatedDesc = generateProductDescription(product);
 
   return {

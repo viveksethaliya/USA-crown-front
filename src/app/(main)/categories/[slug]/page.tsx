@@ -25,10 +25,19 @@ export async function generateMetadata(props: PageProps) {
     const data = await res.json();
     const category = data.category;
     
-    const title = category.seo_title || generateSEOTitle(category.name);
+    let storeName = 'Crown Findings';
+    try {
+      const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { next: { revalidate: 60 } });
+      if (settingsRes.ok) {
+        const settings = await settingsRes.json();
+        if (settings.store_name) storeName = settings.store_name;
+      }
+    } catch(e) {}
+
+    const title = category.seo_title || generateSEOTitle(category.name, storeName);
     let description = category.seo_description || category.description;
     if (!description) {
-      description = `Browse our selection of ${category.name} at Crown Findings.`;
+      description = `Browse our selection of ${category.name} at ${storeName}.`;
     }
 
     // Determine robots directive
@@ -84,8 +93,59 @@ export default async function CategoryPage(props: PageProps) {
   const data = await res.json();
   const { category, children, parent, products, totalProducts, totalPages } = data;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://usa-crown-front.vercel.app';
+  
+  const breadcrumbList = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": `${siteUrl}/`
+      }
+    ]
+  };
+
+  if (parent) {
+    breadcrumbList.itemListElement.push({
+      "@type": "ListItem",
+      "position": 2,
+      "name": parent.name,
+      "item": `${siteUrl}/categories/${parent.slug}`
+    });
+  }
+
+  breadcrumbList.itemListElement.push({
+    "@type": "ListItem",
+    "position": parent ? 3 : 2,
+    "name": category.name,
+    "item": `${siteUrl}/categories/${category.slug}`
+  });
+
+  const itemList = products && products.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": products.map((p: any, i: number) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "url": `${siteUrl}/products/${p.slug}`
+    }))
+  } : null;
+
   return (
     <div className={styles.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbList) }}
+      />
+      {itemList && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+        />
+      )}
       <div className={styles.layout}>
         <main className={styles.main} style={{ width: '100%', margin: '0 auto', maxWidth: '1200px', padding: '2rem' }}>
           

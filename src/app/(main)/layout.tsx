@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     if (res.ok) {
       const settings = await res.json();
       if (settings.seo_default_title) title = settings.seo_default_title;
+      else if (settings.store_name) title = `${settings.store_name} | B2B Wholesale Jewelry`;
       if (settings.seo_default_description) description = settings.seo_default_description;
     }
   } catch (error) {
@@ -41,13 +42,46 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function StorefrontLayout({
+export default async function StorefrontLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let orgSchema = null;
+  
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { 
+      next: { revalidate: 60 } 
+    });
+    if (res.ok) {
+      const settings = await res.json();
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      const storeName = settings.store_name || "Crown Findings";
+      
+      if (siteUrl && storeName) {
+        orgSchema = {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": storeName,
+          "url": siteUrl
+        };
+        if (settings.seo_default_og_image) {
+          orgSchema.logo = settings.seo_default_og_image;
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch store settings for org schema:", error);
+  }
+
   return (
     <div className={`storefront-root flex flex-col min-h-full w-full ${playfair.variable} ${outfit.variable}`}>
+      {orgSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        />
+      )}
       <Header />
       <main className="flex-1 w-full">{children}</main>
       <Footer />

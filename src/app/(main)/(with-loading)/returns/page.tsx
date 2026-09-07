@@ -2,10 +2,23 @@ import React from 'react';
 import styles from '../policy.module.css';
 import ReturnsFaqAccordion from './ReturnsFaqAccordion';
 
-export const metadata = {
-  title: 'Returns & Exchanges | Crown Findings',
-  description: 'Return and exchange policy for Crown Findings.',
-};
+import { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+  let storeName = 'Crown Findings';
+  try {
+    const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { next: { revalidate: 60 } });
+    if (settingsRes.ok) {
+      const settings = await settingsRes.json();
+      if (settings.store_name) storeName = settings.store_name;
+    }
+  } catch(e) {}
+  
+  return {
+    title: `Returns & Exchanges | ${storeName}`,
+    description: `Return and exchange policy for ${storeName}.`,
+  };
+}
 
 export default function ReturnsPage() {
   return (

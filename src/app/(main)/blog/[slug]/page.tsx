@@ -63,8 +63,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getBlogPost(resolvedParams.slug);
 
   if (post) {
-    const title = post.seo_title || `${post.title} | Crown Findings Blog`;
-    const description = post.seo_description || post.excerpt || `Read ${post.title} on the Crown Findings Blog.`;
+    let storeName = 'Crown Findings';
+    try {
+      const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { next: { revalidate: 60 } });
+      if (settingsRes.ok) {
+        const settings = await settingsRes.json();
+        if (settings.store_name) storeName = settings.store_name;
+      }
+    } catch(e) {}
+
+    const title = post.seo_title || `${post.title} | ${storeName} Blog`;
+    const description = post.seo_description || post.excerpt || `Read ${post.title} on the ${storeName} Blog.`;
     const imageUrl = post.seo_og_image || post.featured_image || undefined;
 
     return {
