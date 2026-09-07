@@ -33,13 +33,13 @@ export default function ImagesTab({ productId, images, setImages, productName = 
     }
   };
 
-  const handleMediaSelected = async (url: string, path: string) => {
+  const handleMediaSelected = async (url: string, path: string, altText?: string) => {
     const token = localStorage.getItem('adminToken');
     try {
       const res = await adminFetch(`${API}/products/${productId}/images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ url, alt_text: productName, position: images.length })
+        body: JSON.stringify({ url, alt_text: altText || productName, position: images.length })
       });
       const data = await res.json();
       if (res.ok) {

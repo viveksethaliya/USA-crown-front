@@ -60,6 +60,7 @@ const AltTextModal = memo(function AltTextModal({ file, onClose, onSave }: AltTe
               className="w-full bg-white border border-[#312f2c]/12 rounded-lg px-4 py-2 text-[#312f2c] focus:ring-2 focus:ring-[#d1a054]/40 focus:outline-none transition-all"
               autoFocus
             />
+            <p className="text-xs text-[#312f2c]/50 mt-2">Used as the default alt text when this image is attached to a product.</p>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button

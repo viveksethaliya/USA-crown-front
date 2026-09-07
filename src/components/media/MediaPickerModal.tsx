@@ -12,6 +12,7 @@ interface MediaFile {
   folder: string;
   url: string;
   path: string;
+  alt_text?: string;
   metadata: {
     mimetype: string;
   };
@@ -20,7 +21,7 @@ interface MediaFile {
 interface MediaPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (url: string, path: string) => void;
+  onSelect: (url: string, path: string, altText?: string) => void;
   title?: string;
 }
 
@@ -58,7 +59,7 @@ export default function MediaPickerModal({ isOpen, onClose, onSelect, title = "S
 
   const handleConfirm = () => {
     if (selectedFile) {
-      onSelect(selectedFile.url, selectedFile.path || `${selectedFile.folder || 'root'}/${selectedFile.name}`);
+      onSelect(selectedFile.url, selectedFile.path || `${selectedFile.folder || 'root'}/${selectedFile.name}`, selectedFile.alt_text);
       onClose();
       setSelectedFile(null); // Reset
     }
