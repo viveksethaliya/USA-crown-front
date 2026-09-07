@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from '@/app/(main)/products/products.module.css';
+import CatalogImage from '@/components/CatalogImage';
 
 interface Product {
   id: number;
@@ -9,6 +10,8 @@ interface Product {
   name: string;
   image?: string | null;
   image_alt_text?: string | null;
+  variant_160w?: string | null;
+  variant_400w?: string | null;
   regular_price?: number | string | null;
   sale_price?: number | string | null;
   date_sale_starts?: string;
@@ -50,12 +53,15 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
           </div>
         )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={product.image || '/web-phts/a-17.jpg'}
-          alt={product.image_alt_text || product.name}
+        <CatalogImage
+          image={product}
+          productName={product.name}
+          sizes="(max-width: 768px) 100vw, 20vw"
+          width={400}
+          height={400}
+          fallbackWidth={400}
+          priority={false}
           className={styles.productImage}
-          loading="lazy"
-          decoding="async"
         />
       </div>
       <div className={styles.productInfo}>

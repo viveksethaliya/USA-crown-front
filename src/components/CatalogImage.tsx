@@ -12,6 +12,7 @@ interface CatalogImageProps {
   productName?: string;
   priority?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   sizes: string;
   width?: number;
   height?: number;
@@ -23,6 +24,7 @@ export default function CatalogImage({
   productName,
   priority = false,
   className,
+  style,
   sizes,
   width = 400,
   height = 400,
@@ -51,6 +53,7 @@ export default function CatalogImage({
       loading={priority ? "eager" : "lazy"}
       fetchPriority={priority ? "high" : "auto"}
       className={className}
+      style={style}
       width={width}
       height={height}
       decoding="async"

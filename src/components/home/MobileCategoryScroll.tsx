@@ -54,7 +54,8 @@ export default function MobileCategoryScroll({ categories }: { categories: any[]
                   width={140}
                   height={140}
                   fallbackWidth={160}
-                  className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110 mix-blend-multiply" 
+                  className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-110" 
+                  style={{ mixBlendMode: 'multiply' }}
                 />
               </div>
               <span className="text-sm font-medium text-gray-500 group-hover:text-[#182955] transition-colors duration-300 capitalize">
