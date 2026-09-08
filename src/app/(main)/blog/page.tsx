@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { FiSearch, FiX } from 'react-icons/fi';

@@ -92,7 +92,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         title,
         description,
         images: imageUrl ? [imageUrl] : [],
-      }
+      },
+      alternates: {
+        canonical: `/blog/${post.slug}`,
+      },
     };
   }
 

@@ -13,6 +13,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `Blog | ${storeName}`,
     description: `News, insights, and updates from ${storeName}.`,
+    alternates: {
+      canonical: '/blog',
+    },
   };
 }
 
