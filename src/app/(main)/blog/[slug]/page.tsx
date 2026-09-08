@@ -7,6 +7,7 @@ import { apiUrl } from '@/lib/api';
 
 interface BlogDetail {
   title: string;
+  slug: string;
   content: string;
   featured_image: string | null;
   created_at: string;
