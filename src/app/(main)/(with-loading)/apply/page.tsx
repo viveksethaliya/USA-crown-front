@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { apiUrl } from "@/lib/cart";
 import { AddressFields } from '@/components/forms/AddressFields';
 
+
 export default function ApplyPage() {
   const [step, setStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);

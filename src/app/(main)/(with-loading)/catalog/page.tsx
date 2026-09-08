@@ -1,12 +1,19 @@
+import { generateStaticPageMetadata } from "@/utils/pageSeo";
 import React from "react";
 import styles from "./catalog.module.css";
 import { FiBookOpen, FiDownload, FiSearch, FiLayers } from "react-icons/fi";
 import ScrollReveal from "@/components/animations/ScrollReveal";
 
-export const metadata = {
-  title: "Catalog 2025 | Crown Findings",
-  description: "Browse our interactive 2025 product catalog online.",
-};
+
+
+
+export async function generateMetadata() {
+  return generateStaticPageMetadata(
+  '/catalog', 
+  `Catalog 2025 | {storeName}`, 
+  `Browse our interactive 2025 product catalog online.`
+  );
+}
 
 export default function CatalogPage() {
   const catalogUrl = "https://portal.printingcenterusa.com/flipbook_share.php?code=958313&title=Crown%20Findings%20Co%20Inc&desc=New%20Catalog%202025%27";

@@ -6,6 +6,7 @@ import diamondData from '../../../../data/diamondSizes.json';
 
 type Shape = keyof typeof diamondData;
 
+
 export default function CalculatorPage() {
   const shapes = Object.keys(diamondData) as Shape[];
   const [activeShape, setActiveShape] = useState<Shape>('round');

@@ -1,22 +1,18 @@
 import React from 'react';
 import styles from '../policy.module.css';
+import { generateStaticPageMetadata } from "@/utils/pageSeo";
 
 import { Metadata } from 'next';
 
-export async function generateMetadata(): Promise<Metadata> {
-  let storeName = 'Crown Findings';
-  try {
-    const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.utilixo.online'}/api/store/settings`, { next: { revalidate: 60 } });
-    if (settingsRes.ok) {
-      const settings = await settingsRes.json();
-      if (settings.store_name) storeName = settings.store_name;
-    }
-  } catch(e) {}
-  
-  return {
-    title: `Terms & Conditions | ${storeName}`,
-    description: `Terms and conditions for wholesale ordering at ${storeName}.`,
-  };
+
+
+
+export async function generateMetadata() {
+  return generateStaticPageMetadata(
+  '/terms', 
+  `Terms & Conditions | {storeName}`, 
+  `Terms and conditions for wholesale ordering at {storeName}.`
+  );
 }
 
 export default function TermsPage() {

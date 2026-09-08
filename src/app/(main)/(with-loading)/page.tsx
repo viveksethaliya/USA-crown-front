@@ -1,3 +1,4 @@
+import { generateStaticPageMetadata } from "@/utils/pageSeo";
 import Link from "next/link";
 import Script from "next/script";
 import styles from "./page.module.css";
@@ -44,6 +45,11 @@ async function fetchFeaturedProducts() {
     console.error("Failed to fetch featured products:", error);
     return [];
   }
+}
+
+
+export async function generateMetadata() {
+  return generateStaticPageMetadata('/');
 }
 
 export default async function Home() {

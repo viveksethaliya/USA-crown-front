@@ -53,6 +53,7 @@ function position(rect: Rect) {
   return { left: `${(left / PAGE_WIDTH) * 100}%`, top: `${(top / PAGE_HEIGHT) * 100}%`, width: `${((right - left) / PAGE_WIDTH) * 100}%`, height: `${((bottom - top) / PAGE_HEIGHT) * 100}%` };
 }
 
+
 export default function ResaleCertificatePage() {
   const canvasHost = useRef<HTMLDivElement>(null);
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES);

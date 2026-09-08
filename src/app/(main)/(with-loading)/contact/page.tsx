@@ -1,13 +1,20 @@
+import { generateStaticPageMetadata } from "@/utils/pageSeo";
 import Image from 'next/image';
 import Link from 'next/link';
 import FaqAccordion from './FaqAccordion';
 import styles from './contact.module.css';
 import ScrollReveal from "@/components/animations/ScrollReveal";
 
-export const metadata = {
-  title: 'Contact Us | Crown Findings',
-  description: 'Learn about Crown Findings, a trusted B2B jewelry findings supplier with over 50 years of experience.',
-};
+
+
+
+export async function generateMetadata() {
+  return generateStaticPageMetadata(
+  '/contact', 
+  `Contact Us | {storeName}`, 
+  `Learn about {storeName}, a trusted B2B jewelry findings supplier with over 50 years of experience.`
+  );
+}
 
 export default function ContactPage() {
   return (

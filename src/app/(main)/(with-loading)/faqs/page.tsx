@@ -1,10 +1,16 @@
 import React from 'react';
 import styles from '../policy.module.css';
+import { generateStaticPageMetadata } from "@/utils/pageSeo";
 
-export const metadata = {
-  title: 'FAQs | Crown Findings',
-  description: 'Frequently Asked Questions about Crown Findings wholesale orders, shipping, and products.',
-};
+
+
+export async function generateMetadata() {
+  return generateStaticPageMetadata(
+  '/faqs', 
+  `FAQs | {storeName}`, 
+  `Frequently Asked Questions about {storeName} wholesale orders, shipping, and products.`
+  );
+}
 
 export default function FaqsPage() {
   return (
