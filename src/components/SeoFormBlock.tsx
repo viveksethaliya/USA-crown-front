@@ -12,6 +12,7 @@ interface SeoFormBlockProps {
   onChange: (field: 'seo_title' | 'seo_description' | 'seo_og_image' | 'seo_keywords', value: string) => void;
   titlePlaceholder?: string;
   descriptionPlaceholder?: string;
+  hideKeywords?: boolean;
 }
 
 export default function SeoFormBlock({
@@ -22,6 +23,7 @@ export default function SeoFormBlock({
   onChange,
   titlePlaceholder = 'Leave blank to use the entity name',
   descriptionPlaceholder = 'Leave blank to use the site default description',
+  hideKeywords = false,
 }: SeoFormBlockProps) {
   const [mediaOpen, setMediaOpen] = useState(false);
 
@@ -96,23 +98,25 @@ export default function SeoFormBlock({
           </div>
 
           {/* SEO Keywords */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">
-                SEO Keywords
-              </label>
+          {!hideKeywords && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-bold text-[#312f2c]/70 uppercase tracking-wider">
+                  SEO Keywords
+                </label>
+              </div>
+              <input
+                type="text"
+                value={seoKeywords}
+                onChange={(e) => onChange('seo_keywords', e.target.value)}
+                placeholder="e.g. jewelry, rings, diamond, wholesale (comma separated)"
+                className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all placeholder:text-[#312f2c]/30"
+              />
+              <p className="text-xs text-[#312f2c]/40 font-medium">
+                Comma separated keywords. While less critical for modern Google, they are still used by some search engines and site search tools.
+              </p>
             </div>
-            <input
-              type="text"
-              value={seoKeywords}
-              onChange={(e) => onChange('seo_keywords', e.target.value)}
-              placeholder="e.g. jewelry, rings, diamond, wholesale (comma separated)"
-              className="w-full bg-white/60 border border-white/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#d1a054]/40 font-medium text-[#312f2c] shadow-sm transition-all placeholder:text-[#312f2c]/30"
-            />
-            <p className="text-xs text-[#312f2c]/40 font-medium">
-              Comma separated keywords. While less critical for modern Google, they are still used by some search engines and site search tools.
-            </p>
-          </div>
+          )}
 
           {/* OG Image */}
           <div className="space-y-2">

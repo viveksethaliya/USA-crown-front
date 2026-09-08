@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { LogIn } from 'lucide-react';
 import {
   LayoutDashboard, Image, Package, Tag, Tags, SlidersHorizontal, Shapes,
-  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, FileText, FormInput, Search
+  Users, Building2, LogOut, ChevronRight, Settings, Layout, UsersRound, ShoppingCart, Activity, Ticket, Zap, PercentCircle, ClipboardList, ListOrdered, Megaphone, FileText, FormInput, Search, Globe
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import PendingRegistrationsBar from '@/components/admin/PendingRegistrationsBar';
@@ -42,6 +42,7 @@ const NAV: NavElement[] = [
       { label: 'Active Carts', href: '/crown-admin/carts', icon: ShoppingCart },
       { label: 'Checkout Fields', href: '/crown-admin/checkout-fields', icon: FormInput },
       { label: 'Settings', href: '/crown-admin/settings', icon: Settings },
+      { label: 'Static Page SEO', href: '/crown-admin/settings/static-page-seo', icon: Globe },
     ]
   },
   {

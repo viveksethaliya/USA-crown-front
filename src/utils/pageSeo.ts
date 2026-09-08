@@ -45,7 +45,7 @@ export async function generateStaticPageMetadata(
   }
   
   if (seoData.is_noindex) {
-    metadata.robots = { index: false, follow: false };
+    metadata.robots = { index: false, follow: true };
   }
 
   // Self-referencing canonical
