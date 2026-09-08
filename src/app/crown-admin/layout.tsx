@@ -42,7 +42,6 @@ const NAV: NavElement[] = [
       { label: 'Active Carts', href: '/crown-admin/carts', icon: ShoppingCart },
       { label: 'Checkout Fields', href: '/crown-admin/checkout-fields', icon: FormInput },
       { label: 'Settings', href: '/crown-admin/settings', icon: Settings },
-      { label: 'Static Page SEO', href: '/crown-admin/settings/static-page-seo', icon: Globe },
     ]
   },
   {

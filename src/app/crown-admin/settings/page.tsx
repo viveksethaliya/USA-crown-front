@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, CheckCircle2, XCircle, Save, Mail, Search } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Save, Mail, Search, Globe, ChevronRight } from 'lucide-react';
 import { apiUrl } from '@/lib/cart';
 import { adminFetch } from '@/lib/api';
 import SeoFormBlock from '@/components/SeoFormBlock';
 import { toast } from 'react-hot-toast';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -212,6 +213,25 @@ export default function SettingsPage() {
                   titlePlaceholder="e.g. Crown Findings — Wholesale Jewelry Findings"
                   descriptionPlaceholder="e.g. Shop premium quality jewelry findings at wholesale prices."
                 />
+              </div>
+
+              {/* ─── Static Page SEO Link ─────────────────────── */}
+              <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8 mt-6 flex items-center justify-between group hover:bg-white/60 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#312f2c]/5 text-[#312f2c] flex items-center justify-center border border-[#312f2c]/10 shadow-sm shrink-0">
+                    <Globe className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[#312f2c] uppercase tracking-wider">Static Page SEO</h2>
+                    <p className="text-xs font-bold text-[#312f2c]/50 uppercase tracking-wider mt-0.5">Configure metadata for hardcoded storefront routes.</p>
+                  </div>
+                </div>
+                <Link 
+                  href="/crown-admin/settings/static-page-seo"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#312f2c]/10 text-[#312f2c] font-bold rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-sm"
+                >
+                  Manage Pages <ChevronRight className="w-4 h-4" />
+                </Link>
               </div>
 
               <div className="flex justify-end pt-4">
