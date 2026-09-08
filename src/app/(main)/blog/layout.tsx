@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `Blog | ${storeName}`,
     description: `News, insights, and updates from ${storeName}.`,
     alternates: {
-      canonical: '/blog',
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/blog`,
     },
   };
 }
