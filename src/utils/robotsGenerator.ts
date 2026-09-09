@@ -27,11 +27,10 @@ Disallow: /auth/`;
       blockAi = data.robots_block_ai === true;
       customBlock = data.robots_custom_block || '';
     } else {
-      console.warn('Failed to fetch settings for robots.txt (non-200), using defaults.');
+      console.warn(`[ROBOTS_FETCH_FAILED] Non-200 response (${res.status}). Using defaults.`);
     }
-  } catch (err) {
-    console.error('Failed to fetch settings for robots.txt, using defaults:', err);
-    // Silent fallback to defaults
+  } catch (err: any) {
+    console.error(`[ROBOTS_FETCH_FAILED] Network or parsing error: ${err.message}. Using defaults.`);
   }
 
   let text = lockedBlock + '\n';
