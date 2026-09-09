@@ -7,7 +7,7 @@ export async function generateRobotsText(): Promise<string> {
   }
 
   // Locked block (always emitted exactly as is)
-  const lockedBlock = `User-Agent: *
+  const lockedBlock = `User-agent: *
 Allow: /
 Disallow: /crown-admin/
 Disallow: /api/
@@ -23,9 +23,22 @@ Disallow: /auth/`;
     const res = await fetch(apiUrl('/api/store/settings'), { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
-      blockFaceted = data.robots_block_faceted !== false; // Default true if missing
-      blockAi = data.robots_block_ai === true;
-      customBlock = data.robots_custom_block || '';
+      
+      if (
+        data.robots_block_faceted === undefined ||
+        data.robots_block_ai === undefined ||
+        data.robots_custom_block === undefined
+      ) {
+        const missing = [];
+        if (data.robots_block_faceted === undefined) missing.push('robots_block_faceted');
+        if (data.robots_block_ai === undefined) missing.push('robots_block_ai');
+        if (data.robots_custom_block === undefined) missing.push('robots_custom_block');
+        console.warn(`[ROBOTS_FETCH_FAILED] Missing expected fields: ${missing.join(', ')}. Using defaults.`);
+      } else {
+        blockFaceted = data.robots_block_faceted;
+        blockAi = data.robots_block_ai;
+        customBlock = data.robots_custom_block;
+      }
     } else {
       console.warn(`[ROBOTS_FETCH_FAILED] Non-200 response (${res.status}). Using defaults.`);
     }

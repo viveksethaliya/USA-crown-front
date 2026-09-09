@@ -1,0 +1,11 @@
+User-Agent: *
+Allow: /
+Disallow: /crown-admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /*?*attr_*
+Disallow: /*?*sort=*
+Disallow: /*?*search=*
+Disallow: /*?*category=*
+
+Sitemap: https://usa-crown-front.vercel.app/sitemap.xml
