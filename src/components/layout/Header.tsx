@@ -360,6 +360,8 @@ export default function Header() {
             <span className={styles.topDivider} />
             <Link href="/catalog" className={styles.topLink}>Catalog</Link>
             <span className={styles.topDivider} />
+            <Link href="/calculator" className={styles.topLink}>Calculator</Link>
+            <span className={styles.topDivider} />
             <Link href="/cart" className={styles.topLink}>Cart{cartCount > 0 ? ` (${cartCount})` : ''}</Link>
             <span className={styles.topDivider} />
 
