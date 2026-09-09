@@ -20,7 +20,7 @@ Disallow: /auth/`;
   let customBlock = '';
 
   try {
-    const res = await fetch(apiUrl('/api/store/settings?v=1'), { next: { revalidate: 60 } });
+    const res = await fetch(apiUrl('/api/store/settings'), { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
       blockFaceted = data.robots_block_faceted !== false; // Default true if missing
