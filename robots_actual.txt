@@ -1,4 +1,4 @@
-User-Agent: *
+User-agent: *
 Allow: /
 Disallow: /crown-admin/
 Disallow: /api/
@@ -7,5 +7,17 @@ Disallow: /*?*attr_*
 Disallow: /*?*sort=*
 Disallow: /*?*search=*
 Disallow: /*?*category=*
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
 
 Sitemap: https://usa-crown-front.vercel.app/sitemap.xml

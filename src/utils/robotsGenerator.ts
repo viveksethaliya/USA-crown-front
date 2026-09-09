@@ -1,6 +1,12 @@
 import { apiUrl } from '@/lib/cart';
 
-export async function generateRobotsText(): Promise<string> {
+export interface DraftState {
+  blockFaceted: boolean;
+  blockAi: boolean;
+  customBlock: string;
+}
+
+export async function generateRobotsText(draftState?: DraftState): Promise<string> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!baseUrl) {
     throw new Error("NEXT_PUBLIC_SITE_URL is missing in environment");
@@ -19,31 +25,37 @@ Disallow: /auth/`;
   let blockAi = false;
   let customBlock = '';
 
-  try {
-    const res = await fetch(apiUrl('/api/store/settings'), { next: { revalidate: 60 } });
-    if (res.ok) {
-      const data = await res.json();
-      
-      if (
-        data.robots_block_faceted === undefined ||
-        data.robots_block_ai === undefined ||
-        data.robots_custom_block === undefined
-      ) {
-        const missing = [];
-        if (data.robots_block_faceted === undefined) missing.push('robots_block_faceted');
-        if (data.robots_block_ai === undefined) missing.push('robots_block_ai');
-        if (data.robots_custom_block === undefined) missing.push('robots_custom_block');
-        console.warn(`[ROBOTS_FETCH_FAILED] Missing expected fields: ${missing.join(', ')}. Using defaults.`);
+  if (draftState) {
+    blockFaceted = draftState.blockFaceted;
+    blockAi = draftState.blockAi;
+    customBlock = draftState.customBlock;
+  } else {
+    try {
+      const res = await fetch(apiUrl('/api/store/settings'), { next: { revalidate: 60 } });
+      if (res.ok) {
+        const data = await res.json();
+        
+        if (
+          data.robots_block_faceted === undefined ||
+          data.robots_block_ai === undefined ||
+          data.robots_custom_block === undefined
+        ) {
+          const missing = [];
+          if (data.robots_block_faceted === undefined) missing.push('robots_block_faceted');
+          if (data.robots_block_ai === undefined) missing.push('robots_block_ai');
+          if (data.robots_custom_block === undefined) missing.push('robots_custom_block');
+          console.warn(`[ROBOTS_FETCH_FAILED] Missing expected fields: ${missing.join(', ')}. Using defaults.`);
+        } else {
+          blockFaceted = data.robots_block_faceted;
+          blockAi = data.robots_block_ai;
+          customBlock = data.robots_custom_block;
+        }
       } else {
-        blockFaceted = data.robots_block_faceted;
-        blockAi = data.robots_block_ai;
-        customBlock = data.robots_custom_block;
+        console.warn(`[ROBOTS_FETCH_FAILED] Non-200 response (${res.status}). Using defaults.`);
       }
-    } else {
-      console.warn(`[ROBOTS_FETCH_FAILED] Non-200 response (${res.status}). Using defaults.`);
+    } catch (err: any) {
+      console.error(`[ROBOTS_FETCH_FAILED] Network or parsing error: ${err.message}. Using defaults.`);
     }
-  } catch (err: any) {
-    console.error(`[ROBOTS_FETCH_FAILED] Network or parsing error: ${err.message}. Using defaults.`);
   }
 
   let text = lockedBlock + '\n';

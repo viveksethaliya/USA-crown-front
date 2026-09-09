@@ -234,6 +234,25 @@ export default function SettingsPage() {
                 </Link>
               </div>
 
+              {/* ─── Robots.txt Link ─────────────────────── */}
+              <div className="bg-white/50 border border-white/60 rounded-2xl shadow-inner p-6 sm:p-8 mt-6 flex items-center justify-between group hover:bg-white/60 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#312f2c]/5 text-[#312f2c] flex items-center justify-center border border-[#312f2c]/10 shadow-sm shrink-0">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[#312f2c] uppercase tracking-wider">Search & Crawlers (robots.txt)</h2>
+                    <p className="text-xs font-bold text-[#312f2c]/50 uppercase tracking-wider mt-0.5">Manage search engine visibility and crawler behavior.</p>
+                  </div>
+                </div>
+                <Link 
+                  href="/crown-admin/settings/robots"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#312f2c]/10 text-[#312f2c] font-bold rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-sm"
+                >
+                  Manage Crawlers <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+
               <div className="flex justify-end pt-4">
                 <button
                   type="submit"
