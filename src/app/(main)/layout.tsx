@@ -28,6 +28,9 @@ export async function generateMetadata(): Promise<Metadata> {
       if (settings.seo_default_title) title = settings.seo_default_title;
       else if (settings.store_name) title = `${settings.store_name} | B2B Wholesale Jewelry`;
       if (settings.seo_default_description) description = settings.seo_default_description;
+      if (settings.robots_site_noindex === true) {
+        return { title, description, robots: { index: false, follow: true } };
+      }
     }
   } catch (error) {
     console.error("Failed to fetch store settings for metadata:", error);

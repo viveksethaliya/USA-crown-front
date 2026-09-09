@@ -47,7 +47,7 @@ export async function generateMetadata(props: PageProps) {
     // becomes a legitimate hub. Noindexing the child is reversible; noindexing
     // the parent costs it its position.
     // So if isOnlyChild is true (this category is a child, and the only child of its parent), we noindex.
-    let robots = 'index, follow';
+    let robots: string | undefined = undefined;
     if (data.totalProducts < 3 || data.isOnlyChild) {
       robots = 'noindex, follow';
     }
@@ -62,7 +62,7 @@ export async function generateMetadata(props: PageProps) {
       alternates: {
         canonical,
       },
-      robots,
+      ...(robots ? { robots } : {}),
       openGraph: {
         title,
         description,
