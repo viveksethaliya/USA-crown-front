@@ -46,13 +46,12 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
 
   return (
     <div className={styles.productCard}>
-      <div className={styles.productImageWrap}>
+      <Link href={productHref} className={styles.productImageWrap} tabIndex={-1} aria-hidden="true">
         {product.sale_price && isSaleActive(product.sale_price, product.date_sale_starts, product.date_sale_ends) && (
           <div className={styles.saleBadge}>
             SALE
           </div>
         )}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <CatalogImage
           image={product}
           productName={product.name}
@@ -63,7 +62,7 @@ export default function ProductCard({ product, isAuthenticated = true, userPermi
           priority={false}
           className={styles.productImage}
         />
-      </div>
+      </Link>
       <div className={styles.productInfo}>
         <Link href={productHref} className={styles.productNameLink}>
           <h3 className={styles.productName}>{product.name}</h3>
