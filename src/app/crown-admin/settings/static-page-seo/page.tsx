@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Save, FileText, Globe } from 'lucide-react';
+import { Loader2, Save, FileText, Globe, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { apiUrl } from '@/lib/cart';
 import { adminFetch } from '@/lib/api';
 import SeoFormBlock from '@/components/SeoFormBlock';
@@ -89,6 +90,11 @@ export default function StaticPageSeoScreen() {
     <div className="flex flex-col h-full gap-6 -m-4 sm:m-0">
       <div className="shrink-0 px-4 sm:px-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div>
+          <div className="flex items-center gap-2 text-sm text-[#312f2c]/50 mb-2">
+            <Link href="/crown-admin/settings" className="hover:text-[#d1a054] flex items-center gap-1">
+              <ArrowLeft className="w-4 h-4" /> Back to Settings
+            </Link>
+          </div>
           <h1 className="text-2xl font-bold text-[#312f2c] tracking-wide flex items-center gap-2">
             <Globe className="w-6 h-6 text-[#d1a054]" />
             Static Page SEO
