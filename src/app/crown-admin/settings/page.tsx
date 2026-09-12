@@ -167,7 +167,7 @@ export default function SettingsPage() {
                     required
                   />
                   <p className="text-xs font-bold text-[#312f2c]/40 uppercase tracking-wider mt-2 leading-relaxed">
-                    Set the global flat tax rate for all taxable items. B2B customers with an approved Resale ID are automatically exempt.
+                    Set the global flat tax rate for all taxable items.
                   </p>
                 </div>
               </div>
